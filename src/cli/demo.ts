@@ -1,7 +1,7 @@
 // demo: command-line entry point that runs both surfaces and prints them for the user.
 
 import { writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { createCrevaScore, createCacheStore } from '../modules/creva-score/creva-score.factory';
 import { buildVerificationBadge } from '../modules/business-verification/business-verification.badge';
 import {
@@ -182,6 +182,21 @@ export function renderRadar(result: SourceResult<RegulatoryRadar>): string[] {
   return lines;
 }
 
+export function renderReportPaths(htmlPath: string, jsonPath: string): string {
+  // Windows resolves `start` against the shell, so the quoted absolute path is what actually opens.
+  const opener = process.platform === 'win32' ? 'start' : process.platform === 'darwin' ? 'open' : 'xdg-open';
+
+  return [
+    'Reporte generado.',
+    '',
+    `  Página   ${htmlPath}`,
+    `  Datos    ${jsonPath}`,
+    '',
+    '  Para abrirlo:',
+    `    ${opener} "${htmlPath}"`,
+  ].join('\n');
+}
+
 async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2));
   const env = loadEnvWithFallback(readEnvFile(join(process.cwd(), '.env')));
@@ -211,9 +226,12 @@ async function main(): Promise<void> {
       disclosure,
     });
 
-    writeFileSync('creva-report.json', `${JSON.stringify(report, null, 2)}\n`, 'utf8');
-    writeFileSync('creva-report.html', renderReportHtml(report), 'utf8');
-    process.stdout.write('Reporte generado: creva-report.html y creva-report.json\n');
+    const htmlPath = resolve('creva-report.html');
+    const jsonPath = resolve('creva-report.json');
+
+    writeFileSync(jsonPath, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
+    writeFileSync(htmlPath, renderReportHtml(report), 'utf8');
+    process.stdout.write(`${renderReportPaths(htmlPath, jsonPath)}\n`);
     return;
   }
 

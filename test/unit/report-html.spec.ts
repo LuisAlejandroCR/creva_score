@@ -2,7 +2,7 @@ import { buildReport } from '../../src/modules/creva-score/creva-report.builder'
 import { buildScoreDisclosure } from '../../src/modules/score-disclosure/score-disclosure.service';
 import { renderReportHtml } from '../../src/cli/report-html';
 import { sourceOk, sourceUnavailable } from '../../src/common/types/source-result.types';
-import { parseArgs } from '../../src/cli/demo';
+import { parseArgs, renderReportPaths } from '../../src/cli/demo';
 
 const disclosure = buildScoreDisclosure({ scoreVersion: '1.0', windowDays: 30 });
 const now = () => new Date('2026-08-13T12:00:00.000Z');
@@ -166,5 +166,27 @@ describe('renderReportHtml', () => {
 
     expect(scriptOpens).toBe(1);
     expect(html).toContain('\\u003c/script>');
+  });
+});
+
+describe('renderReportPaths', () => {
+  const html = String.raw`C:\IA Hackathon - Creva score\creva-report.html`;
+  const json = String.raw`C:\IA Hackathon - Creva score\creva-report.json`;
+
+  it('states where the files landed, not just that they were written', () => {
+    const out = renderReportPaths(html, json);
+
+    expect(out).toContain(html);
+    expect(out).toContain(json);
+  });
+
+  it('quotes the path, because it almost always contains spaces', () => {
+    expect(renderReportPaths(html, json)).toContain(`"${html}"`);
+  });
+
+  it('offers an opener that matches the platform it is running on', () => {
+    const expected = process.platform === 'win32' ? 'start' : process.platform === 'darwin' ? 'open' : 'xdg-open';
+
+    expect(renderReportPaths(html, json)).toContain(`${expected} "`);
   });
 });
