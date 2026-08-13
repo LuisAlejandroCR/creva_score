@@ -5,6 +5,9 @@ import { CromaClient } from './infra/croma-client';
 import { Env, loadEnv } from './infra/env';
 import { Logger, noopLogger } from './infra/logger';
 import { SiemClient } from './siem/siem.client';
+import { DofClient } from './dof/dof.client';
+import { CnbvClient } from './cnbv/cnbv.client';
+import { RegulatoryRadarService } from './regulatory-radar/regulatory-radar.service';
 import { BusinessVerificationService } from './business-verification/business-verification.service';
 
 export * from './infra/cache';
@@ -14,12 +17,18 @@ export * from './infra/logger';
 export * from './infra/types';
 export * from './infra/validated-call';
 export * from './siem/siem.client';
+export * from './dof/dof.client';
+export * from './dof/dof.schemas';
+export * from './cnbv/cnbv.client';
+export * from './cnbv/cnbv.schemas';
+export * from './regulatory-radar/regulatory-radar.service';
 export * from './siem/siem.schemas';
 export * from './business-verification/business-verification.service';
 export * from './business-verification/business-verification.badge';
 
 export interface BusinessVerificationSetup {
   service: BusinessVerificationService;
+  radar: RegulatoryRadarService;
   env: Env;
 }
 
@@ -41,5 +50,13 @@ export function createBusinessVerification(
     rfcField: env.SIEM_DETAIL_RFC_FIELD,
   });
 
-  return { service, env };
+  const radar = new RegulatoryRadarService(new DofClient(croma), new CnbvClient(croma), new MemoryCacheStore(), {
+    keywords: env.REGULATORY_RADAR_KEYWORDS,
+    scanDays: env.REGULATORY_RADAR_SCAN_DAYS,
+    cacheTtlMs: env.REGULATORY_RADAR_CACHE_TTL_MS,
+    maxAlerts: env.REGULATORY_RADAR_MAX_ALERTS,
+    maxRulebookPages: env.REGULATORY_RADAR_MAX_RULEBOOK_PAGES,
+  });
+
+  return { service, radar, env };
 }

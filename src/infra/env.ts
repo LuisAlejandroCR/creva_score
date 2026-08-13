@@ -14,6 +14,15 @@ const envSchema = z.object({
   // Dot path into the detail response.
   SIEM_DETAIL_RFC_FIELD: z.string().min(1).default('establishment.rfc'),
 
+  REGULATORY_RADAR_KEYWORDS: z
+    .string()
+    .default('')
+    .transform((value) => value.split(',').map((k) => k.trim()).filter((k) => k.length > 0)),
+  REGULATORY_RADAR_SCAN_DAYS: z.coerce.number().int().min(1).max(30).default(7),
+  REGULATORY_RADAR_CACHE_TTL_MS: z.coerce.number().int().min(0).default(DAY_MS),
+  REGULATORY_RADAR_MAX_ALERTS: z.coerce.number().int().min(1).max(100).default(20),
+  REGULATORY_RADAR_MAX_RULEBOOK_PAGES: z.coerce.number().int().min(1).max(20).default(3),
+
   BUSINESS_VERIFICATION_CACHE_TTL_MS: z.coerce.number().int().min(0).default(7 * DAY_MS),
   BUSINESS_VERIFICATION_MAX_DETAIL_LOOKUPS: z.coerce.number().int().min(0).max(5).default(1),
 });
