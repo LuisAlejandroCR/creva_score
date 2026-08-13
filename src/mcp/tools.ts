@@ -35,6 +35,14 @@ const verifyBusinessShape = {
 
 const radarShape = {};
 
+const NOTE_BY_STATUS: Record<'verified' | 'not_listed' | 'ambiguous', string> = {
+  verified: 'Sello emitido: el negocio se identificó sin ambigüedad.',
+  not_listed:
+    'Sin sello: no se encontró el negocio. El directorio es voluntario, así que la ausencia no es evidencia de nada.',
+  ambiguous:
+    'Sin sello: se encontraron varios negocios con nombres parecidos y no se pudo identificar cuál es. No es lo mismo que no estar registrado. Acota con state_code o envía el rfc.',
+};
+
 function text(value: string, isError = false): McpToolResult {
   return { content: [{ type: 'text', text: value }], ...(isError && { isError: true }) };
 }
@@ -73,19 +81,15 @@ export function buildVerifyBusinessTool(
         );
       }
 
-      const badge = buildVerificationBadge(result);
       return text(
         JSON.stringify(
           {
             status,
-            badge,
+            badge: buildVerificationBadge(result),
             candidates_found: result.data?.candidates_found ?? 0,
             checked_at: result.checked_at,
             source: result.source,
-            note:
-              badge === null
-                ? 'Sin sello. El directorio es voluntario, así que la ausencia no es evidencia de nada.'
-                : 'Sello emitido: el negocio se identificó sin ambigüedad.',
+            note: NOTE_BY_STATUS[status],
           },
           null,
           2,

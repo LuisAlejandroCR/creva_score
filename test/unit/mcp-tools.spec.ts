@@ -116,6 +116,29 @@ describe('creva_verify_business', () => {
     expect(croma.calls[0]?.body).toEqual({ name: 'Cañoneri', state_code: 29 });
   });
 
+  it('never blames absence when the problem was ambiguity', async () => {
+    const many = Array.from({ length: 3 }, (_, i) => ({ ...exactMatch, establishment_id: String(i), commercial_name: `ABARROTES ${i}` }));
+    const { setup } = setupWith(new Map([[SIEM_SEARCH_PATH, searchResponse(many)]]));
+    const tool = buildVerifyBusinessTool(setup);
+
+    const result = await tool.handler({ business_name: 'ABARROTES' });
+    const payload = parse(result);
+
+    expect(payload.status).toBe('ambiguous');
+    expect(payload.badge).toBeNull();
+    expect(payload.note as string).not.toContain('ausencia');
+    expect(payload.note as string).toContain('varios negocios');
+  });
+
+  it('explains absence only when the business was genuinely absent', async () => {
+    const { setup } = setupWith(new Map([[SIEM_SEARCH_PATH, searchResponse([])]]));
+
+    const payload = parse(await buildVerifyBusinessTool(setup).handler({ business_name: 'Negocio Nuevo' }));
+
+    expect(payload.status).toBe('not_listed');
+    expect(payload.note as string).toContain('ausencia');
+  });
+
   it('declares an input contract that rejects a too-short name', () => {
     const { setup } = setupWith(new Map());
     const { inputSchema } = buildVerifyBusinessTool(setup).config;

@@ -14,7 +14,7 @@ Entonces le dicen que no. No por su negocio, sino por un dato que falta.
 
 Lo injusto es que la información sí existe: su negocio está en registros públicos, su actividad está declarada, sus movimientos están en su cuenta. Nadie los junta y nadie los mira.
 
-## Qué hace Creva Score
+## ¿Qué hace Creva Score?
 
 Reúne lo que ya se puede saber de su negocio y lo convierte en algo que se entiende y se puede enseñar:
 
@@ -22,7 +22,7 @@ Reúne lo que ya se puede saber de su negocio y lo convierte en algo que se enti
 - **Información oficial, no suposiciones.** La que está publicada por las propias instituciones.
 - **Cosas que sí puede hacer.** Si algo baja su puntaje, la app le dice qué cambiarlo, no solo que está mal.
 
-## Cómo lo hacemos
+## ¿Cómo lo hacemos?
 
 Con reglas claras, no con adivinanzas:
 
@@ -34,7 +34,7 @@ Con reglas claras, no con adivinanzas:
 
 **Que algo sea público no lo hace nuestro.** Un dato publicado por una institución sigue siendo de la persona a la que se refiere. Lo tratamos así.
 
-## Por qué México primero, y luego la región
+## ¿Por qué México primero, y luego la región?
 
 Empezamos en México porque ahí están nuestras usuarias. Pero la misma idea funciona en Colombia y en Perú con los registros de cada país: es el mismo producto mirando otra ventanilla. Crecer a la región no es una promesa, es el siguiente paso natural.
 
@@ -81,6 +81,71 @@ Mientras tanto, esto es lo que ya está decidido y no va a cambiar:
 - **No consultamos antecedentes penales** de nadie.
 - No vendemos tus datos.
 - Puedes ver, corregir o borrar tus datos, y retirar tu autorización, cuando quieras.
+
+---
+
+## Para devs
+
+> A partir de aquí el texto es técnico. Si llegaste buscando qué hace Creva Score, ya lo leíste arriba.
+
+**Requisitos:** Node 20 o superior.
+
+```bash
+npm install
+cp .env.example .env    # y coloca tu credencial de Croma en CROMA_API_KEY
+```
+
+Sin `CROMA_API_KEY` todo arranca igual: cada consulta responde "no disponible" y nada revienta.
+
+### Verlo funcionando
+
+```bash
+npm run demo
+```
+
+Muestra los avisos regulatorios. Para incluir el sello de un negocio:
+
+```bash
+node dist/cli/demo.js --negocio "ABARROTES ERENDIRA" --estado 8
+```
+
+En `cmd.exe`, `npm run demo -- --negocio "…"` rompe las comillas: usa `node dist/cli/demo.js` directamente.
+
+### Usarlo desde un agente (MCP)
+
+El proyecto expone sus dos composiciones como herramientas MCP por stdio: `creva_verify_business` y `creva_regulatory_radar`.
+
+```bash
+npm run mcp
+```
+
+Para conectarlo a un cliente MCP:
+
+```json
+{
+  "mcpServers": {
+    "creva-score": {
+      "command": "node",
+      "args": ["dist/mcp/server.js"],
+      "cwd": "<ruta del repositorio>"
+    }
+  }
+}
+```
+
+### Pruebas
+
+```bash
+npm run verify
+```
+
+Corre typecheck, lint, las tres suites y el build. Las suites se pueden correr por separado con `npm run test:unit`, `npm run test:fuzz` y `npm run test:invariant`.
+
+Las invariantes son las que sostienen las promesas de arriba: que el sello nunca otorgue puntos, que el RFC no llegue a una llave de caché, que la credencial no salga en un registro, y que el servidor MCP no escriba en el canal del protocolo.
+
+### Consumo de la API
+
+La cuota es de 100 consultas al día para toda la organización. Verificar un negocio cuesta 2; el radar cuesta un día de gaceta por fecha revisada, más el catálogo. Los resultados se guardan en disco, así que repetir una consulta no gasta cuota.
 
 ## Licencia
 
