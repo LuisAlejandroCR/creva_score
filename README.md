@@ -147,6 +147,8 @@ Las invariantes son las que sostienen las promesas de arriba: que el sello nunca
 
 La cuota es de 100 consultas al día para toda la organización. Verificar un negocio cuesta 2; el radar cuesta un día de gaceta por fecha revisada, más el catálogo. Los resultados se guardan en disco, así que repetir una consulta no gasta cuota.
 
+Algunas consultas se resuelven como trabajo en segundo plano: el cliente lo detecta, espera lo que la API le indique y no da la respuesta por buena hasta que el trabajo termina. Ese sondeo no consume la cuota diaria, así que una consulta lenta cuesta lo mismo que una rápida.
+
 ## Licencia
 
 
