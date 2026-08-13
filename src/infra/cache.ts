@@ -5,6 +5,7 @@ import { SourceResult } from './types';
 export interface CacheStore {
   get<T>(key: string): Promise<SourceResult<T> | undefined>;
   set<T>(key: string, value: SourceResult<T>, ttlMs: number): Promise<void>;
+  delete(key: string): Promise<void>;
 }
 
 interface CacheEntry {
@@ -31,5 +32,9 @@ export class MemoryCacheStore implements CacheStore {
   async set<T>(key: string, value: SourceResult<T>, ttlMs: number): Promise<void> {
     if (ttlMs <= 0) return;
     this.entries.set(key, { value, expiresAt: this.now() + ttlMs });
+  }
+
+  async delete(key: string): Promise<void> {
+    this.entries.delete(key);
   }
 }

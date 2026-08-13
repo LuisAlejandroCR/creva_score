@@ -1,6 +1,7 @@
 // index: public surface of the package.
 
-import { MemoryCacheStore } from './infra/cache';
+import { CacheStore, MemoryCacheStore } from './infra/cache';
+import { FileCacheStore } from './infra/file-cache';
 import { CromaClient } from './infra/croma-client';
 import { Env, loadEnv } from './infra/env';
 import { Logger, noopLogger } from './infra/logger';
@@ -11,6 +12,7 @@ import { RegulatoryRadarService } from './regulatory-radar/regulatory-radar.serv
 import { BusinessVerificationService } from './business-verification/business-verification.service';
 
 export * from './infra/cache';
+export * from './infra/file-cache';
 export * from './infra/croma-client';
 export * from './infra/env';
 export * from './infra/logger';
@@ -44,13 +46,15 @@ export function createBusinessVerification(
     logger,
   });
 
-  const service = new BusinessVerificationService(new SiemClient(croma), new MemoryCacheStore(), {
+  const cache = createCacheStore(env, logger);
+
+  const service = new BusinessVerificationService(new SiemClient(croma), cache, {
     cacheTtlMs: env.BUSINESS_VERIFICATION_CACHE_TTL_MS,
     maxDetailLookups: env.BUSINESS_VERIFICATION_MAX_DETAIL_LOOKUPS,
     rfcField: env.SIEM_DETAIL_RFC_FIELD,
   });
 
-  const radar = new RegulatoryRadarService(new DofClient(croma), new CnbvClient(croma), new MemoryCacheStore(), {
+  const radar = new RegulatoryRadarService(new DofClient(croma), new CnbvClient(croma), cache, {
     keywords: env.REGULATORY_RADAR_KEYWORDS,
     scanDays: env.REGULATORY_RADAR_SCAN_DAYS,
     cacheTtlMs: env.REGULATORY_RADAR_CACHE_TTL_MS,
@@ -59,4 +63,9 @@ export function createBusinessVerification(
   });
 
   return { service, radar, env };
+}
+
+export function createCacheStore(env: Env, logger: Logger = noopLogger): CacheStore {
+  const filePath = env.CACHE_FILE_PATH.trim();
+  return filePath === '' ? new MemoryCacheStore() : new FileCacheStore({ filePath, logger });
 }

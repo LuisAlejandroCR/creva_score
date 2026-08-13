@@ -9,6 +9,7 @@ legal/
 node_modules/
 dist/
 coverage/
+.cache/
 *.tsbuildinfo
 
 *.log

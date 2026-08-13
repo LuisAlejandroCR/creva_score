@@ -14,6 +14,9 @@ const envSchema = z.object({
   // Dot path into the detail response.
   SIEM_DETAIL_RFC_FIELD: z.string().min(1).default('establishment.rfc'),
 
+  // Empty keeps the cache in memory only.
+  CACHE_FILE_PATH: z.string().default(''),
+
   REGULATORY_RADAR_KEYWORDS: z
     .string()
     .default('')
@@ -48,6 +51,10 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): Env {
     throw new EnvValidationError(parsed.error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`));
   }
   return parsed.data;
+}
+
+export function loadEnvWithFallback(fallback: NodeJS.ProcessEnv): Env {
+  return loadEnv({ ...fallback, ...process.env });
 }
 
 export function isCromaConfigured(env: Env): boolean {

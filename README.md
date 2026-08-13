@@ -40,7 +40,7 @@ Empezamos en México porque ahí están nuestras usuarias. Pero la misma idea fu
 
 ## Estado del proyecto
 
-🚧 **En construcción.** Hay dos piezas funcionando. Todavía no hay una app que puedas abrir.
+🚧 **En construcción.** Las dos piezas ya funcionan de principio a fin contra los registros oficiales reales, y su resultado se puede ver en pantalla. Todavía no hay una app que puedas abrir: eso es lo que sigue.
 
 ### 1. El sello de tu negocio
 
@@ -60,6 +60,13 @@ Revisa lo que se publica en el diario oficial del gobierno y la lista de reglas 
 - **Cada aviso trae su fuente y su fecha**, con el documento oficial detrás.
 - **Los temas que vigila salen de documentos reales**, no de palabras que nos sonaron bien: leímos el catálogo oficial completo de reglas y varios días del diario oficial, y elegimos con eso a la vista.
 - Si una fuente no responde ese día, lo dice. Preferimos avisarte que no pudimos mirar, a dejarte creer que no había nada.
+
+### Lo que guardamos, y cómo
+
+Consultar los registros oficiales toma su tiempo, así que guardamos el resultado un rato en lugar de preguntar lo mismo una y otra vez. Dos cosas que nos importan de eso:
+
+- **Lo guardado no lleva tu nombre en claro.** Se archiva bajo una huella ilegible, no bajo el nombre de tu negocio.
+- **Se puede borrar.** Si nos pides que quitemos tus datos, hay una forma de hacerlo de verdad, no solo de dejar de mostrarlos.
 
 Este proyecto se está construyendo durante el [IA Hackathon GovTech](https://usecroma.com/es/changelog/hackathon-govtech) (12–16 de agosto de 2026), sobre [Croma](https://usecroma.com), que da acceso a datos de gobierno de México, Colombia y Perú.
 
