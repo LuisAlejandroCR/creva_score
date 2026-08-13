@@ -102,7 +102,7 @@ export function render(report: ProbeReport, toolName?: string): string {
 
 async function main(): Promise<void> {
   const { tool, args } = parseProbeArgs(process.argv.slice(2));
-  const child = spawn(process.execPath, [join(__dirname, '../mcp/server.js')], {
+  const child = spawn(process.execPath, [join(__dirname, '../modules/mcp/mcp.server.js')], {
     stdio: ['pipe', 'pipe', 'pipe'],
   });
 

@@ -3,8 +3,8 @@
 import { z } from 'zod/v3';
 import { buildVerificationBadge } from '../business-verification/business-verification.badge';
 import { getVerificationStatus } from '../business-verification/business-verification.service';
-import { BusinessVerificationSetup } from '../index';
-import { renderScoreDisclosure } from '../score-disclosure/score-disclosure';
+import { BusinessVerificationSetup } from '../../index';
+import { renderScoreDisclosure } from '../score-disclosure/score-disclosure.service';
 
 export interface McpToolResult {
   [key: string]: unknown;

@@ -1,5 +1,5 @@
-import { MemoryCacheStore } from '../../src/infra/cache';
-import { sourceOk } from '../../src/infra/types';
+import { MemoryCacheStore } from '../../src/common/cache/memory-cache';
+import { sourceOk } from '../../src/common/types/source-result.types';
 
 describe('MemoryCacheStore', () => {
   it('returns a stored value before it expires', async () => {

@@ -1,9 +1,9 @@
-import { MemoryCacheStore } from '../../src/infra/cache';
-import { CallOptions, CromaCallable } from '../../src/infra/croma-client';
-import { SourceResult, sourceOk, sourceUnavailable } from '../../src/infra/types';
-import { SiemClient } from '../../src/siem/siem.client';
-import { SIEM_DETAIL_PATH } from '../../src/siem/siem.schemas';
-import { BusinessVerificationService, getVerificationStatus } from '../../src/business-verification/business-verification.service';
+import { MemoryCacheStore } from '../../src/common/cache/memory-cache';
+import { CallOptions, CromaCallable } from '../../src/common/http/croma.client';
+import { SourceResult, sourceOk, sourceUnavailable } from '../../src/common/types/source-result.types';
+import { SiemClient } from '../../src/modules/business-verification/providers/siem.provider';
+import { SIEM_DETAIL_PATH } from '../../src/modules/business-verification/providers/siem.types';
+import { BusinessVerificationService, getVerificationStatus } from '../../src/modules/business-verification/business-verification.service';
 
 class FakeCroma implements CromaCallable {
   readonly calls: Array<{ path: string; body: unknown }> = [];

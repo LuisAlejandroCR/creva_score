@@ -1,6 +1,6 @@
 import { createBusinessVerification } from '../../src/index';
-import { loadEnv } from '../../src/infra/env';
-import { getVerificationStatus } from '../../src/business-verification/business-verification.service';
+import { loadEnv } from '../../src/config/env';
+import { getVerificationStatus } from '../../src/modules/business-verification/business-verification.service';
 
 describe('createBusinessVerification', () => {
   it('wires a usable setup from environment configuration', () => {

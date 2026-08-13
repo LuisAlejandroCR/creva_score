@@ -2,14 +2,14 @@
 
 import { join } from 'node:path';
 import { createBusinessVerification, createCacheStore } from '../index';
-import { buildVerificationBadge } from '../business-verification/business-verification.badge';
+import { buildVerificationBadge } from '../modules/business-verification/business-verification.badge';
 import {
   BusinessVerification,
   getVerificationStatus,
-} from '../business-verification/business-verification.service';
-import { isCromaConfigured, loadEnvWithFallback } from '../infra/env';
-import { RegulatoryAlert, RegulatoryRadar } from '../regulatory-radar/regulatory-radar.service';
-import { SourceResult } from '../infra/types';
+} from '../modules/business-verification/business-verification.service';
+import { isCromaConfigured, loadEnvWithFallback } from '../config/env';
+import { RegulatoryAlert, RegulatoryRadar } from '../modules/regulatory-radar/regulatory-radar.service';
+import { SourceResult } from '../common/types/source-result.types';
 import { CountingCacheStore } from './counting-cache';
 import { readEnvFile } from './env-file';
 

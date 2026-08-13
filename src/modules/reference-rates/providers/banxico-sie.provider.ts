@@ -1,8 +1,8 @@
 // sie.client: Banxico SIE reference rates. Separate host and auth from the government-data provider.
 
 import { z } from 'zod';
-import { Logger, noopLogger } from '../infra/logger';
-import { SourceResult, sourceOk, sourceUnavailable } from '../infra/types';
+import { Logger, noopLogger } from '../../../common/logger';
+import { SourceResult, sourceOk, sourceUnavailable } from '../../../common/types/source-result.types';
 
 export const SIE_SOURCE = 'mx.banxico.sie';
 

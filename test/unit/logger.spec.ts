@@ -1,4 +1,4 @@
-import { createConsoleLogger, noopLogger, redact } from '../../src/infra/logger';
+import { createConsoleLogger, noopLogger, redact } from '../../src/common/logger';
 
 describe('redact', () => {
   it('masks credential-bearing keys', () => {

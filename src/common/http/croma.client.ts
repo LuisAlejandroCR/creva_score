@@ -1,7 +1,7 @@
 // croma-client: HTTP client for the government-data provider.
 
-import { Logger, noopLogger } from './logger';
-import { SourceResult, sourceOk, sourceUnavailable } from './types';
+import { Logger, noopLogger } from '../logger';
+import { SourceResult, sourceOk, sourceUnavailable } from '../types/source-result.types';
 
 const TERMINAL_JOB_STATUSES = new Set(['completed', 'failed', 'canceled', 'expired']);
 const DEFAULT_POLL_INTERVAL_MS = 1000;

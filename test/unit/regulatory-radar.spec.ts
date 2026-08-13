@@ -1,11 +1,11 @@
-import { MemoryCacheStore } from '../../src/infra/cache';
-import { CallOptions, CromaCallable } from '../../src/infra/croma-client';
-import { SourceResult, sourceOk, sourceUnavailable } from '../../src/infra/types';
-import { CnbvClient } from '../../src/cnbv/cnbv.client';
-import { CNBV_REGULATIONS_PATH } from '../../src/cnbv/cnbv.schemas';
-import { DofClient } from '../../src/dof/dof.client';
-import { DOF_PUBLICATIONS_BY_DATE_PATH } from '../../src/dof/dof.schemas';
-import { RegulatoryRadarService } from '../../src/regulatory-radar/regulatory-radar.service';
+import { MemoryCacheStore } from '../../src/common/cache/memory-cache';
+import { CallOptions, CromaCallable } from '../../src/common/http/croma.client';
+import { SourceResult, sourceOk, sourceUnavailable } from '../../src/common/types/source-result.types';
+import { CnbvClient } from '../../src/modules/regulatory-radar/providers/cnbv.provider';
+import { CNBV_REGULATIONS_PATH } from '../../src/modules/regulatory-radar/providers/cnbv.types';
+import { DofClient } from '../../src/modules/regulatory-radar/providers/dof.provider';
+import { DOF_PUBLICATIONS_BY_DATE_PATH } from '../../src/modules/regulatory-radar/providers/dof.types';
+import { RegulatoryRadarService } from '../../src/modules/regulatory-radar/regulatory-radar.service';
 
 class RoutingCroma implements CromaCallable {
   readonly calls: Array<{ path: string; body: unknown }> = [];

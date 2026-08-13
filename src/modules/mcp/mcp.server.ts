@@ -3,11 +3,11 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { join } from 'node:path';
-import { createBusinessVerification } from '../index';
-import { loadEnvWithFallback } from '../infra/env';
-import { createStderrLogger } from '../infra/logger';
-import { readEnvFile } from '../cli/env-file';
-import { buildRegulatoryRadarTool, buildScoreDisclosureTool, buildVerifyBusinessTool } from './tools';
+import { createBusinessVerification } from '../../index';
+import { loadEnvWithFallback } from '../../config/env';
+import { createStderrLogger } from '../../common/logger';
+import { readEnvFile } from '../../cli/env-file';
+import { buildRegulatoryRadarTool, buildScoreDisclosureTool, buildVerifyBusinessTool } from './mcp.tools';
 
 export const MCP_SERVER_NAME = 'creva-score';
 export const MCP_SERVER_VERSION = '0.1.0';

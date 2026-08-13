@@ -1,4 +1,4 @@
-import { buildScoreDisclosure, renderScoreDisclosure } from '../../src/score-disclosure/score-disclosure';
+import { buildScoreDisclosure, renderScoreDisclosure } from '../../src/modules/score-disclosure/score-disclosure.service';
 
 const config = { scoreVersion: '1.0', windowDays: 30, now: () => new Date('2026-08-13T12:00:00.000Z') };
 

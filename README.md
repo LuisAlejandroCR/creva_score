@@ -176,7 +176,7 @@ Para conectarlo a un cliente MCP:
   "mcpServers": {
     "creva-score": {
       "command": "node",
-      "args": ["dist/mcp/server.js"],
+      "args": ["dist/modules/mcp/mcp.server.js"],
       "cwd": "<ruta del repositorio>"
     }
   }

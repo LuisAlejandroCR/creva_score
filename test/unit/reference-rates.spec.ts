@@ -1,11 +1,11 @@
-import { MemoryCacheStore } from '../../src/infra/cache';
-import { SieClient } from '../../src/banxico/sie.client';
+import { MemoryCacheStore } from '../../src/common/cache/memory-cache';
+import { SieClient } from '../../src/modules/reference-rates/providers/banxico-sie.provider';
 import {
   DEFAULT_RATE_DEFINITIONS,
   ReferenceRatesService,
   headlineRates,
   secondaryRates,
-} from '../../src/reference-rates/reference-rates.service';
+} from '../../src/modules/reference-rates/reference-rates.service';
 
 function response(series: Array<{ id: string; titulo: string; fecha?: string; dato?: string }>): Response {
   return new Response(

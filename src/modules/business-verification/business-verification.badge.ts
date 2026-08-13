@@ -1,7 +1,7 @@
 // business-verification.badge: informational credential from the directory check. Carries no
 // score contribution; see D-02.
 
-import { SourceResult } from '../infra/types';
+import { SourceResult } from '../../common/types/source-result.types';
 import { BusinessVerification } from './business-verification.service';
 
 export const BUSINESS_VERIFICATION_BADGE_KEY = 'business_verification';

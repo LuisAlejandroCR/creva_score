@@ -1,7 +1,7 @@
 // counting-cache: cache wrapper that records whether a run read from storage or from the sources.
 
-import { CacheStore } from '../infra/cache';
-import { SourceResult } from '../infra/types';
+import { CacheStore } from '../common/cache/memory-cache';
+import { SourceResult } from '../common/types/source-result.types';
 
 export class CountingCacheStore implements CacheStore {
   private hitCount = 0;

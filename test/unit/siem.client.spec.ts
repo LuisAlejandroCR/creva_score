@@ -1,7 +1,7 @@
-import { CallOptions, CromaCallable } from '../../src/infra/croma-client';
-import { SourceResult, sourceOk, sourceUnavailable } from '../../src/infra/types';
-import { SiemClient } from '../../src/siem/siem.client';
-import { SIEM_DETAIL_PATH, SIEM_SEARCH_PATH } from '../../src/siem/siem.schemas';
+import { CallOptions, CromaCallable } from '../../src/common/http/croma.client';
+import { SourceResult, sourceOk, sourceUnavailable } from '../../src/common/types/source-result.types';
+import { SiemClient } from '../../src/modules/business-verification/providers/siem.provider';
+import { SIEM_DETAIL_PATH, SIEM_SEARCH_PATH } from '../../src/modules/business-verification/providers/siem.types';
 
 class FakeCroma implements CromaCallable {
   readonly calls: Array<{ path: string; body: unknown; options: CallOptions }> = [];

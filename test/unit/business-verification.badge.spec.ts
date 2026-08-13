@@ -1,9 +1,9 @@
-import { sourceOk, sourceUnavailable } from '../../src/infra/types';
-import { BusinessVerification } from '../../src/business-verification/business-verification.service';
+import { sourceOk, sourceUnavailable } from '../../src/common/types/source-result.types';
+import { BusinessVerification } from '../../src/modules/business-verification/business-verification.service';
 import {
   BUSINESS_VERIFICATION_BADGE_KEY,
   buildVerificationBadge,
-} from '../../src/business-verification/business-verification.badge';
+} from '../../src/modules/business-verification/business-verification.badge';
 
 function verification(overrides: Partial<BusinessVerification> = {}): BusinessVerification {
   return {

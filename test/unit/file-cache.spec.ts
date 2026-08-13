@@ -1,8 +1,8 @@
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { FileCacheStore } from '../../src/infra/file-cache';
-import { sourceOk } from '../../src/infra/types';
+import { FileCacheStore } from '../../src/common/cache/file-cache';
+import { sourceOk } from '../../src/common/types/source-result.types';
 
 describe('FileCacheStore', () => {
   let directory: string;

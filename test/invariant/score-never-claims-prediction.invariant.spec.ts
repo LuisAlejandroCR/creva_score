@@ -1,5 +1,5 @@
 import fc from 'fast-check';
-import { buildScoreDisclosure, renderScoreDisclosure } from '../../src/score-disclosure/score-disclosure';
+import { buildScoreDisclosure, renderScoreDisclosure } from '../../src/modules/score-disclosure/score-disclosure.service';
 
 const PREDICTIVE_WORDS = /(predic|probabilidad|estima|pronóstic|riesgo de impago|scoring de riesgo)/i;
 

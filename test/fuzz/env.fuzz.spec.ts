@@ -1,5 +1,5 @@
 import fc from 'fast-check';
-import { EnvValidationError, loadEnv } from '../../src/infra/env';
+import { EnvValidationError, loadEnv } from '../../src/config/env';
 
 const knownKeys = [
   'CROMA_API_KEY',

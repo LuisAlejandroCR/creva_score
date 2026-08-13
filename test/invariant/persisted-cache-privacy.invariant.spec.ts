@@ -2,11 +2,11 @@ import fc from 'fast-check';
 import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { FileCacheStore } from '../../src/infra/file-cache';
-import { CallOptions, CromaCallable } from '../../src/infra/croma-client';
-import { SourceResult, sourceOk } from '../../src/infra/types';
-import { SiemClient } from '../../src/siem/siem.client';
-import { BusinessVerificationService } from '../../src/business-verification/business-verification.service';
+import { FileCacheStore } from '../../src/common/cache/file-cache';
+import { CallOptions, CromaCallable } from '../../src/common/http/croma.client';
+import { SourceResult, sourceOk } from '../../src/common/types/source-result.types';
+import { SiemClient } from '../../src/modules/business-verification/providers/siem.provider';
+import { BusinessVerificationService } from '../../src/modules/business-verification/business-verification.service';
 
 class StubCroma implements CromaCallable {
   async call<T>(_path: string, _body: unknown, _options: CallOptions): Promise<SourceResult<T>> {

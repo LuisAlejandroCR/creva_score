@@ -1,7 +1,7 @@
 import fc from 'fast-check';
-import { CallOptions, CromaCallable } from '../../src/infra/croma-client';
-import { SourceResult, sourceOk } from '../../src/infra/types';
-import { SiemClient } from '../../src/siem/siem.client';
+import { CallOptions, CromaCallable } from '../../src/common/http/croma.client';
+import { SourceResult, sourceOk } from '../../src/common/types/source-result.types';
+import { SiemClient } from '../../src/modules/business-verification/providers/siem.provider';
 
 class EchoCroma implements CromaCallable {
   constructor(private readonly payload: unknown) {}

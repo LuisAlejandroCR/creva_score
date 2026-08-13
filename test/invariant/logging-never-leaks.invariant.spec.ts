@@ -1,6 +1,6 @@
 import fc from 'fast-check';
-import { createConsoleLogger, redact } from '../../src/infra/logger';
-import { CromaClient } from '../../src/infra/croma-client';
+import { createConsoleLogger, redact } from '../../src/common/logger';
+import { CromaClient } from '../../src/common/http/croma.client';
 
 describe('logging invariants', () => {
   it('never emits a credential value, whatever field it arrives in', () => {

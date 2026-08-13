@@ -1,10 +1,10 @@
 // business-verification.service: resolves a business against the government directory.
 
 import { createHash } from 'node:crypto';
-import { CacheStore } from '../infra/cache';
-import { SourceResult, sourceOk } from '../infra/types';
-import { SiemClient } from '../siem/siem.client';
-import { EstablishmentSummary, SIEM_SOURCE } from '../siem/siem.schemas';
+import { CacheStore } from '../../common/cache/memory-cache';
+import { SourceResult, sourceOk } from '../../common/types/source-result.types';
+import { SiemClient } from './providers/siem.provider';
+import { EstablishmentSummary, SIEM_SOURCE } from './providers/siem.types';
 
 export interface BusinessVerificationInput {
   businessName: string;

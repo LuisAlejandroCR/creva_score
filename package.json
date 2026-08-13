@@ -18,7 +18,7 @@
     "lint": "eslint .",
     "format": "prettier --write \"{src,test}/**/*.ts\"",
     "verify": "npm run typecheck && npm run lint && npm test && npm run build",
-    "mcp": "npm run build && node dist/mcp/server.js",
+    "mcp": "npm run build && node dist/modules/mcp/mcp.server.js",
     "mcp:probe": "npm run build && node dist/cli/mcp-probe.js"
   },
   "dependencies": {

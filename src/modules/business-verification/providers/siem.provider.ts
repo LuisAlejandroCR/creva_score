@@ -1,8 +1,8 @@
 // siem.client: typed wrapper over the establishment directory endpoints.
 
-import { CromaCallable } from '../infra/croma-client';
-import { SourceResult, sourceUnavailable } from '../infra/types';
-import { callAndValidate } from '../infra/validated-call';
+import { CromaCallable } from '../../../common/http/croma.client';
+import { SourceResult, sourceUnavailable } from '../../../common/types/source-result.types';
+import { callAndValidate } from '../../../common/http/validated-call';
 import {
   EstablishmentDetail,
   EstablishmentSearch,
@@ -12,7 +12,7 @@ import {
   SIEM_SOURCE,
   establishmentDetailSchema,
   establishmentSearchSchema,
-} from './siem.schemas';
+} from './siem.types';
 
 const NAME_MIN_LENGTH = 2;
 const NAME_MAX_LENGTH = 200;

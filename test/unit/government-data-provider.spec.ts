@@ -1,6 +1,6 @@
-import { CromaProvider } from '../../src/integrations/government-data-provider';
-import type { ProviderServices } from '../../src/integrations/government-data-provider';
-import { sourceOk, sourceUnavailable } from '../../src/infra/types';
+import { CromaProvider } from '../../src/common/types/government-data.types';
+import type { ProviderServices } from '../../src/common/types/government-data.types';
+import { sourceOk, sourceUnavailable } from '../../src/common/types/source-result.types';
 
 function services(overrides: Partial<ProviderServices> = {}): ProviderServices {
   return {

@@ -1,9 +1,9 @@
 // government-data-provider: the boundary the report depends on. See B15.
 
-import { SourceResult } from '../infra/types';
-import { BusinessVerification, BusinessVerificationInput } from '../business-verification/business-verification.service';
-import { RegulatoryRadar } from '../regulatory-radar/regulatory-radar.service';
-import { ReferenceRates } from '../reference-rates/reference-rates.service';
+import { SourceResult } from './source-result.types';
+import { BusinessVerification, BusinessVerificationInput } from '../../modules/business-verification/business-verification.service';
+import { RegulatoryRadar } from '../../modules/regulatory-radar/regulatory-radar.service';
+import { ReferenceRates } from '../../modules/reference-rates/reference-rates.service';
 
 export interface GovernmentDataProvider {
   readonly name: string;

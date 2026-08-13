@@ -1,6 +1,6 @@
 // cache: cache port for verification results.
 
-import { SourceResult } from './types';
+import { SourceResult } from '../types/source-result.types';
 
 export interface CacheStore {
   get<T>(key: string): Promise<SourceResult<T> | undefined>;

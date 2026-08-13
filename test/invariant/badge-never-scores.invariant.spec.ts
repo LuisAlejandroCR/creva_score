@@ -1,8 +1,8 @@
 import fc from 'fast-check';
 import * as publicApi from '../../src/index';
-import { sourceOk, sourceUnavailable } from '../../src/infra/types';
-import { BusinessVerification } from '../../src/business-verification/business-verification.service';
-import { buildVerificationBadge } from '../../src/business-verification/business-verification.badge';
+import { sourceOk, sourceUnavailable } from '../../src/common/types/source-result.types';
+import { BusinessVerification } from '../../src/modules/business-verification/business-verification.service';
+import { buildVerificationBadge } from '../../src/modules/business-verification/business-verification.badge';
 
 const arbVerification = fc.record({
   matched: fc.boolean(),

@@ -1,18 +1,18 @@
-import { MemoryCacheStore } from '../../src/infra/cache';
-import { CallOptions, CromaCallable } from '../../src/infra/croma-client';
-import { SourceResult, sourceOk, sourceUnavailable } from '../../src/infra/types';
-import { SiemClient } from '../../src/siem/siem.client';
-import { SIEM_SEARCH_PATH } from '../../src/siem/siem.schemas';
-import { DofClient } from '../../src/dof/dof.client';
-import { CnbvClient } from '../../src/cnbv/cnbv.client';
-import { BusinessVerificationService } from '../../src/business-verification/business-verification.service';
-import { RegulatoryRadarService } from '../../src/regulatory-radar/regulatory-radar.service';
+import { MemoryCacheStore } from '../../src/common/cache/memory-cache';
+import { CallOptions, CromaCallable } from '../../src/common/http/croma.client';
+import { SourceResult, sourceOk, sourceUnavailable } from '../../src/common/types/source-result.types';
+import { SiemClient } from '../../src/modules/business-verification/providers/siem.provider';
+import { SIEM_SEARCH_PATH } from '../../src/modules/business-verification/providers/siem.types';
+import { DofClient } from '../../src/modules/regulatory-radar/providers/dof.provider';
+import { CnbvClient } from '../../src/modules/regulatory-radar/providers/cnbv.provider';
+import { BusinessVerificationService } from '../../src/modules/business-verification/business-verification.service';
+import { RegulatoryRadarService } from '../../src/modules/regulatory-radar/regulatory-radar.service';
 import { BusinessVerificationSetup } from '../../src/index';
-import { loadEnv } from '../../src/infra/env';
-import { buildScoreDisclosure } from '../../src/score-disclosure/score-disclosure';
-import { SieClient } from '../../src/banxico/sie.client';
-import { DEFAULT_RATE_DEFINITIONS, ReferenceRatesService } from '../../src/reference-rates/reference-rates.service';
-import { buildRegulatoryRadarTool, buildVerifyBusinessTool } from '../../src/mcp/tools';
+import { loadEnv } from '../../src/config/env';
+import { buildScoreDisclosure } from '../../src/modules/score-disclosure/score-disclosure.service';
+import { SieClient } from '../../src/modules/reference-rates/providers/banxico-sie.provider';
+import { DEFAULT_RATE_DEFINITIONS, ReferenceRatesService } from '../../src/modules/reference-rates/reference-rates.service';
+import { buildRegulatoryRadarTool, buildVerifyBusinessTool } from '../../src/modules/mcp/mcp.tools';
 
 class Croma implements CromaCallable {
   readonly calls: Array<{ path: string; body: unknown }> = [];

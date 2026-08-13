@@ -1,5 +1,5 @@
 import fc from 'fast-check';
-import { CromaClient } from '../../src/infra/croma-client';
+import { CromaClient } from '../../src/common/http/croma.client';
 
 const arbStatus = fc.constantFrom(200, 201, 202, 204, 400, 401, 403, 404, 409, 422, 429, 500, 502, 503, 504);
 

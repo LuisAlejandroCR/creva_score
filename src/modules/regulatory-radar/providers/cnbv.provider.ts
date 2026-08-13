@@ -1,9 +1,9 @@
 // cnbv.client: typed wrapper over the banking rulebook endpoint.
 
-import { CromaCallable } from '../infra/croma-client';
-import { SourceResult } from '../infra/types';
-import { callAndValidate } from '../infra/validated-call';
-import { CNBV_REGULATIONS_PATH, CNBV_SOURCE, CnbvRegulations, cnbvRegulationsSchema } from './cnbv.schemas';
+import { CromaCallable } from '../../../common/http/croma.client';
+import { SourceResult } from '../../../common/types/source-result.types';
+import { callAndValidate } from '../../../common/http/validated-call';
+import { CNBV_REGULATIONS_PATH, CNBV_SOURCE, CnbvRegulations, cnbvRegulationsSchema } from './cnbv.types';
 
 const PAGE_MAX = 1000;
 

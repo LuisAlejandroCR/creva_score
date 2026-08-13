@@ -1,8 +1,8 @@
 // reference-rates.service: headline and secondary reference rates. See D-06.
 
-import { CacheStore } from '../infra/cache';
-import { SourceResult, sourceOk } from '../infra/types';
-import { SieClient, SieObservation } from '../banxico/sie.client';
+import { CacheStore } from '../../common/cache/memory-cache';
+import { SourceResult, sourceOk } from '../../common/types/source-result.types';
+import { SieClient, SieObservation } from './providers/banxico-sie.provider';
 
 export const REFERENCE_RATES_SOURCE = 'mx.banxico.sie';
 

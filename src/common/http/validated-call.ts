@@ -1,8 +1,8 @@
 // validated-call: schema-validated call over the HTTP client.
 
 import { z } from 'zod';
-import { CallOptions, CromaCallable } from './croma-client';
-import { SourceResult, sourceUnavailable } from './types';
+import { CallOptions, CromaCallable } from './croma.client';
+import { SourceResult, sourceUnavailable } from '../types/source-result.types';
 
 export async function callAndValidate<T>(
   client: CromaCallable,

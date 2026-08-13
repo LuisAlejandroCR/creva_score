@@ -9,8 +9,8 @@ import {
   renderVerification,
 } from '../../src/cli/demo';
 import { CountingCacheStore } from '../../src/cli/counting-cache';
-import { MemoryCacheStore } from '../../src/infra/cache';
-import { sourceOk, sourceUnavailable } from '../../src/infra/types';
+import { MemoryCacheStore } from '../../src/common/cache/memory-cache';
+import { sourceOk, sourceUnavailable } from '../../src/common/types/source-result.types';
 import { readEnvFile } from '../../src/cli/env-file';
 
 const verification = (matched: boolean) =>

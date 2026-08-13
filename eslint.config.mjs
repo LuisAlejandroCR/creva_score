@@ -23,7 +23,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['src/infra/env.ts', 'src/infra/logger.ts'],
+    files: ['src/config/env.ts', 'src/common/logger.ts'],
     rules: { 'no-restricted-syntax': 'off', 'no-console': 'off' },
   },
   {

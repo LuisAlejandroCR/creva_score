@@ -1,14 +1,14 @@
 // dof.client: typed wrapper over the federal gazette endpoint. One request per gazette date.
 
-import { CromaCallable } from '../infra/croma-client';
-import { SourceResult, sourceUnavailable } from '../infra/types';
-import { callAndValidate } from '../infra/validated-call';
+import { CromaCallable } from '../../../common/http/croma.client';
+import { SourceResult, sourceUnavailable } from '../../../common/types/source-result.types';
+import { callAndValidate } from '../../../common/http/validated-call';
 import {
   DOF_PUBLICATIONS_BY_DATE_PATH,
   DOF_SOURCE,
   DofPublicationsByDate,
   dofPublicationsByDateSchema,
-} from './dof.schemas';
+} from './dof.types';
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 

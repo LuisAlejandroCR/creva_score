@@ -1,6 +1,6 @@
 // creva-report: the stable result the presentation layer consumes. See B14.
 
-import { ScoreDisclosure } from '../score-disclosure/score-disclosure';
+import { ScoreDisclosure } from '../../modules/score-disclosure/score-disclosure.service';
 
 export type SignalCategory = 'business_verification' | 'regulatory' | 'reference_rate';
 

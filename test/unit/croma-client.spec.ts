@@ -1,4 +1,4 @@
-import { CromaClient } from '../../src/infra/croma-client';
+import { CromaClient } from '../../src/common/http/croma.client';
 
 function jsonResponse(body: unknown, init: { status?: number; headers?: Record<string, string> } = {}): Response {
   return new Response(JSON.stringify(body), {

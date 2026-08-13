@@ -1,7 +1,7 @@
 import fc from 'fast-check';
-import { buildCrevaReport, countByTone } from '../../src/report/creva-report';
-import type { ReportSignal, ReportSource } from '../../src/report/creva-report';
-import { buildScoreDisclosure } from '../../src/score-disclosure/score-disclosure';
+import { buildCrevaReport, countByTone } from '../../src/common/types/creva-report.types';
+import type { ReportSignal, ReportSource } from '../../src/common/types/creva-report.types';
+import { buildScoreDisclosure } from '../../src/modules/score-disclosure/score-disclosure.service';
 
 const VERDICT_KEY = /(decision|approve|reject|aprob|rechaz|deneg|veredicto|confidence|confianza|probabilit|riesgo)/i;
 const CONTRIBUTION_KEY = /(score_value|points|weight|penalt|bonus)/i;

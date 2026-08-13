@@ -1,12 +1,12 @@
 // regulatory-radar.service: collects recent regulatory publications relevant to small businesses.
 // Shared across all users and free of personal data, unlike the directory check.
 
-import { CacheStore } from '../infra/cache';
-import { SourceResult, sourceOk, sourceUnavailable } from '../infra/types';
-import { CnbvClient } from '../cnbv/cnbv.client';
-import { CNBV_SOURCE } from '../cnbv/cnbv.schemas';
-import { DofClient } from '../dof/dof.client';
-import { DOF_SOURCE } from '../dof/dof.schemas';
+import { CacheStore } from '../../common/cache/memory-cache';
+import { SourceResult, sourceOk, sourceUnavailable } from '../../common/types/source-result.types';
+import { CnbvClient } from './providers/cnbv.provider';
+import { CNBV_SOURCE } from './providers/cnbv.types';
+import { DofClient } from './providers/dof.provider';
+import { DOF_SOURCE } from './providers/dof.types';
 
 export const RADAR_SOURCE = 'mx.regulatory-radar';
 
