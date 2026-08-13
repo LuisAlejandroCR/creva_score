@@ -10,6 +10,8 @@ import { RegulatoryRadarService } from '../../src/regulatory-radar/regulatory-ra
 import { BusinessVerificationSetup } from '../../src/index';
 import { loadEnv } from '../../src/infra/env';
 import { buildScoreDisclosure } from '../../src/score-disclosure/score-disclosure';
+import { SieClient } from '../../src/banxico/sie.client';
+import { DEFAULT_RATE_DEFINITIONS, ReferenceRatesService } from '../../src/reference-rates/reference-rates.service';
 import { buildRegulatoryRadarTool, buildVerifyBusinessTool } from '../../src/mcp/tools';
 
 class Croma implements CromaCallable {
@@ -45,6 +47,10 @@ function setupWith(responses: Map<string, SourceResult<unknown>>): {
       cacheTtlMs: 1000,
       maxAlerts: 10,
       maxRulebookPages: 1,
+    }),
+    rates: new ReferenceRatesService(new SieClient({}), cache, {
+      definitions: DEFAULT_RATE_DEFINITIONS,
+      cacheTtlMs: 0,
     }),
     disclosure: buildScoreDisclosure({ scoreVersion: '1.0', windowDays: 30 }),
     env,

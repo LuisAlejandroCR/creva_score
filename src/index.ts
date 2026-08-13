@@ -11,6 +11,8 @@ import { CnbvClient } from './cnbv/cnbv.client';
 import { RegulatoryRadarService } from './regulatory-radar/regulatory-radar.service';
 import { BusinessVerificationService } from './business-verification/business-verification.service';
 import { ScoreDisclosure, buildScoreDisclosure } from './score-disclosure/score-disclosure';
+import { SieClient } from './banxico/sie.client';
+import { DEFAULT_RATE_DEFINITIONS, ReferenceRatesService } from './reference-rates/reference-rates.service';
 
 export * from './infra/cache';
 export * from './infra/file-cache';
@@ -29,10 +31,13 @@ export * from './siem/siem.schemas';
 export * from './business-verification/business-verification.service';
 export * from './business-verification/business-verification.badge';
 export * from './score-disclosure/score-disclosure';
+export * from './banxico/sie.client';
+export * from './reference-rates/reference-rates.service';
 
 export interface BusinessVerificationSetup {
   service: BusinessVerificationService;
   radar: RegulatoryRadarService;
+  rates: ReferenceRatesService;
   disclosure: ScoreDisclosure;
   env: Env;
 }
@@ -66,12 +71,23 @@ export function createBusinessVerification(
     maxRulebookPages: env.REGULATORY_RADAR_MAX_RULEBOOK_PAGES,
   });
 
+  const rates = new ReferenceRatesService(
+    new SieClient({
+      token: env.BANXICO_SIE_TOKEN,
+      baseUrl: env.BANXICO_SIE_BASE_URL,
+      timeoutMs: env.CROMA_TIMEOUT_MS,
+      logger,
+    }),
+    cache,
+    { definitions: DEFAULT_RATE_DEFINITIONS, cacheTtlMs: env.REFERENCE_RATES_CACHE_TTL_MS },
+  );
+
   const disclosure = buildScoreDisclosure({
     scoreVersion: env.SCORE_VERSION,
     windowDays: env.SCORE_WINDOW_DAYS,
   });
 
-  return { service, radar, disclosure, env };
+  return { service, radar, rates, disclosure, env };
 }
 
 export function createCacheStore(env: Env, logger: Logger = noopLogger): CacheStore {

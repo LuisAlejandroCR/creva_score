@@ -17,6 +17,10 @@ const envSchema = z.object({
   // Empty keeps the cache in memory only.
   CACHE_FILE_PATH: z.string().default(''),
 
+  BANXICO_SIE_TOKEN: z.string().min(1).optional(),
+  BANXICO_SIE_BASE_URL: z.string().url().default('https://www.banxico.org.mx/SieAPIRest/service/v1'),
+  REFERENCE_RATES_CACHE_TTL_MS: z.coerce.number().int().min(0).default(6 * 60 * 60 * 1000),
+
   SCORE_VERSION: z.string().min(1).default('1.0'),
   SCORE_WINDOW_DAYS: z.coerce.number().int().min(1).max(365).default(30),
 
