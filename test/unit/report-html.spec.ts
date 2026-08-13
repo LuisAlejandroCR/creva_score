@@ -187,6 +187,33 @@ describe('renderReportHtml', () => {
     expect(renderReportHtml(report())).toContain('prefers-reduced-motion');
   });
 
+  it('opens the evidence with the keyboard, not only with a mouse', () => {
+    const html = renderReportHtml(report());
+    const heads = html.match(/<button class="panel-head"[^>]*>/g) ?? [];
+
+    expect(heads.length).toBe(4);
+    for (const head of heads) {
+      expect(head).toContain('aria-expanded="false"');
+      expect(head).toContain('aria-controls="body-');
+    }
+  });
+
+  it('leaves every panel folded and says how to unfold it', () => {
+    const html = renderReportHtml(report());
+
+    expect(html).not.toMatch(/class="panel[^"]*\bopen\b/);
+    expect(html).toContain('Ver evidencia');
+  });
+
+  it('wires each rail stop to the panel it reveals', () => {
+    const html = renderReportHtml(report());
+
+    for (const lane of ['siem', 'dof', 'cnbv', 'banxico']) {
+      expect(html).toContain(`<button class="stop" data-lane="${lane}" type="button" aria-controls="lane-${lane}">`);
+      expect(html).toContain(`id="lane-${lane}"`);
+    }
+  });
+
   it('escapes anything that came from a source', () => {
     const hostile = buildReport({
       subject: { business_name: '<script>alert(1)</script>', state_code: null },

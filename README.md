@@ -121,6 +121,8 @@ Genera `creva-report.html` y `creva-report.json`. El HTML es **un solo archivo**
 
 Los únicos enlaces que salen del archivo son a los documentos oficiales citados, para que cualquiera pueda comprobarlos.
 
+La evidencia de cada fuente viene plegada y se abre con un clic o con el teclado. Si tu sistema está configurado para reducir el movimiento, la página aparece completa y quieta, sin animaciones.
+
 Salida real de esa corrida, recortada:
 
 ```text

@@ -28,10 +28,16 @@ describe('logging invariants', () => {
         fc.constantFrom('rfc', 'RFC', 'curp', 'email', 'phone', 'address', 'legal_name', 'commercial_name'),
         fc.string({ minLength: 4 }),
         (field, value) => {
-          expect(JSON.stringify(redact({ [field]: value }))).not.toContain(value);
+          // Field names survive redaction by design, so the datum is looked for in the
+          // value alone: searching the whole serialized object reports a leak whenever
+          // the generated value is merely a substring of the key ("name" in legal_name).
+          expect(redact({ [field]: value })[field]).toBe('[personal]');
         },
       ),
     );
+
+    // The guard has teeth: a field carrying no personal marker keeps its value.
+    expect(redact({ page: 'ACME 42' }).page).toBe('ACME 42');
   });
 
   it('never lets the API key reach the log while calling the provider', async () => {
