@@ -33,6 +33,8 @@ export * from './business-verification/business-verification.badge';
 export * from './score-disclosure/score-disclosure';
 export * from './banxico/sie.client';
 export * from './reference-rates/reference-rates.service';
+export * from './report/creva-report';
+export * from './integrations/government-data-provider';
 
 export interface BusinessVerificationSetup {
   service: BusinessVerificationService;
