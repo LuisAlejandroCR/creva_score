@@ -19,7 +19,6 @@
     "verify": "npm run typecheck && npm run lint && npm test && npm run build"
   },
   "dependencies": {
-    "decimal.js": "^10.4.3",
     "zod": "^3.24.1"
   },
   "devDependencies": {

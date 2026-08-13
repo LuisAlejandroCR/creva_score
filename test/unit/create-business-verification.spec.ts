@@ -4,11 +4,11 @@ import { getVerificationStatus } from '../../src/business-verification/business-
 
 describe('createBusinessVerification', () => {
   it('wires a usable setup from environment configuration', () => {
-    const env = loadEnv({ CROMA_API_KEY: 'k', BUSINESS_VERIFICATION_POINTS: '15', SCORE_MAX: '100' });
+    const env = loadEnv({ CROMA_API_KEY: 'k' });
     const setup = createBusinessVerification(env);
 
-    expect(setup.factorConfig).toEqual({ points: 15, maxScore: 100 });
     expect(typeof setup.service.verify).toBe('function');
+    expect(setup.env.CROMA_BASE_URL).toBe('https://api.croma.run');
   });
 
   it('degrades to unavailable without credentials instead of failing to start', async () => {

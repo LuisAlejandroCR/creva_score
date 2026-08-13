@@ -40,13 +40,14 @@ Empezamos en México porque ahí están nuestras usuarias. Pero la misma idea fu
 
 ## Estado del proyecto
 
-🚧 **En construcción.** Ya está lista la primera pieza: la que busca tu negocio en el directorio oficial de establecimientos y, si lo encuentra, lo suma a tu puntaje. Todavía no hay una app que puedas abrir.
+🚧 **En construcción.** Ya está lista la primera pieza: la que busca tu negocio en el directorio oficial de establecimientos. Todavía no hay una app que puedas abrir.
 
-Cómo se comporta esa pieza, que es lo que importa:
+Cómo se comporta, que es lo que importa:
 
-- Si tu negocio **no está** en el directorio, tu puntaje sale **exactamente igual** que si esta parte no existiera. Cero castigo.
-- Si el servicio de consulta se cae, tu puntaje se calcula igual y te lo decimos.
-- Cuando sí encontramos tu negocio, te mostramos **de dónde salió el dato y de qué fecha es**.
+- **Tu puntaje no depende de esto.** Si tu negocio aparece en el directorio, ganas un sello que puedes enseñar; si no aparece, tu puntaje es exactamente el mismo. Ni mejor ni peor.
+- **Lo medimos antes de decidirlo.** Revisamos cuántos micronegocios están realmente registrados y encontramos que el directorio cubre muchísimo mejor a unos estados que a otros. Si eso diera puntos, estaríamos premiando el código postal. Por eso no da puntos.
+- **El sello se puede comprobar.** Dice de qué fuente salió y en qué fecha se consultó, para que cualquiera pueda verificarlo.
+- Si el servicio de consulta se cae, no pasa nada: tu puntaje se calcula igual.
 
 Este proyecto se está construyendo durante el [IA Hackathon GovTech](https://usecroma.com/es/changelog/hackathon-govtech) (12–16 de agosto de 2026), sobre [Croma](https://usecroma.com), que da acceso a datos de gobierno de México, Colombia y Perú.
 

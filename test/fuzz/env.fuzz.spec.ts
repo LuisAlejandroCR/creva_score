@@ -6,11 +6,10 @@ const knownKeys = [
   'CROMA_BASE_URL',
   'CROMA_ORGANIZATION_ID',
   'CROMA_WAIT_SECONDS',
+  'CROMA_TIMEOUT_MS',
   'SIEM_DETAIL_RFC_FIELD',
   'BUSINESS_VERIFICATION_CACHE_TTL_MS',
   'BUSINESS_VERIFICATION_MAX_DETAIL_LOOKUPS',
-  'BUSINESS_VERIFICATION_POINTS',
-  'SCORE_MAX',
   'Base_URL',
   'Organization_ID',
 ];
@@ -26,8 +25,6 @@ describe('env fuzz', () => {
           expect(Number.isFinite(env.CROMA_WAIT_SECONDS)).toBe(true);
           expect(env.CROMA_WAIT_SECONDS).toBeGreaterThanOrEqual(1);
           expect(env.CROMA_WAIT_SECONDS).toBeLessThanOrEqual(55);
-          expect(env.BUSINESS_VERIFICATION_POINTS).toBeGreaterThanOrEqual(0);
-          expect(env.SCORE_MAX).toBeGreaterThanOrEqual(1);
           expect(env.BUSINESS_VERIFICATION_MAX_DETAIL_LOOKUPS).toBeLessThanOrEqual(5);
         } catch (error) {
           expect(error).toBeInstanceOf(EnvValidationError);

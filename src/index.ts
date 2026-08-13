@@ -6,7 +6,6 @@ import { Env, loadEnv } from './infra/env';
 import { Logger, noopLogger } from './infra/logger';
 import { SiemClient } from './siem/siem.client';
 import { BusinessVerificationService } from './business-verification/business-verification.service';
-import { BusinessVerificationFactorConfig } from './business-verification/business-verification.factor';
 
 export * from './infra/cache';
 export * from './infra/croma-client';
@@ -17,11 +16,10 @@ export * from './infra/validated-call';
 export * from './siem/siem.client';
 export * from './siem/siem.schemas';
 export * from './business-verification/business-verification.service';
-export * from './business-verification/business-verification.factor';
+export * from './business-verification/business-verification.badge';
 
 export interface BusinessVerificationSetup {
   service: BusinessVerificationService;
-  factorConfig: BusinessVerificationFactorConfig;
   env: Env;
 }
 
@@ -43,9 +41,5 @@ export function createBusinessVerification(
     rfcField: env.SIEM_DETAIL_RFC_FIELD,
   });
 
-  return {
-    service,
-    factorConfig: { points: env.BUSINESS_VERIFICATION_POINTS, maxScore: env.SCORE_MAX },
-    env,
-  };
+  return { service, env };
 }

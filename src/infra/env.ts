@@ -16,8 +16,6 @@ const envSchema = z.object({
 
   BUSINESS_VERIFICATION_CACHE_TTL_MS: z.coerce.number().int().min(0).default(7 * DAY_MS),
   BUSINESS_VERIFICATION_MAX_DETAIL_LOOKUPS: z.coerce.number().int().min(0).max(5).default(1),
-  BUSINESS_VERIFICATION_POINTS: z.coerce.number().min(0).default(20),
-  SCORE_MAX: z.coerce.number().min(1).default(100),
 });
 
 export type Env = z.infer<typeof envSchema>;
