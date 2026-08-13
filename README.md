@@ -46,10 +46,14 @@ Este proyecto se está construyendo durante el [IA Hackathon GovTech](https://us
 
 ## Tus datos
 
-- [Aviso de Privacidad](legal/aviso-de-privacidad.md) — qué datos usamos, para qué, y cómo pedir que los borremos.
-- [Términos de Servicio](legal/terminos-de-servicio.md) — qué te ofrecemos y qué no.
+Nuestro Aviso de Privacidad y nuestros Términos de Servicio están redactados y en revisión legal. Se publican aquí antes de que el producto se abra al público — no vamos a pedirte datos sin que puedas leer primero qué hacemos con ellos.
 
-> Ambos documentos son **borradores** y están pendientes de revisión legal antes de que el producto se abra al público.
+Mientras tanto, esto es lo que ya está decidido y no va a cambiar:
+
+- Consultamos registros oficiales **solo sobre tu negocio**, y solo si tú nos autorizas.
+- **No consultamos antecedentes penales** de nadie.
+- No vendemos tus datos.
+- Puedes ver, corregir o borrar tus datos, y retirar tu autorización, cuando quieras.
 
 ## Licencia
 
