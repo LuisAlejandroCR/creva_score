@@ -111,12 +111,62 @@ node dist/cli/demo.js --negocio "ABARROTES ERENDIRA" --estado 8
 
 En `cmd.exe`, `npm run demo -- --negocio "…"` rompe las comillas: usa `node dist/cli/demo.js` directamente.
 
+Salida real de esa corrida, recortada:
+
+```text
+Creva Score — demostración
+No se consultó ninguna fuente en esta corrida: todo salió de la copia guardada.
+Cada dato conserva la fecha de su consulta original.
+
+Sello de tu negocio
+-------------------
+  ✔ Encontramos "ABARROTES ERENDIRA" en el directorio oficial.
+  Estado: Chihuahua
+  Coincidencia por nombre, sin confirmar con RFC.
+  Fuente: Directorio oficial de establecimientos (SIEM) · consultado el 13 de agosto de 2026
+
+Reglas que te afectan
+---------------------
+  Revisado el 13 de agosto de 2026 · 7 días de publicaciones
+
+  Novedades publicadas: 2
+  • [Novedad] Acuerdo por el que se modifican las Reglas de carácter general a que se
+    refiere la Ley Federal para la Prevención e Identificación de Operaciones con
+    Recursos de Procedencia Ilícita.
+    Fuente: Diario Oficial de la Federación · 07 de agosto de 2026
+
+  Reglas ya vigentes que aplican: 18
+```
+
+El estado (`--estado`) es opcional pero casi siempre necesario: buscar por nombre sin acotar suele devolver miles de coincidencias, y entonces no se emite sello.
+
 ### Usarlo desde un agente (MCP)
 
 El proyecto expone sus dos composiciones como herramientas MCP por stdio: `creva_verify_business` y `creva_regulatory_radar`.
 
 ```bash
 npm run mcp
+```
+
+**Para probarlo sin cliente MCP**, hay una sonda que hace el saludo del protocolo y, si se lo pides, llama a una herramienta:
+
+```bash
+npm run mcp:probe
+node dist/cli/mcp-probe.js --tool creva_regulatory_radar --args "{}"
+```
+
+Informa qué herramientas expone el servidor y si algo ensució el canal del protocolo:
+
+```text
+Sonda MCP
+
+  servidor        creva-score v0.1.0
+  protocolo       2025-06-18
+  herramientas    creva_verify_business, creva_regulatory_radar
+  stdout          2 líneas, solo JSON-RPC: sí
+  stderr          vacío
+
+  El canal del protocolo quedó limpio.
 ```
 
 Para conectarlo a un cliente MCP:
