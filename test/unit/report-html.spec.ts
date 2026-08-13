@@ -130,9 +130,61 @@ describe('renderReportHtml', () => {
   it('shows what the score refuses to claim', () => {
     const html = renderReportHtml(report());
 
-    expect(html).toContain('Qué es este puntaje, y qué no');
+    expect(html).toContain('Sobre este análisis');
     expect(html).toContain('Lo que NO hace');
     expect(html).toContain('dejes de pagar');
+  });
+
+  it('never grades the business, it only states a fact about the registry', () => {
+    const html = renderReportHtml(report()).toLowerCase();
+
+    for (const verdict of ['favorable', 'desfavorable', 'aprob', 'rechaz', 'riesgo bajo', 'riesgo alto', 'confianza']) {
+      expect(html).not.toContain(verdict);
+    }
+    expect(renderReportHtml(report())).toContain('Verificado');
+  });
+
+  it('puts a real count in the hero, never an invented figure', () => {
+    const built = report();
+    const html = renderReportHtml(built);
+
+    expect(html).toContain(`data-count="${built.signals.length}"`);
+    expect(html).toContain('señales públicas encontradas');
+  });
+
+  it('says "sin sello" rather than implying something is wrong', () => {
+    const html = renderReportHtml(
+      buildReport({
+        subject: { business_name: 'CAÑONERI', state_code: 29 },
+        verification: sourceOk('mx.siem', {
+          matched: false,
+          confirmed_by_rfc: false,
+          establishment_id: null,
+          commercial_name: null,
+          state: null,
+          candidates_found: 0,
+        }),
+        radar,
+        rates,
+        disclosure,
+        now,
+      }),
+    );
+
+    expect(html).toContain('Sin sello');
+    expect(html).toContain('su ausencia no dice nada');
+  });
+
+  it('lays out one lane per source so evidence stays folded', () => {
+    const html = renderReportHtml(report());
+
+    for (const lane of ['lane-siem', 'lane-dof', 'lane-cnbv', 'lane-banxico']) {
+      expect(html).toContain(lane);
+    }
+  });
+
+  it('keeps motion optional', () => {
+    expect(renderReportHtml(report())).toContain('prefers-reduced-motion');
   });
 
   it('escapes anything that came from a source', () => {
