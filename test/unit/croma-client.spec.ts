@@ -61,6 +61,49 @@ describe('CromaClient', () => {
     expect(fetchImpl).toHaveBeenCalledTimes(3);
   });
 
+  it('reports how long a job took and how many polls it needed', async () => {
+    const logs: Array<{ message: string; fields: Record<string, unknown> }> = [];
+    const fetchImpl = jest
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({ job: { id: 'j', status: 'running', status_url: '/jobs/j' } }, { status: 202 }))
+      .mockResolvedValueOnce(jsonResponse({ job: { id: 'j', status: 'running' }, data: null }))
+      .mockResolvedValueOnce(jsonResponse({ job: { id: 'j', status: 'completed' }, data: { found: true } }));
+
+    const client = new CromaClient({
+      apiKey: 'k',
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+      sleep: noSleep,
+      logger: { log: (_level, message, fields = {}) => logs.push({ message, fields }) },
+    });
+    await client.call('/p', {}, { source: 'mx.siem' });
+
+    const jobLog = logs.find((entry) => entry.message === 'croma.job');
+    expect(jobLog?.fields).toMatchObject({ source: 'mx.siem', status: 'completed', polls: 2 });
+  });
+
+  it('reports an exhausted job instead of polling forever in silence', async () => {
+    const logs: Array<{ message: string; fields: Record<string, unknown> }> = [];
+    const fetchImpl = jest
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({ job: { id: 'j', status: 'queued', status_url: '/jobs/j' } }, { status: 202 }))
+      .mockImplementation(async () => jsonResponse({ job: { id: 'j', status: 'running' }, data: null }));
+
+    const client = new CromaClient({
+      apiKey: 'k',
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+      sleep: noSleep,
+      maxPolls: 3,
+      logger: { log: (_level, message, fields = {}) => logs.push({ message, fields }) },
+    });
+    const result = await client.call('/p', {}, { source: 'mx.siem' });
+
+    expect(result.error).toBe('job_poll_exhausted');
+    expect(logs.find((entry) => entry.message === 'croma.job')?.fields).toMatchObject({
+      status: 'poll_exhausted',
+      polls: 3,
+    });
+  });
+
   it('degrades when an async job ends in a non-completed terminal state', async () => {
     const fetchImpl = jest
       .fn()

@@ -173,6 +173,7 @@ export class CromaClient implements CromaCallable {
 
     const url = statusPath.startsWith('http') ? statusPath : `${this.baseUrl}${statusPath}`;
     let waitMs = initialWaitMs;
+    const startedAt = Date.now();
 
     for (let poll = 0; poll < this.maxPolls; poll++) {
       await this.sleep(waitMs);
@@ -196,6 +197,13 @@ export class CromaClient implements CromaCallable {
         continue;
       }
 
+      this.logger.log('info', 'croma.job', {
+        source,
+        status: status ?? 'unknown',
+        polls: poll + 1,
+        elapsed_ms: Date.now() - startedAt,
+      });
+
       if (status === 'completed') {
         const data = payload.data ?? null;
         if (data === null) {
@@ -207,6 +215,12 @@ export class CromaClient implements CromaCallable {
       return sourceUnavailable<T>(source, `job_${status ?? 'unknown'}`, new Date().toISOString());
     }
 
+    this.logger.log('warn', 'croma.job', {
+      source,
+      status: 'poll_exhausted',
+      polls: this.maxPolls,
+      elapsed_ms: Date.now() - startedAt,
+    });
     return sourceUnavailable<T>(source, 'job_poll_exhausted', new Date().toISOString());
   }
 
