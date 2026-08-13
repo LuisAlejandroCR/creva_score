@@ -40,14 +40,26 @@ Empezamos en México porque ahí están nuestras usuarias. Pero la misma idea fu
 
 ## Estado del proyecto
 
-🚧 **En construcción.** Ya está lista la primera pieza: la que busca tu negocio en el directorio oficial de establecimientos. Todavía no hay una app que puedas abrir.
+🚧 **En construcción.** Hay dos piezas funcionando. Todavía no hay una app que puedas abrir.
 
-Cómo se comporta, que es lo que importa:
+### 1. El sello de tu negocio
 
-- **Tu puntaje no depende de esto.** Si tu negocio aparece en el directorio, ganas un sello que puedes enseñar; si no aparece, tu puntaje es exactamente el mismo. Ni mejor ni peor.
+Busca tu negocio en el directorio oficial de establecimientos y, si está, emite un sello que puedes enseñar.
+
+- **Tu puntaje no depende de esto.** Si tu negocio aparece en el directorio, ganas un sello; si no aparece, tu puntaje es exactamente el mismo. Ni mejor ni peor.
 - **Lo medimos antes de decidirlo.** Revisamos cuántos micronegocios están realmente registrados y encontramos que el directorio cubre muchísimo mejor a unos estados que a otros. Si eso diera puntos, estaríamos premiando el código postal. Por eso no da puntos.
 - **El sello se puede comprobar.** Dice de qué fuente salió y en qué fecha se consultó, para que cualquiera pueda verificarlo.
 - Si el servicio de consulta se cae, no pasa nada: tu puntaje se calcula igual.
+
+### 2. Avisos de reglas que te afectan
+
+Revisa lo que se publica en el diario oficial del gobierno y la lista de reglas vigentes de la autoridad bancaria, y separa lo que toca tu crédito de lo que no.
+
+- **No consulta ningún dato tuyo.** Es la misma revisión para todas: no hay nada personal de por medio.
+- **Distingue una novedad de una regla que ya existía**, para que no parezca noticia algo que lleva años publicado.
+- **Cada aviso trae su fuente y su fecha**, con el documento oficial detrás.
+- **Los temas que vigila salen de los nombres reales de las reglas**, no de palabras que nos sonaron bien: los sacamos del catálogo oficial completo.
+- Si una fuente no responde ese día, lo dice. Preferimos avisarte que no pudimos mirar, a dejarte creer que no había nada.
 
 Este proyecto se está construyendo durante el [IA Hackathon GovTech](https://usecroma.com/es/changelog/hackathon-govtech) (12–16 de agosto de 2026), sobre [Croma](https://usecroma.com), que da acceso a datos de gobierno de México, Colombia y Perú.
 
