@@ -41,3 +41,8 @@ export function createConsoleLogger(sink: Pick<Console, 'log'> = console): Logge
     },
   };
 }
+
+// Stdout is reserved for the MCP protocol stream; anything written there corrupts it.
+export function createStderrLogger(sink: Pick<Console, 'error'> = console): Logger {
+  return createConsoleLogger({ log: (line: string) => sink.error(line) });
+}

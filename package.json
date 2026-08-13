@@ -17,9 +17,11 @@
     "demo": "npm run build && node dist/cli/demo.js",
     "lint": "eslint .",
     "format": "prettier --write \"{src,test}/**/*.ts\"",
-    "verify": "npm run typecheck && npm run lint && npm test && npm run build"
+    "verify": "npm run typecheck && npm run lint && npm test && npm run build",
+    "mcp": "npm run build && node dist/mcp/server.js"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
     "zod": "^3.24.1"
   },
   "devDependencies": {

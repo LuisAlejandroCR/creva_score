@@ -1,0 +1,177 @@
+import { MemoryCacheStore } from '../../src/infra/cache';
+import { CallOptions, CromaCallable } from '../../src/infra/croma-client';
+import { SourceResult, sourceOk, sourceUnavailable } from '../../src/infra/types';
+import { SiemClient } from '../../src/siem/siem.client';
+import { SIEM_SEARCH_PATH } from '../../src/siem/siem.schemas';
+import { DofClient } from '../../src/dof/dof.client';
+import { CnbvClient } from '../../src/cnbv/cnbv.client';
+import { BusinessVerificationService } from '../../src/business-verification/business-verification.service';
+import { RegulatoryRadarService } from '../../src/regulatory-radar/regulatory-radar.service';
+import { BusinessVerificationSetup } from '../../src/index';
+import { loadEnv } from '../../src/infra/env';
+import { buildRegulatoryRadarTool, buildVerifyBusinessTool } from '../../src/mcp/tools';
+
+class Croma implements CromaCallable {
+  readonly calls: Array<{ path: string; body: unknown }> = [];
+
+  constructor(private readonly responses: Map<string, SourceResult<unknown>>) {}
+
+  async call<T>(path: string, body: unknown, _options: CallOptions): Promise<SourceResult<T>> {
+    this.calls.push({ path, body });
+    const response = this.responses.get(path);
+    if (!response) return sourceUnavailable('unknown', 'http_500') as SourceResult<T>;
+    return response as SourceResult<T>;
+  }
+}
+
+function setupWith(responses: Map<string, SourceResult<unknown>>): {
+  setup: BusinessVerificationSetup;
+  croma: Croma;
+} {
+  const croma = new Croma(responses);
+  const cache = new MemoryCacheStore();
+  const env = loadEnv({ CROMA_API_KEY: 'k', REGULATORY_RADAR_SCAN_DAYS: '1' });
+
+  const setup: BusinessVerificationSetup = {
+    service: new BusinessVerificationService(new SiemClient(croma), cache, {
+      cacheTtlMs: 1000,
+      maxDetailLookups: 0,
+      rfcField: 'establishment.rfc',
+    }),
+    radar: new RegulatoryRadarService(new DofClient(croma), new CnbvClient(croma), cache, {
+      keywords: ['PyME'],
+      scanDays: 1,
+      cacheTtlMs: 1000,
+      maxAlerts: 10,
+      maxRulebookPages: 1,
+    }),
+    env,
+  };
+  return { setup, croma };
+}
+
+function searchResponse(establishments: Array<Record<string, unknown>>): SourceResult<unknown> {
+  return sourceOk('mx.siem', {
+    query: 'q',
+    establishments,
+    pagination: { total: establishments.length, page_size: 10, total_pages: 1, page: 1 },
+  });
+}
+
+const exactMatch = {
+  establishment_id: '1',
+  commercial_name: 'CAÑONERI',
+  chamber: 'CANACO',
+  state: 'Tlaxcala',
+  state_code: 29,
+};
+
+function parse(result: { content: Array<{ text: string }> }): Record<string, unknown> {
+  return JSON.parse(result.content[0]!.text) as Record<string, unknown>;
+}
+
+describe('creva_verify_business', () => {
+  it('emits a badge with provenance when the business is identified', async () => {
+    const { setup } = setupWith(new Map([[SIEM_SEARCH_PATH, searchResponse([exactMatch])]]));
+    const tool = buildVerifyBusinessTool(setup);
+
+    const result = await tool.handler({ business_name: 'Cañoneri' });
+    const payload = parse(result);
+
+    expect(result.isError).toBeUndefined();
+    expect(payload.status).toBe('verified');
+    expect(payload.badge).toMatchObject({ source: 'mx.siem', commercial_name: 'CAÑONERI' });
+  });
+
+  it('reports not_listed as a real answer, not an error', async () => {
+    const { setup } = setupWith(new Map([[SIEM_SEARCH_PATH, searchResponse([])]]));
+    const tool = buildVerifyBusinessTool(setup);
+
+    const result = await tool.handler({ business_name: 'Negocio Nuevo' });
+    const payload = parse(result);
+
+    expect(result.isError).toBeUndefined();
+    expect(payload.status).toBe('not_listed');
+    expect(payload.badge).toBeNull();
+  });
+
+  it('flags an unreadable source as an error so it is never read as "not listed"', async () => {
+    const { setup } = setupWith(new Map([[SIEM_SEARCH_PATH, sourceUnavailable('mx.siem', 'http_502')]]));
+    const tool = buildVerifyBusinessTool(setup);
+
+    const result = await tool.handler({ business_name: 'Cañoneri' });
+    const payload = parse(result);
+
+    expect(result.isError).toBe(true);
+    expect(payload.status).toBe('unavailable');
+    expect(payload.reason).toBe('http_502');
+  });
+
+  it('passes the state filter through to the directory query', async () => {
+    const { setup, croma } = setupWith(new Map([[SIEM_SEARCH_PATH, searchResponse([exactMatch])]]));
+    const tool = buildVerifyBusinessTool(setup);
+
+    await tool.handler({ business_name: 'Cañoneri', state_code: 29 });
+
+    expect(croma.calls[0]?.body).toEqual({ name: 'Cañoneri', state_code: 29 });
+  });
+
+  it('declares an input contract that rejects a too-short name', () => {
+    const { setup } = setupWith(new Map());
+    const { inputSchema } = buildVerifyBusinessTool(setup).config;
+
+    expect(inputSchema.business_name.safeParse('A').success).toBe(false);
+    expect(inputSchema.business_name.safeParse('Cañoneri').success).toBe(true);
+    expect(inputSchema.state_code.safeParse(33).success).toBe(false);
+  });
+});
+
+describe('creva_regulatory_radar', () => {
+  it('returns alerts with the dates it managed to read and the ones it did not', async () => {
+    const { setup } = setupWith(
+      new Map<string, SourceResult<unknown>>([
+        [
+          '/mx/dof/publications-by-date/v1',
+          sourceOk('mx.dof', {
+            date: '2026-08-13',
+            published: true,
+            total: 1,
+            publications: [{ id: 'p1', title: 'ACUERDO sobre PyME', agency: 'SE', branch: 'EJECUTIVO' }],
+          }),
+        ],
+        [
+          '/mx/cnbv/regulations/v1',
+          sourceOk('mx.cnbv', {
+            regulations: [],
+            pagination: { total: 0, page_size: 50, total_pages: 0, page: 1 },
+          }),
+        ],
+      ]),
+    );
+    const tool = buildRegulatoryRadarTool(setup);
+
+    const result = await tool.handler({});
+    const payload = parse(result);
+
+    expect(result.isError).toBeUndefined();
+    expect(payload.status).toBe('ok');
+    expect(payload.failed_dates).toEqual([]);
+    expect((payload.alerts as unknown[]).length).toBe(1);
+  });
+
+  it('flags an error when no source could be read', async () => {
+    const { setup } = setupWith(new Map());
+    const tool = buildRegulatoryRadarTool(setup);
+
+    const result = await tool.handler({});
+
+    expect(result.isError).toBe(true);
+    expect(parse(result).status).toBe('unavailable');
+  });
+
+  it('takes no input describing a person or a business', () => {
+    const { setup } = setupWith(new Map());
+
+    expect(Object.keys(buildRegulatoryRadarTool(setup).config.inputSchema)).toEqual([]);
+  });
+});
