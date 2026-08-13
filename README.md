@@ -142,7 +142,7 @@ El estado (`--estado`) es opcional pero casi siempre necesario: buscar por nombr
 
 ### Usarlo desde un agente (MCP)
 
-El proyecto expone sus dos composiciones como herramientas MCP por stdio: `creva_verify_business` y `creva_regulatory_radar`.
+El proyecto expone sus composiciones como herramientas MCP por stdio: `creva_verify_business`, `creva_regulatory_radar` y `creva_score_disclosure` — esta última responde qué declara el puntaje y qué **no** estima.
 
 ```bash
 npm run mcp
@@ -162,7 +162,7 @@ Sonda MCP
 
   servidor        creva-score v0.1.0
   protocolo       2025-06-18
-  herramientas    creva_verify_business, creva_regulatory_radar
+  herramientas    creva_verify_business, creva_regulatory_radar, creva_score_disclosure
   stdout          2 líneas, solo JSON-RPC: sí
   stderr          vacío
 

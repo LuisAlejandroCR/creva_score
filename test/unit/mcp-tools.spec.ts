@@ -9,6 +9,7 @@ import { BusinessVerificationService } from '../../src/business-verification/bus
 import { RegulatoryRadarService } from '../../src/regulatory-radar/regulatory-radar.service';
 import { BusinessVerificationSetup } from '../../src/index';
 import { loadEnv } from '../../src/infra/env';
+import { buildScoreDisclosure } from '../../src/score-disclosure/score-disclosure';
 import { buildRegulatoryRadarTool, buildVerifyBusinessTool } from '../../src/mcp/tools';
 
 class Croma implements CromaCallable {
@@ -45,6 +46,7 @@ function setupWith(responses: Map<string, SourceResult<unknown>>): {
       maxAlerts: 10,
       maxRulebookPages: 1,
     }),
+    disclosure: buildScoreDisclosure({ scoreVersion: '1.0', windowDays: 30 }),
     env,
   };
   return { setup, croma };

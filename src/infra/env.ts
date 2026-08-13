@@ -17,6 +17,9 @@ const envSchema = z.object({
   // Empty keeps the cache in memory only.
   CACHE_FILE_PATH: z.string().default(''),
 
+  SCORE_VERSION: z.string().min(1).default('1.0'),
+  SCORE_WINDOW_DAYS: z.coerce.number().int().min(1).max(365).default(30),
+
   REGULATORY_RADAR_KEYWORDS: z
     .string()
     .default('')

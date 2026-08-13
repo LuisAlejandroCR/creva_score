@@ -4,6 +4,7 @@ import { z } from 'zod/v3';
 import { buildVerificationBadge } from '../business-verification/business-verification.badge';
 import { getVerificationStatus } from '../business-verification/business-verification.service';
 import { BusinessVerificationSetup } from '../index';
+import { renderScoreDisclosure } from '../score-disclosure/score-disclosure';
 
 export interface McpToolResult {
   [key: string]: unknown;
@@ -34,6 +35,7 @@ const verifyBusinessShape = {
 };
 
 const radarShape = {};
+const disclosureShape = {};
 
 const NOTE_BY_STATUS: Record<'verified' | 'not_listed' | 'ambiguous', string> = {
   verified: 'Sello emitido: el negocio se identificó sin ambigüedad.',
@@ -141,4 +143,25 @@ export function buildRegulatoryRadarTool(
       );
     },
   };
+}
+
+export function buildScoreDisclosureTool(
+  setup: BusinessVerificationSetup,
+): McpToolDefinition<typeof disclosureShape> {
+  return {
+    name: 'creva_score_disclosure',
+    config: {
+      title: 'Qué declara el puntaje de Creva, y qué no',
+      description:
+        'Devuelve la ficha del puntaje: qué describe, sobre qué ventana de tiempo, qué NO estima, y cómo se marca la procedencia de cada dato que lo alimenta. El puntaje es descriptivo: no estima probabilidad de impago ni sustituye un historial crediticio.',
+      inputSchema: disclosureShape,
+    },
+    async handler() {
+      return text(JSON.stringify(setup.disclosure, null, 2));
+    },
+  };
+}
+
+export function renderDisclosureForHumans(setup: BusinessVerificationSetup): string {
+  return renderScoreDisclosure(setup.disclosure);
 }

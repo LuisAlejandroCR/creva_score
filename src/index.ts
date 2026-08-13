@@ -10,6 +10,7 @@ import { DofClient } from './dof/dof.client';
 import { CnbvClient } from './cnbv/cnbv.client';
 import { RegulatoryRadarService } from './regulatory-radar/regulatory-radar.service';
 import { BusinessVerificationService } from './business-verification/business-verification.service';
+import { ScoreDisclosure, buildScoreDisclosure } from './score-disclosure/score-disclosure';
 
 export * from './infra/cache';
 export * from './infra/file-cache';
@@ -27,10 +28,12 @@ export * from './regulatory-radar/regulatory-radar.service';
 export * from './siem/siem.schemas';
 export * from './business-verification/business-verification.service';
 export * from './business-verification/business-verification.badge';
+export * from './score-disclosure/score-disclosure';
 
 export interface BusinessVerificationSetup {
   service: BusinessVerificationService;
   radar: RegulatoryRadarService;
+  disclosure: ScoreDisclosure;
   env: Env;
 }
 
@@ -63,7 +66,12 @@ export function createBusinessVerification(
     maxRulebookPages: env.REGULATORY_RADAR_MAX_RULEBOOK_PAGES,
   });
 
-  return { service, radar, env };
+  const disclosure = buildScoreDisclosure({
+    scoreVersion: env.SCORE_VERSION,
+    windowDays: env.SCORE_WINDOW_DAYS,
+  });
+
+  return { service, radar, disclosure, env };
 }
 
 export function createCacheStore(env: Env, logger: Logger = noopLogger): CacheStore {

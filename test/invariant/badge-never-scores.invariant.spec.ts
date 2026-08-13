@@ -20,7 +20,11 @@ const arbResult = fc.oneof(
     .map((e) => sourceUnavailable<BusinessVerification>('mx.siem', e)),
 );
 
-const SCORE_LIKE_KEY = /(score|point|weight|factor|bonus|penalt)/i;
+// Words that would mean a contribution to a number. "score" alone is not one of them:
+// the package legitimately exposes a declaration *about* the score.
+const CONTRIBUTION_KEY = /(point|weight|factor|bonus|penalt|component)/i;
+const SCORE_KEY = /score/i;
+const DISCLOSURE_SURFACE = /disclosure/i;
 
 describe('D-02 invariants — the directory check never becomes a number', () => {
   it('issues a badge exactly when the business was found, and never otherwise', () => {
@@ -34,14 +38,15 @@ describe('D-02 invariants — the directory check never becomes a number', () =>
     );
   });
 
-  it('never puts a score-like value in the badge', () => {
+  it('never puts a contribution-like value in the badge', () => {
     fc.assert(
       fc.property(arbResult, (result) => {
         const badge = buildVerificationBadge(result);
         if (badge === null) return;
 
         for (const [key, value] of Object.entries(badge)) {
-          expect(SCORE_LIKE_KEY.test(key)).toBe(false);
+          expect(CONTRIBUTION_KEY.test(key)).toBe(false);
+          expect(SCORE_KEY.test(key)).toBe(false);
           expect(typeof value).not.toBe('number');
         }
       }),
@@ -50,7 +55,7 @@ describe('D-02 invariants — the directory check never becomes a number', () =>
 
   it('exposes no way, anywhere in the public API, to turn a verification into points', () => {
     for (const [name, exported] of Object.entries(publicApi)) {
-      expect(SCORE_LIKE_KEY.test(name)).toBe(false);
+      expect(CONTRIBUTION_KEY.test(name)).toBe(false);
       if (typeof exported === 'number') {
         throw new Error(`public API exports a bare number: ${name}`);
       }
@@ -58,5 +63,14 @@ describe('D-02 invariants — the directory check never becomes a number', () =>
 
     expect('applyBusinessVerification' in publicApi).toBe(false);
     expect('buildBusinessVerificationComponent' in publicApi).toBe(false);
+  });
+
+  it('lets nothing mention the score except the declaration that it does not predict', () => {
+    const scoreNamed = Object.keys(publicApi).filter((name) => SCORE_KEY.test(name));
+
+    expect(scoreNamed.length).toBeGreaterThan(0);
+    for (const name of scoreNamed) {
+      expect(DISCLOSURE_SURFACE.test(name)).toBe(true);
+    }
   });
 });

@@ -7,7 +7,7 @@ import { createBusinessVerification } from '../index';
 import { loadEnvWithFallback } from '../infra/env';
 import { createStderrLogger } from '../infra/logger';
 import { readEnvFile } from '../cli/env-file';
-import { buildRegulatoryRadarTool, buildVerifyBusinessTool } from './tools';
+import { buildRegulatoryRadarTool, buildScoreDisclosureTool, buildVerifyBusinessTool } from './tools';
 
 export const MCP_SERVER_NAME = 'creva-score';
 export const MCP_SERVER_VERSION = '0.1.0';
@@ -24,6 +24,9 @@ export function createMcpServer(): McpServer {
 
   const radar = buildRegulatoryRadarTool(setup);
   server.registerTool(radar.name, radar.config, radar.handler);
+
+  const disclosure = buildScoreDisclosureTool(setup);
+  server.registerTool(disclosure.name, disclosure.config, disclosure.handler);
 
   return server;
 }
