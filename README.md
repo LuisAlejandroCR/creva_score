@@ -58,7 +58,7 @@ Revisa lo que se publica en el diario oficial del gobierno y la lista de reglas 
 - **No consulta ningún dato tuyo.** Es la misma revisión para todas: no hay nada personal de por medio.
 - **Distingue una novedad de una regla que ya existía**, para que no parezca noticia algo que lleva años publicado.
 - **Cada aviso trae su fuente y su fecha**, con el documento oficial detrás.
-- **Los temas que vigila salen de los nombres reales de las reglas**, no de palabras que nos sonaron bien: los sacamos del catálogo oficial completo.
+- **Los temas que vigila salen de documentos reales**, no de palabras que nos sonaron bien: leímos el catálogo oficial completo de reglas y varios días del diario oficial, y elegimos con eso a la vista.
 - Si una fuente no responde ese día, lo dice. Preferimos avisarte que no pudimos mirar, a dejarte creer que no había nada.
 
 Este proyecto se está construyendo durante el [IA Hackathon GovTech](https://usecroma.com/es/changelog/hackathon-govtech) (12–16 de agosto de 2026), sobre [Croma](https://usecroma.com), que da acceso a datos de gobierno de México, Colombia y Perú.
