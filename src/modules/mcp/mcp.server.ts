@@ -3,7 +3,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { join } from 'node:path';
-import { createBusinessVerification } from '../../index';
+import { createCrevaScore } from '../creva-score/creva-score.factory';
 import { loadEnvWithFallback } from '../../config/env';
 import { createStderrLogger } from '../../common/logger';
 import { readEnvFile } from '../../cli/env-file';
@@ -15,7 +15,7 @@ export const MCP_SERVER_VERSION = '0.1.0';
 export function createMcpServer(): McpServer {
   const logger = createStderrLogger();
   const env = loadEnvWithFallback(readEnvFile(join(process.cwd(), '.env')));
-  const setup = createBusinessVerification(env, logger);
+  const setup = createCrevaScore(env, logger);
 
   const server = new McpServer({ name: MCP_SERVER_NAME, version: MCP_SERVER_VERSION });
 

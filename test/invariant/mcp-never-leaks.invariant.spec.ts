@@ -7,7 +7,7 @@ import { DofClient } from '../../src/modules/regulatory-radar/providers/dof.prov
 import { CnbvClient } from '../../src/modules/regulatory-radar/providers/cnbv.provider';
 import { BusinessVerificationService } from '../../src/modules/business-verification/business-verification.service';
 import { RegulatoryRadarService } from '../../src/modules/regulatory-radar/regulatory-radar.service';
-import { BusinessVerificationSetup } from '../../src/index';
+import { CrevaScoreSetup } from '../../src/modules/creva-score/creva-score.factory';
 import { loadEnv } from '../../src/config/env';
 import { buildScoreDisclosure } from '../../src/modules/score-disclosure/score-disclosure.service';
 import { SieClient } from '../../src/modules/reference-rates/providers/banxico-sie.provider';
@@ -25,7 +25,7 @@ class FlakyCroma implements CromaCallable {
   }
 }
 
-function setupWith(outcome: SourceResult<unknown>): BusinessVerificationSetup {
+function setupWith(outcome: SourceResult<unknown>): CrevaScoreSetup {
   const croma = new FlakyCroma(outcome);
   const cache = new MemoryCacheStore();
   return {

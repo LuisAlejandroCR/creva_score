@@ -3,7 +3,7 @@
 import { z } from 'zod/v3';
 import { buildVerificationBadge } from '../business-verification/business-verification.badge';
 import { getVerificationStatus } from '../business-verification/business-verification.service';
-import { BusinessVerificationSetup } from '../../index';
+import { CrevaScoreSetup } from '../creva-score/creva-score.factory';
 import { renderScoreDisclosure } from '../score-disclosure/score-disclosure.service';
 
 export interface McpToolResult {
@@ -50,7 +50,7 @@ function text(value: string, isError = false): McpToolResult {
 }
 
 export function buildVerifyBusinessTool(
-  setup: BusinessVerificationSetup,
+  setup: CrevaScoreSetup,
 ): McpToolDefinition<typeof verifyBusinessShape> {
   return {
     name: 'creva_verify_business',
@@ -102,7 +102,7 @@ export function buildVerifyBusinessTool(
 }
 
 export function buildRegulatoryRadarTool(
-  setup: BusinessVerificationSetup,
+  setup: CrevaScoreSetup,
 ): McpToolDefinition<typeof radarShape> {
   return {
     name: 'creva_regulatory_radar',
@@ -146,7 +146,7 @@ export function buildRegulatoryRadarTool(
 }
 
 export function buildScoreDisclosureTool(
-  setup: BusinessVerificationSetup,
+  setup: CrevaScoreSetup,
 ): McpToolDefinition<typeof disclosureShape> {
   return {
     name: 'creva_score_disclosure',
@@ -162,6 +162,6 @@ export function buildScoreDisclosureTool(
   };
 }
 
-export function renderDisclosureForHumans(setup: BusinessVerificationSetup): string {
+export function renderDisclosureForHumans(setup: CrevaScoreSetup): string {
   return renderScoreDisclosure(setup.disclosure);
 }

@@ -1,7 +1,7 @@
 // demo: command-line entry point that runs both surfaces and prints them for the user.
 
 import { join } from 'node:path';
-import { createBusinessVerification, createCacheStore } from '../index';
+import { createCrevaScore, createCacheStore } from '../modules/creva-score/creva-score.factory';
 import { buildVerificationBadge } from '../modules/business-verification/business-verification.badge';
 import {
   BusinessVerification,
@@ -178,7 +178,7 @@ async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2));
   const env = loadEnvWithFallback(readEnvFile(join(process.cwd(), '.env')));
   const cache = new CountingCacheStore(createCacheStore(env));
-  const { service, radar } = createBusinessVerification(env, undefined, cache);
+  const { service, radar } = createCrevaScore(env, undefined, cache);
 
   const verification =
     args.businessName === undefined

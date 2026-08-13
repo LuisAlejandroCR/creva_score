@@ -1,5 +1,5 @@
 import fc from 'fast-check';
-import * as publicApi from '../../src/index';
+import * as publicApi from '../../src/modules/creva-score/creva-score.factory';
 import { sourceOk, sourceUnavailable } from '../../src/common/types/source-result.types';
 import { BusinessVerification } from '../../src/modules/business-verification/business-verification.service';
 import { buildVerificationBadge } from '../../src/modules/business-verification/business-verification.badge';
@@ -23,8 +23,9 @@ const arbResult = fc.oneof(
 // Words that would mean a contribution to a number. "score" alone is not one of them:
 // the package legitimately exposes a declaration *about* the score.
 const CONTRIBUTION_KEY = /(point|weight|factor|bonus|penalt|component)/i;
-const SCORE_KEY = /score/i;
-const DISCLOSURE_SURFACE = /disclosure/i;
+// The product itself is called Creva Score, so the bare word cannot be forbidden.
+// What must never exist is an export that produces a score value.
+const PRODUCES_A_SCORE = /(calculate|compute|apply|assign|award|increment|add)[A-Za-z]*score/i;
 
 describe('D-02 invariants — the directory check never becomes a number', () => {
   it('issues a badge exactly when the business was found, and never otherwise', () => {
@@ -46,7 +47,7 @@ describe('D-02 invariants — the directory check never becomes a number', () =>
 
         for (const [key, value] of Object.entries(badge)) {
           expect(CONTRIBUTION_KEY.test(key)).toBe(false);
-          expect(SCORE_KEY.test(key)).toBe(false);
+          expect(/score/i.test(key)).toBe(false);
           expect(typeof value).not.toBe('number');
         }
       }),
@@ -65,12 +66,14 @@ describe('D-02 invariants — the directory check never becomes a number', () =>
     expect('buildBusinessVerificationComponent' in publicApi).toBe(false);
   });
 
-  it('lets nothing mention the score except the declaration that it does not predict', () => {
-    const scoreNamed = Object.keys(publicApi).filter((name) => SCORE_KEY.test(name));
+  it('exposes nothing that produces a score value', () => {
+    for (const name of Object.keys(publicApi)) {
+      expect(PRODUCES_A_SCORE.test(name)).toBe(false);
+    }
 
-    expect(scoreNamed.length).toBeGreaterThan(0);
-    for (const name of scoreNamed) {
-      expect(DISCLOSURE_SURFACE.test(name)).toBe(true);
+    // The guard has teeth: these are the shapes it is meant to stop.
+    for (const forbidden of ['calculateScore', 'applyScoreComponent', 'awardScorePoints', 'addScore']) {
+      expect(PRODUCES_A_SCORE.test(forbidden)).toBe(true);
     }
   });
 });

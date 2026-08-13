@@ -7,7 +7,7 @@ import { DofClient } from '../../src/modules/regulatory-radar/providers/dof.prov
 import { CnbvClient } from '../../src/modules/regulatory-radar/providers/cnbv.provider';
 import { BusinessVerificationService } from '../../src/modules/business-verification/business-verification.service';
 import { RegulatoryRadarService } from '../../src/modules/regulatory-radar/regulatory-radar.service';
-import { BusinessVerificationSetup } from '../../src/index';
+import { CrevaScoreSetup } from '../../src/modules/creva-score/creva-score.factory';
 import { loadEnv } from '../../src/config/env';
 import { buildScoreDisclosure } from '../../src/modules/score-disclosure/score-disclosure.service';
 import { SieClient } from '../../src/modules/reference-rates/providers/banxico-sie.provider';
@@ -28,14 +28,14 @@ class Croma implements CromaCallable {
 }
 
 function setupWith(responses: Map<string, SourceResult<unknown>>): {
-  setup: BusinessVerificationSetup;
+  setup: CrevaScoreSetup;
   croma: Croma;
 } {
   const croma = new Croma(responses);
   const cache = new MemoryCacheStore();
   const env = loadEnv({ CROMA_API_KEY: 'k', REGULATORY_RADAR_SCAN_DAYS: '1' });
 
-  const setup: BusinessVerificationSetup = {
+  const setup: CrevaScoreSetup = {
     service: new BusinessVerificationService(new SiemClient(croma), cache, {
       cacheTtlMs: 1000,
       maxDetailLookups: 0,
