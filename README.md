@@ -111,6 +111,16 @@ node dist/cli/demo.js --negocio "ABARROTES ERENDIRA" --estado 8
 
 En `cmd.exe`, `npm run demo -- --negocio "…"` rompe las comillas: usa `node dist/cli/demo.js` directamente.
 
+### Verlo como producto, no como terminal
+
+```bash
+node dist/cli/demo.js --negocio "ABARROTES ERENDIRA" --estado 8 --reporte
+```
+
+Genera `creva-report.html` y `creva-report.json`. El HTML es **un solo archivo**: no carga nada de internet, no necesita servidor y se abre con doble clic. Muestra primero la investigación en curso, después las señales con su fuente y su fecha, y cierra con lo que el puntaje **no** estima.
+
+Los únicos enlaces que salen del archivo son a los documentos oficiales citados, para que cualquiera pueda comprobarlos.
+
 Salida real de esa corrida, recortada:
 
 ```text

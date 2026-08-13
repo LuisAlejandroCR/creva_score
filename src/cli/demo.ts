@@ -1,5 +1,6 @@
 // demo: command-line entry point that runs both surfaces and prints them for the user.
 
+import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { createCrevaScore, createCacheStore } from '../modules/creva-score/creva-score.factory';
 import { buildVerificationBadge } from '../modules/business-verification/business-verification.badge';
@@ -12,11 +13,14 @@ import { RegulatoryAlert, RegulatoryRadar } from '../modules/regulatory-radar/re
 import { SourceResult } from '../common/types/source-result.types';
 import { CountingCacheStore } from './counting-cache';
 import { readEnvFile } from './env-file';
+import { buildReport } from '../modules/creva-score/creva-report.builder';
+import { renderReportHtml } from './report-html';
 
 export interface DemoArgs {
   businessName?: string;
   stateCode?: number;
   rfc?: string;
+  report?: boolean;
 }
 
 const CALENDAR_DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -33,6 +37,10 @@ export function parseArgs(argv: string[]): DemoArgs {
   for (let index = 0; index < argv.length; index++) {
     const flag = argv[index];
     const value = argv[index + 1];
+
+    // Boolean flags carry no value, so they are read before the value guard.
+    if (flag === '--reporte' || flag === '--report') args.report = true;
+
     if (value === undefined || value.startsWith('--')) continue;
 
     if (flag === '--negocio') args.businessName = value;
@@ -178,7 +186,7 @@ async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2));
   const env = loadEnvWithFallback(readEnvFile(join(process.cwd(), '.env')));
   const cache = new CountingCacheStore(createCacheStore(env));
-  const { service, radar } = createCrevaScore(env, undefined, cache);
+  const { service, radar, rates, disclosure } = createCrevaScore(env, undefined, cache);
 
   const verification =
     args.businessName === undefined
@@ -189,7 +197,27 @@ async function main(): Promise<void> {
           rfc: args.rfc,
         });
 
-  const body = [...renderVerification(args, verification), ...renderRadar(await radar.scan())];
+  const scan = await radar.scan();
+
+  if (args.report === true) {
+    const report = buildReport({
+      subject:
+        args.businessName === undefined
+          ? null
+          : { business_name: args.businessName, state_code: args.stateCode ?? null },
+      verification,
+      radar: scan,
+      rates: await rates.getRates(),
+      disclosure,
+    });
+
+    writeFileSync('creva-report.json', `${JSON.stringify(report, null, 2)}\n`, 'utf8');
+    writeFileSync('creva-report.html', renderReportHtml(report), 'utf8');
+    process.stdout.write('Reporte generado: creva-report.html y creva-report.json\n');
+    return;
+  }
+
+  const body = [...renderVerification(args, verification), ...renderRadar(scan)];
 
   const lines = [
     'Creva Score — demostración',
