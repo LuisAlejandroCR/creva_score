@@ -1,19 +1,25 @@
 // demo: command-line entry point that runs both surfaces and prints them for the user.
 
 import { join } from 'node:path';
-import { createBusinessVerification } from '../index';
+import { createBusinessVerification, createCacheStore } from '../index';
 import { buildVerificationBadge } from '../business-verification/business-verification.badge';
-import { getVerificationStatus } from '../business-verification/business-verification.service';
+import {
+  BusinessVerification,
+  getVerificationStatus,
+} from '../business-verification/business-verification.service';
 import { isCromaConfigured, loadEnvWithFallback } from '../infra/env';
 import { RegulatoryAlert, RegulatoryRadar } from '../regulatory-radar/regulatory-radar.service';
 import { SourceResult } from '../infra/types';
+import { CountingCacheStore } from './counting-cache';
 import { readEnvFile } from './env-file';
 
-interface DemoArgs {
+export interface DemoArgs {
   businessName?: string;
   stateCode?: number;
   rfc?: string;
 }
+
+const CALENDAR_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 const SOURCE_LABELS: Record<string, string> = {
   'mx.siem': 'Directorio oficial de establecimientos (SIEM)',
@@ -39,8 +45,6 @@ export function parseArgs(argv: string[]): DemoArgs {
   return args;
 }
 
-const CALENDAR_DATE = /^\d{4}-\d{2}-\d{2}$/;
-
 export function formatDate(value: string | null): string {
   if (value === null) return 'sin fecha';
 
@@ -62,8 +66,60 @@ export function describeSource(source: string): string {
   return SOURCE_LABELS[source] ?? source;
 }
 
+export function describeProvenance(configured: boolean, hits: number, misses: number): string {
+  if (!configured) {
+    return 'Sin credenciales configuradas: la demostración corre en modo degradado y nada se cae.';
+  }
+  if (misses === 0 && hits > 0) {
+    return 'No se consultó ninguna fuente en esta corrida: todo salió de la copia guardada. Cada dato conserva la fecha de su consulta original.';
+  }
+  if (hits > 0) {
+    return 'Consulta nueva a los registros oficiales, completada con datos ya guardados.';
+  }
+  return 'Consulta nueva a los registros oficiales.';
+}
+
 function heading(text: string): string {
   return `\n${text}\n${'-'.repeat(text.length)}`;
+}
+
+export function renderVerification(
+  args: DemoArgs,
+  result: SourceResult<BusinessVerification> | null,
+): string[] {
+  const lines = [heading('Sello de tu negocio')];
+
+  if (result === null || args.businessName === undefined) {
+    lines.push('  No consultamos ningún negocio en esta corrida.');
+    lines.push('  Para verificar el tuyo:');
+    lines.push('    npm run demo -- --negocio "NOMBRE DE TU NEGOCIO" --estado 29');
+    lines.push('  El estado es opcional, pero sin él la búsqueda por nombre rara vez acierta.');
+    return lines;
+  }
+
+  const status = getVerificationStatus(result);
+  const badge = buildVerificationBadge(result);
+
+  if (status === 'verified' && badge !== null) {
+    lines.push(`  ✔ Encontramos "${badge.commercial_name ?? args.businessName}" en el directorio oficial.`);
+    if (badge.state !== null) lines.push(`  Estado: ${badge.state}`);
+    lines.push(
+      `  ${badge.confirmed_by_rfc ? 'Confirmado con tu RFC.' : 'Coincidencia por nombre, sin confirmar con RFC.'}`,
+    );
+    lines.push(`  Fuente: ${describeSource(badge.source)} · consultado el ${formatDate(badge.checked_at)}`);
+    return lines;
+  }
+
+  if (status === 'not_listed') {
+    lines.push(`  No encontramos "${args.businessName}" en el directorio oficial.`);
+    lines.push('  Eso no dice nada malo de tu negocio: el registro es voluntario.');
+    lines.push('  Tu puntaje es exactamente el mismo, con sello o sin él.');
+    return lines;
+  }
+
+  lines.push('  No pudimos consultar el directorio en este momento.');
+  lines.push('  Tu puntaje se calcula igual.');
+  return lines;
 }
 
 function renderAlert(alert: RegulatoryAlert): string[] {
@@ -74,7 +130,7 @@ function renderAlert(alert: RegulatoryAlert): string[] {
   return lines;
 }
 
-function renderRadar(result: SourceResult<RegulatoryRadar>): string[] {
+export function renderRadar(result: SourceResult<RegulatoryRadar>): string[] {
   const lines = [heading('Reglas que te afectan')];
 
   if (!result.available || result.data === null) {
@@ -110,43 +166,26 @@ function renderRadar(result: SourceResult<RegulatoryRadar>): string[] {
 async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2));
   const env = loadEnvWithFallback(readEnvFile(join(process.cwd(), '.env')));
+  const cache = new CountingCacheStore(createCacheStore(env));
+  const { service, radar } = createBusinessVerification(env, undefined, cache);
 
-  const lines: string[] = ['Creva Score — demostración'];
-  lines.push(
-    isCromaConfigured(env)
-      ? 'Consultando registros oficiales…'
-      : 'Sin credenciales configuradas: la demostración corre en modo degradado y nada se cae.',
-  );
+  const verification =
+    args.businessName === undefined
+      ? null
+      : await service.verify({
+          businessName: args.businessName,
+          stateCode: args.stateCode,
+          rfc: args.rfc,
+        });
 
-  const { service, radar } = createBusinessVerification(env);
+  const body = [...renderVerification(args, verification), ...renderRadar(await radar.scan())];
 
-  if (args.businessName !== undefined) {
-    const result = await service.verify({
-      businessName: args.businessName,
-      stateCode: args.stateCode,
-      rfc: args.rfc,
-    });
-    const status = getVerificationStatus(result);
-    const badge = buildVerificationBadge(result);
-
-    lines.push(heading('Sello de tu negocio'));
-    if (status === 'verified' && badge !== null) {
-      lines.push(`  ✔ Encontramos "${badge.commercial_name ?? args.businessName}" en el directorio oficial.`);
-      if (badge.state !== null) lines.push(`  Estado: ${badge.state}`);
-      lines.push(`  ${badge.confirmed_by_rfc ? 'Confirmado con tu RFC.' : 'Coincidencia por nombre, sin confirmar con RFC.'}`);
-      lines.push(`  Fuente: ${describeSource(badge.source)} · consultado el ${formatDate(badge.checked_at)}`);
-    } else if (status === 'not_listed') {
-      lines.push(`  No encontramos "${args.businessName}" en el directorio oficial.`);
-      lines.push('  Eso no dice nada malo de tu negocio: el registro es voluntario.');
-      lines.push('  Tu puntaje es exactamente el mismo, con sello o sin él.');
-    } else {
-      lines.push('  No pudimos consultar el directorio en este momento.');
-      lines.push('  Tu puntaje se calcula igual.');
-    }
-  }
-
-  lines.push(...renderRadar(await radar.scan()));
-  lines.push('');
+  const lines = [
+    'Creva Score — demostración',
+    describeProvenance(isCromaConfigured(env), cache.hits, cache.misses),
+    ...body,
+    '',
+  ];
   process.stdout.write(`${lines.join('\n')}\n`);
 }
 

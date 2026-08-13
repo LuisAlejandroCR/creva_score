@@ -37,6 +37,7 @@ export interface BusinessVerificationSetup {
 export function createBusinessVerification(
   env: Env = loadEnv(),
   logger: Logger = noopLogger,
+  cacheStore?: CacheStore,
 ): BusinessVerificationSetup {
   const croma = new CromaClient({
     apiKey: env.CROMA_API_KEY,
@@ -46,7 +47,7 @@ export function createBusinessVerification(
     logger,
   });
 
-  const cache = createCacheStore(env, logger);
+  const cache = cacheStore ?? createCacheStore(env, logger);
 
   const service = new BusinessVerificationService(new SiemClient(croma), cache, {
     cacheTtlMs: env.BUSINESS_VERIFICATION_CACHE_TTL_MS,
