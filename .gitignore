@@ -5,3 +5,11 @@ AGENTS.md
 .env
 
 legal/
+
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+
+*.log
+.DS_Store

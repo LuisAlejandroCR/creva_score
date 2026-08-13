@@ -40,7 +40,13 @@ Empezamos en México porque ahí están nuestras usuarias. Pero la misma idea fu
 
 ## Estado del proyecto
 
-🚧 **En construcción.** Estamos definiendo el alcance; todavía no hay una versión que puedas usar.
+🚧 **En construcción.** Ya está lista la primera pieza: la que busca tu negocio en el directorio oficial de establecimientos y, si lo encuentra, lo suma a tu puntaje. Todavía no hay una app que puedas abrir.
+
+Cómo se comporta esa pieza, que es lo que importa:
+
+- Si tu negocio **no está** en el directorio, tu puntaje sale **exactamente igual** que si esta parte no existiera. Cero castigo.
+- Si el servicio de consulta se cae, tu puntaje se calcula igual y te lo decimos.
+- Cuando sí encontramos tu negocio, te mostramos **de dónde salió el dato y de qué fecha es**.
 
 Este proyecto se está construyendo durante el [IA Hackathon GovTech](https://usecroma.com/es/changelog/hackathon-govtech) (12–16 de agosto de 2026), sobre [Croma](https://usecroma.com), que da acceso a datos de gobierno de México, Colombia y Perú.
 
