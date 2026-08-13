@@ -121,7 +121,9 @@ Genera `creva-report.html` y `creva-report.json`. El HTML es **un solo archivo**
 
 Los únicos enlaces que salen del archivo son a los documentos oficiales citados, para que cualquiera pueda comprobarlos.
 
-La evidencia de cada fuente viene plegada y se abre con un clic o con el teclado. Si tu sistema está configurado para reducir el movimiento, la página aparece completa y quieta, sin animaciones.
+La evidencia viene plegada y se abre con un clic o con el teclado. De cada fuente se muestran las primeras señales, y el resto lo pides tú de a poco — nada te cae encima de golpe. Puedes filtrar por fuente, y tocar cualquiera de los tres resúmenes de arriba te lleva directo a la evidencia que lo respalda.
+
+Si tu sistema está configurado para reducir el movimiento, la página aparece completa y quieta, sin animaciones.
 
 Salida real de esa corrida, recortada:
 

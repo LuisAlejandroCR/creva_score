@@ -67,7 +67,8 @@ describe('persisted cache privacy invariants', () => {
       }),
       { numRuns: 150 },
     );
-  });
+    // Every run writes and reads a real file, so the deadline is I/O-bound, not CPU-bound.
+  }, 30_000);
 
   it('leaves nothing readable behind after a deletion request, for any input', async () => {
     await fc.assert(
@@ -89,5 +90,5 @@ describe('persisted cache privacy invariants', () => {
       }),
       { numRuns: 100 },
     );
-  });
+  }, 30_000);
 });

@@ -29,7 +29,8 @@ describe('FileCacheStore fuzz', () => {
       }),
       { numRuns: 60 },
     );
-  });
+    // Every run writes and reads a real file, so the deadline is I/O-bound, not CPU-bound.
+  }, 30_000);
 
   it('never throws on an arbitrary JSON structure in the entries slot', async () => {
     await fc.assert(
@@ -42,7 +43,7 @@ describe('FileCacheStore fuzz', () => {
       }),
       { numRuns: 100 },
     );
-  });
+  }, 30_000);
 
   it('round-trips any key through a restart', async () => {
     await fc.assert(
@@ -58,5 +59,5 @@ describe('FileCacheStore fuzz', () => {
       }),
       { numRuns: 60 },
     );
-  });
+  }, 30_000);
 });

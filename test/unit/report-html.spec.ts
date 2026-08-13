@@ -1,6 +1,6 @@
 import { buildReport } from '../../src/modules/creva-score/creva-report.builder';
 import { buildScoreDisclosure } from '../../src/modules/score-disclosure/score-disclosure.service';
-import { renderReportHtml } from '../../src/cli/report-html';
+import { moreLabel, nextVisible, renderReportHtml } from '../../src/cli/report-html';
 import { sourceOk, sourceUnavailable } from '../../src/common/types/source-result.types';
 import { parseArgs, renderReportPaths } from '../../src/cli/demo';
 
@@ -205,13 +205,75 @@ describe('renderReportHtml', () => {
     expect(html).toContain('Ver evidencia');
   });
 
-  it('wires each rail stop to the panel it reveals', () => {
+  it('offers one filter per source plus the unfiltered view, all pressable', () => {
     const html = renderReportHtml(report());
 
-    for (const lane of ['siem', 'dof', 'cnbv', 'banxico']) {
-      expect(html).toContain(`<button class="stop" data-lane="${lane}" type="button" aria-controls="lane-${lane}">`);
+    for (const filter of ['all', 'siem', 'dof', 'cnbv', 'banxico']) {
+      expect(html).toContain(`data-filter="${filter}"`);
+    }
+    expect(html.match(/<button class="filter[^"]*" type="button" data-filter="[a-z]+" aria-pressed="(true|false)">/g)).toHaveLength(5);
+    expect(html.match(/aria-pressed="true"/g)).toHaveLength(1);
+  });
+
+  it('folds every source past the first few without dropping a single item', () => {
+    const many = buildReport({
+      subject: { business_name: 'ACME', state_code: null },
+      verification: verified,
+      radar: sourceOk('mx.regulatory-radar', {
+        alerts: Array.from({ length: 18 }, (_, i) => ({
+          source: 'mx.cnbv' as const,
+          kind: 'standing_rule' as const,
+          external_id: `c${i}`,
+          title: `Norma ${i}`,
+          published_at: '2026-08-01',
+          agency: 'CNBV',
+          url: null,
+        })),
+        scanned_dates: ['2026-08-13'],
+        failed_dates: [],
+        sources_available: ['mx.cnbv'],
+        sources_unavailable: [],
+      }),
+      rates,
+      disclosure,
+      now,
+    });
+
+    const html = renderReportHtml(many);
+    const cnbvPanel = html.slice(html.indexOf('id="lane-cnbv"'), html.indexOf('id="lane-banxico"'));
+
+    // All 18 stay in the document; 15 of them simply start folded.
+    expect(cnbvPanel.match(/class="item /g)).toHaveLength(18);
+    expect(cnbvPanel.match(/ hidden>/g)).toHaveLength(15);
+    expect(cnbvPanel).toContain('data-visible="3"');
+    for (let i = 0; i < 18; i++) expect(cnbvPanel).toContain(`Norma ${i}`);
+  });
+
+  it('promises only what one press reveals, and says how many are left', () => {
+    expect(moreLabel(3, 18)).toBe('Mostrar 3 más → quedan 12');
+    expect(moreLabel(6, 18)).toBe('Mostrar 4 más → quedan 8');
+    expect(moreLabel(10, 18)).toBe('Mostrar 8 más →');
+    expect(nextVisible(3, 4)).toBe(4);
+  });
+
+  it('turns each summary insight into a jump to the evidence it names', () => {
+    const html = renderReportHtml(report());
+
+    for (const lane of ['siem', 'dof', 'cnbv']) {
+      expect(html).toContain(`data-target="${lane}"`);
       expect(html).toContain(`id="lane-${lane}"`);
     }
+    expect(html).toContain('Negocio encontrado en SIEM');
+    expect(html).toContain('Explorar evidencia');
+  });
+
+  it('counts the investigation out loud without inventing a source', () => {
+    const built = report();
+    const html = renderReportHtml(built);
+
+    expect(html.match(/class="tick"/g)).toHaveLength(4);
+    expect(html).toContain('fuentes conectadas');
+    expect(html).toContain(`<strong>${built.signals.length}</strong> señales encontradas`);
   });
 
   it('escapes anything that came from a source', () => {
