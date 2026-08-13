@@ -92,8 +92,10 @@ export function renderVerification(
   if (result === null || args.businessName === undefined) {
     lines.push('  No consultamos ningún negocio en esta corrida.');
     lines.push('  Para verificar el tuyo:');
-    lines.push('    npm run demo -- --negocio "NOMBRE DE TU NEGOCIO" --estado 29');
+    lines.push('    npm run build');
+    lines.push('    node dist/cli/demo.js --negocio "NOMBRE DE TU NEGOCIO" --estado 29');
     lines.push('  El estado es opcional, pero sin él la búsqueda por nombre rara vez acierta.');
+    lines.push('  Usa el nombre completo tal como está registrado: una palabra suelta no identifica un negocio.');
     return lines;
   }
 
@@ -107,6 +109,15 @@ export function renderVerification(
       `  ${badge.confirmed_by_rfc ? 'Confirmado con tu RFC.' : 'Coincidencia por nombre, sin confirmar con RFC.'}`,
     );
     lines.push(`  Fuente: ${describeSource(badge.source)} · consultado el ${formatDate(badge.checked_at)}`);
+    return lines;
+  }
+
+  if (status === 'ambiguous') {
+    const found = new Intl.NumberFormat('es-MX').format(result.data?.candidates_found ?? 0);
+    lines.push(`  Encontramos ${found} negocios con un nombre parecido a "${args.businessName}",`);
+    lines.push('  pero ninguno se puede identificar como el tuyo.');
+    lines.push('  No emitimos un sello que no podamos comprobar.');
+    lines.push('  Prueba con el nombre completo tal como está registrado, o agrega tu RFC con --rfc.');
     return lines;
   }
 

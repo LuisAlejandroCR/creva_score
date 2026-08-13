@@ -27,7 +27,10 @@ export interface BusinessVerificationOptions {
   rfcField: string;
 }
 
-export type VerificationStatus = 'verified' | 'not_listed' | 'unavailable';
+export type VerificationStatus = 'verified' | 'ambiguous' | 'not_listed' | 'unavailable';
+
+const RANK_EXACT = 0;
+const RANK_CONTAINS = 2;
 
 export class BusinessVerificationService {
   constructor(
@@ -50,8 +53,12 @@ export class BusinessVerificationService {
       return { ...search, data: null };
     }
 
-    const candidates = search.data.establishments;
-    const result = await this.resolveMatch(candidates, input.businessName, input.rfc);
+    const result = await this.resolveMatch(
+      search.data.establishments,
+      search.data.pagination.total,
+      input.businessName,
+      input.rfc,
+    );
     const verified = sourceOk<BusinessVerification>(SIEM_SOURCE, result, search.checked_at ?? undefined);
 
     await this.cache.set(cacheKey, verified, this.options.cacheTtlMs);
@@ -60,6 +67,7 @@ export class BusinessVerificationService {
 
   private async resolveMatch(
     candidates: EstablishmentSummary[],
+    totalFound: number,
     businessName: string,
     rfc: string | undefined,
   ): Promise<BusinessVerification> {
@@ -69,27 +77,47 @@ export class BusinessVerificationService {
       establishment_id: null,
       commercial_name: null,
       state: null,
-      candidates_found: candidates.length,
+      candidates_found: totalFound,
     };
 
     const ordered = orderByNameCloseness(candidates, businessName);
-    const first = ordered[0];
-    if (!first) return base;
-
-    const nameMatch: BusinessVerification = {
-      ...base,
-      matched: true,
-      establishment_id: first.establishment_id,
-      commercial_name: first.commercial_name,
-      state: first.state,
-    };
+    const best = ordered[0];
+    if (!best) return base;
 
     const normalizedRfc = normalizeRfc(rfc);
-    if (!normalizedRfc || this.options.maxDetailLookups <= 0) {
-      return nameMatch;
+    if (normalizedRfc && this.options.maxDetailLookups > 0) {
+      const confirmed = await this.confirmByRfc(ordered, normalizedRfc);
+      if (confirmed) {
+        return {
+          ...base,
+          matched: true,
+          confirmed_by_rfc: true,
+          establishment_id: confirmed.establishment_id,
+          commercial_name: confirmed.commercial_name,
+          state: confirmed.state,
+        };
+      }
     }
 
+    const closeness = rank(best, normalizeName(businessName));
+    const identifies = closeness === RANK_EXACT || (closeness <= RANK_CONTAINS && totalFound === 1);
+    if (!identifies) return base;
+
+    return {
+      ...base,
+      matched: true,
+      establishment_id: best.establishment_id,
+      commercial_name: best.commercial_name,
+      state: best.state,
+    };
+  }
+
+  private async confirmByRfc(
+    ordered: EstablishmentSummary[],
+    normalizedRfc: string,
+  ): Promise<EstablishmentSummary | null> {
     const lookups = Math.min(this.options.maxDetailLookups, ordered.length);
+
     for (let index = 0; index < lookups; index++) {
       const candidate = ordered[index];
       if (!candidate) break;
@@ -98,24 +126,16 @@ export class BusinessVerificationService {
       if (!detail.available || detail.data === null || detail.data.found !== true) continue;
 
       const detailRfc = normalizeRfc(readPath(detail.data, this.options.rfcField));
-      if (detailRfc && detailRfc === normalizedRfc) {
-        return {
-          ...nameMatch,
-          confirmed_by_rfc: true,
-          establishment_id: candidate.establishment_id,
-          commercial_name: candidate.commercial_name,
-          state: candidate.state,
-        };
-      }
+      if (detailRfc && detailRfc === normalizedRfc) return candidate;
     }
-
-    return nameMatch;
+    return null;
   }
 }
 
 export function getVerificationStatus(result: SourceResult<BusinessVerification>): VerificationStatus {
   if (!result.available || result.data === null) return 'unavailable';
-  return result.data.matched ? 'verified' : 'not_listed';
+  if (result.data.matched) return 'verified';
+  return result.data.candidates_found > 0 ? 'ambiguous' : 'not_listed';
 }
 
 function readPath(payload: Record<string, unknown>, path: string): string | undefined {
@@ -161,5 +181,5 @@ function normalizeName(name: string): string {
 function buildCacheKey(input: BusinessVerificationInput): string {
   const rfc = normalizeRfc(input.rfc);
   const fingerprint = rfc ? createHash('sha256').update(rfc).digest('hex').slice(0, 16) : 'none';
-  return `siem:v1:${normalizeName(input.businessName)}|${input.stateCode ?? 'any'}|${fingerprint}`;
+  return `siem:v2:${normalizeName(input.businessName)}|${input.stateCode ?? 'any'}|${fingerprint}`;
 }

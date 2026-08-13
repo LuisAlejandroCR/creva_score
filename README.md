@@ -49,6 +49,7 @@ Busca tu negocio en el directorio oficial de establecimientos y, si está, emite
 - **Tu puntaje no depende de esto.** Si tu negocio aparece en el directorio, ganas un sello; si no aparece, tu puntaje es exactamente el mismo. Ni mejor ni peor.
 - **Lo medimos antes de decidirlo.** Revisamos cuántos micronegocios están realmente registrados y encontramos que el directorio cubre muchísimo mejor a unos estados que a otros. Si eso diera puntos, estaríamos premiando el código postal. Por eso no da puntos.
 - **El sello se puede comprobar.** Dice de qué fuente salió y en qué fecha se consultó, para que cualquiera pueda verificarlo.
+- **No te damos un sello que no sea tuyo.** Si buscamos y aparecen muchos negocios con nombres parecidos, te lo decimos y no emitimos nada. Un sello a nombre de otro negocio no te sirve de nada frente a un banco, y a nosotros nos costaría lo único que importa aquí: que se pueda creer.
 - Si el servicio de consulta se cae, no pasa nada: tu puntaje se calcula igual.
 
 ### 2. Avisos de reglas que te afectan

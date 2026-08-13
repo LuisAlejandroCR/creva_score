@@ -18,11 +18,14 @@ class FakeCroma implements CromaCallable {
   }
 }
 
-function searchResult(establishments: Array<Record<string, unknown>>): SourceResult<unknown> {
+function searchResult(
+  establishments: Array<Record<string, unknown>>,
+  total = establishments.length,
+): SourceResult<unknown> {
   return sourceOk('mx.siem', {
     query: 'ACME',
     establishments,
-    pagination: { total: establishments.length, page_size: 20, total_pages: 1, page: 1 },
+    pagination: { total, page_size: 10, total_pages: Math.ceil(total / 10), page: 1 },
   });
 }
 
@@ -176,6 +179,72 @@ describe('BusinessVerificationService', () => {
     expect(result.data).toMatchObject({ establishment_id: '222', confirmed_by_rfc: true });
   });
 
+  it('issues no badge for a generic word that returns a crowd of businesses', async () => {
+    const rows = Array.from({ length: 10 }, (_, index) => ({
+      ...candidate,
+      establishment_id: `id-${index}`,
+      commercial_name: `ABARROTES ${index === 0 ? 'ERENDIRA' : index}`,
+    }));
+    const { service } = build([searchResult(rows, 2171)]);
+
+    const result = await service.verify({ businessName: 'ABARROTES', stateCode: 8 });
+
+    expect(result.data).toMatchObject({
+      matched: false,
+      establishment_id: null,
+      commercial_name: null,
+      candidates_found: 2171,
+    });
+    expect(getVerificationStatus(result)).toBe('ambiguous');
+  });
+
+  it('reports how many the directory really holds, not how many fit on one page', async () => {
+    const rows = Array.from({ length: 10 }, (_, index) => ({ ...candidate, establishment_id: `id-${index}` }));
+    const { service } = build([searchResult(rows, 2171)]);
+
+    const result = await service.verify({ businessName: 'ACME' });
+
+    expect(result.data?.candidates_found).toBe(2171);
+  });
+
+  it('issues no badge for a candidate whose name has no relation to the query', async () => {
+    const unrelated = { ...candidate, commercial_name: 'FERRETERIA EL TORNILLO' };
+    const { service } = build([searchResult([unrelated])]);
+
+    const result = await service.verify({ businessName: 'ACME' });
+
+    expect(result.data).toMatchObject({ matched: false, establishment_id: null });
+  });
+
+  it('issues a badge on an exact name even when the directory holds many rows', async () => {
+    const rows = [
+      { ...candidate, establishment_id: '111', commercial_name: 'ACME SA DE CV SUCURSAL NORTE' },
+      { ...candidate, establishment_id: '222', commercial_name: 'Acmé SA' },
+    ];
+    const { service } = build([searchResult(rows, 640)]);
+
+    const result = await service.verify({ businessName: 'ACME SA' });
+
+    expect(result.data).toMatchObject({ matched: true, establishment_id: '222', confirmed_by_rfc: false });
+    expect(getVerificationStatus(result)).toBe('verified');
+  });
+
+  it('lets a confirmed RFC carry a match the name alone could not identify', async () => {
+    const rows = Array.from({ length: 10 }, (_, index) => ({
+      ...candidate,
+      establishment_id: `id-${index}`,
+      commercial_name: `ABARROTES ${index}`,
+    }));
+    const { service } = build([
+      searchResult(rows, 2171),
+      sourceOk('mx.siem', { found: true, establishment_id: 'id-0', establishment: { rfc: 'ACM010101AAA' } }),
+    ]);
+
+    const result = await service.verify({ businessName: 'ABARROTES', rfc: 'ACM010101AAA' });
+
+    expect(result.data).toMatchObject({ matched: true, confirmed_by_rfc: true, establishment_id: 'id-0' });
+  });
+
   it('keeps the RFC out of the cache key', async () => {
     const { cache, service } = build([
       searchResult([candidate]),
@@ -187,5 +256,16 @@ describe('BusinessVerificationService', () => {
 
     expect(keys).toHaveLength(1);
     expect(keys[0]).not.toContain('ACM010101AAA');
+  });
+
+  it('does not answer from a verdict cached under the previous matching rule', async () => {
+    const { cache, croma, service } = build([searchResult([candidate])]);
+    const staleKey = 'siem:v1:ACME|any|none';
+    await cache.set(staleKey, sourceOk('mx.siem', { matched: true, candidates_found: 9999 }), 60_000);
+
+    const result = await service.verify({ businessName: 'ACME' });
+
+    expect(result.data?.candidates_found).toBe(1);
+    expect(croma.calls).toHaveLength(1);
   });
 });

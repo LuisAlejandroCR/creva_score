@@ -83,6 +83,18 @@ describe('demo verification section', () => {
     expect(lines).toContain('--negocio');
   });
 
+  // npm mangles a quoted argument containing spaces on Windows; the hint must not suggest that form.
+  it('points at an invocation that survives a business name with spaces', () => {
+    const lines = renderVerification({}, null).join('\n');
+
+    expect(lines).toContain('node dist/cli/demo.js --negocio');
+    expect(lines).not.toContain('npm run demo -- --negocio');
+  });
+
+  it('tells the reader that one loose word will not identify a business', () => {
+    expect(renderVerification({}, null).join('\n')).toContain('una palabra suelta no identifica');
+  });
+
   it('never claims a result when no business was asked for', () => {
     const lines = renderVerification({}, verification(true)).join('\n');
 
