@@ -1,9 +1,9 @@
-import { MemoryCacheStore } from '../infra/cache';
-import { CallOptions, CromaCallable } from '../infra/croma-client';
-import { SourceResult, sourceOk, sourceUnavailable } from '../infra/types';
-import { SiemClient } from '../siem/siem.client';
-import { SIEM_DETAIL_PATH } from '../siem/siem.schemas';
-import { BusinessVerificationService, getVerificationStatus } from './business-verification.service';
+import { MemoryCacheStore } from '../../src/infra/cache';
+import { CallOptions, CromaCallable } from '../../src/infra/croma-client';
+import { SourceResult, sourceOk, sourceUnavailable } from '../../src/infra/types';
+import { SiemClient } from '../../src/siem/siem.client';
+import { SIEM_DETAIL_PATH } from '../../src/siem/siem.schemas';
+import { BusinessVerificationService, getVerificationStatus } from '../../src/business-verification/business-verification.service';
 
 class FakeCroma implements CromaCallable {
   readonly calls: Array<{ path: string; body: unknown }> = [];
@@ -34,7 +34,7 @@ const candidate = {
   state_code: 14,
 };
 
-const options = { cacheTtlMs: 60_000, maxDetailLookups: 1, rfcField: 'rfc' };
+const options = { cacheTtlMs: 60_000, maxDetailLookups: 1, rfcField: 'establishment.rfc' };
 
 function build(responses: Array<SourceResult<unknown>>, overrides: Partial<typeof options> = {}) {
   const croma = new FakeCroma(responses);
@@ -74,7 +74,7 @@ describe('BusinessVerificationService', () => {
   it('confirms the match when the detail RFC equals the profile RFC', async () => {
     const { croma, service } = build([
       searchResult([candidate]),
-      sourceOk('mx.siem', { found: true, establishment_id: '3417757', rfc: 'acm-010101-AAA' }),
+      sourceOk('mx.siem', { found: true, establishment_id: '3417757', establishment: { rfc: 'acm-010101-AAA' } }),
     ]);
 
     const result = await service.verify({ businessName: 'ACME', rfc: 'ACM010101AAA' });
@@ -86,7 +86,7 @@ describe('BusinessVerificationService', () => {
   it('stays an unconfirmed match when the RFC does not line up', async () => {
     const { service } = build([
       searchResult([candidate]),
-      sourceOk('mx.siem', { found: true, establishment_id: '3417757', rfc: 'OTR990101ZZZ' }),
+      sourceOk('mx.siem', { found: true, establishment_id: '3417757', establishment: { rfc: 'OTR990101ZZZ' } }),
     ]);
 
     const result = await service.verify({ businessName: 'ACME', rfc: 'ACM010101AAA' });
@@ -110,7 +110,7 @@ describe('BusinessVerificationService', () => {
     const { croma, service } = build(
       [
         searchResult([candidate, second]),
-        sourceOk('mx.siem', { found: true, establishment_id: '3417757', rfc: 'NOPE000000XXX' }),
+        sourceOk('mx.siem', { found: true, establishment_id: '3417757', establishment: { rfc: 'NOPE000000XXX' } }),
       ],
       { maxDetailLookups: 1 },
     );
@@ -151,10 +151,35 @@ describe('BusinessVerificationService', () => {
     expect(croma.calls).toHaveLength(2);
   });
 
+  it('does not confirm from an RFC sitting outside the configured path', async () => {
+    const { service } = build([
+      searchResult([candidate]),
+      sourceOk('mx.siem', { found: true, establishment_id: '3417757', rfc: 'ACM010101AAA' }),
+    ]);
+
+    const result = await service.verify({ businessName: 'ACME', rfc: 'ACM010101AAA' });
+
+    expect(result.data?.confirmed_by_rfc).toBe(false);
+  });
+
+  it('spends its detail lookup on the closest name, not on the first row returned', async () => {
+    const looseMatch = { ...candidate, establishment_id: '111', commercial_name: 'ACME SA DE CV SUCURSAL NORTE' };
+    const exactMatch = { ...candidate, establishment_id: '222', commercial_name: 'Acmé SA' };
+    const { croma, service } = build([
+      searchResult([looseMatch, exactMatch]),
+      sourceOk('mx.siem', { found: true, establishment_id: '222', establishment: { rfc: 'ACM010101AAA' } }),
+    ]);
+
+    const result = await service.verify({ businessName: 'ACME SA', rfc: 'ACM010101AAA' });
+
+    expect(croma.calls[1]?.body).toEqual({ establishment_id: '222' });
+    expect(result.data).toMatchObject({ establishment_id: '222', confirmed_by_rfc: true });
+  });
+
   it('keeps the RFC out of the cache key', async () => {
     const { cache, service } = build([
       searchResult([candidate]),
-      sourceOk('mx.siem', { found: true, establishment_id: '3417757', rfc: 'ACM010101AAA' }),
+      sourceOk('mx.siem', { found: true, establishment_id: '3417757', establishment: { rfc: 'ACM010101AAA' } }),
     ]);
     await service.verify({ businessName: 'ACME', rfc: 'ACM010101AAA' });
 

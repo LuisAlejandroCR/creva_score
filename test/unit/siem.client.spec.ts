@@ -1,7 +1,7 @@
-import { CallOptions, CromaCallable } from '../infra/croma-client';
-import { SourceResult, sourceOk, sourceUnavailable } from '../infra/types';
-import { SiemClient } from './siem.client';
-import { SIEM_DETAIL_PATH, SIEM_SEARCH_PATH } from './siem.schemas';
+import { CallOptions, CromaCallable } from '../../src/infra/croma-client';
+import { SourceResult, sourceOk, sourceUnavailable } from '../../src/infra/types';
+import { SiemClient } from '../../src/siem/siem.client';
+import { SIEM_DETAIL_PATH, SIEM_SEARCH_PATH } from '../../src/siem/siem.schemas';
 
 class FakeCroma implements CromaCallable {
   readonly calls: Array<{ path: string; body: unknown; options: CallOptions }> = [];
@@ -84,14 +84,18 @@ describe('SiemClient', () => {
 
   it('passes unconfirmed detail fields through untouched', async () => {
     const croma = new FakeCroma([
-      sourceOk('mx.siem', { found: true, establishment_id: '3417757', rfc: 'ACM010101AAA', anything_else: 42 }),
+      sourceOk('mx.siem', {
+        found: true,
+        establishment_id: '3417757',
+        establishment: { rfc: 'ACM010101AAA', legal_name: 'ACME SA DE CV', status: 'ACTIVO' },
+      }),
     ]);
 
     const result = await new SiemClient(croma).getEstablishment('3417757');
 
     expect(croma.calls[0]?.path).toBe(SIEM_DETAIL_PATH);
     expect(croma.calls[0]?.body).toEqual({ establishment_id: '3417757' });
-    expect(result.data).toMatchObject({ found: true, rfc: 'ACM010101AAA', anything_else: 42 });
+    expect(result.data?.establishment).toMatchObject({ rfc: 'ACM010101AAA', status: 'ACTIVO' });
   });
 
   it('forwards a degraded call without inventing data', async () => {

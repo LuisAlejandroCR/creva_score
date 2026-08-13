@@ -51,7 +51,7 @@ export class BusinessVerificationService {
     }
 
     const candidates = search.data.establishments;
-    const result = await this.resolveMatch(candidates, input.rfc);
+    const result = await this.resolveMatch(candidates, input.businessName, input.rfc);
     const verified = sourceOk<BusinessVerification>(SIEM_SOURCE, result, search.checked_at ?? undefined);
 
     await this.cache.set(cacheKey, verified, this.options.cacheTtlMs);
@@ -60,6 +60,7 @@ export class BusinessVerificationService {
 
   private async resolveMatch(
     candidates: EstablishmentSummary[],
+    businessName: string,
     rfc: string | undefined,
   ): Promise<BusinessVerification> {
     const base: BusinessVerification = {
@@ -71,7 +72,8 @@ export class BusinessVerificationService {
       candidates_found: candidates.length,
     };
 
-    const first = candidates[0];
+    const ordered = orderByNameCloseness(candidates, businessName);
+    const first = ordered[0];
     if (!first) return base;
 
     const nameMatch: BusinessVerification = {
@@ -87,15 +89,15 @@ export class BusinessVerificationService {
       return nameMatch;
     }
 
-    const lookups = Math.min(this.options.maxDetailLookups, candidates.length);
+    const lookups = Math.min(this.options.maxDetailLookups, ordered.length);
     for (let index = 0; index < lookups; index++) {
-      const candidate = candidates[index];
+      const candidate = ordered[index];
       if (!candidate) break;
 
       const detail = await this.siem.getEstablishment(candidate.establishment_id);
       if (!detail.available || detail.data === null || detail.data.found !== true) continue;
 
-      const detailRfc = normalizeRfc(readField(detail.data, this.options.rfcField));
+      const detailRfc = normalizeRfc(readPath(detail.data, this.options.rfcField));
       if (detailRfc && detailRfc === normalizedRfc) {
         return {
           ...nameMatch,
@@ -116,9 +118,29 @@ export function getVerificationStatus(result: SourceResult<BusinessVerification>
   return result.data.matched ? 'verified' : 'not_listed';
 }
 
-function readField(payload: Record<string, unknown>, field: string): string | undefined {
-  const value = payload[field];
-  return typeof value === 'string' ? value : undefined;
+function readPath(payload: Record<string, unknown>, path: string): string | undefined {
+  let current: unknown = payload;
+  for (const segment of path.split('.')) {
+    if (current === null || typeof current !== 'object') return undefined;
+    current = (current as Record<string, unknown>)[segment];
+  }
+  return typeof current === 'string' ? current : undefined;
+}
+
+function orderByNameCloseness(
+  candidates: EstablishmentSummary[],
+  businessName: string,
+): EstablishmentSummary[] {
+  const target = normalizeName(businessName);
+  return [...candidates].sort((a, b) => rank(a, target) - rank(b, target));
+}
+
+function rank(candidate: EstablishmentSummary, target: string): number {
+  const name = candidate.commercial_name === null ? '' : normalizeName(candidate.commercial_name);
+  if (name === target) return 0;
+  if (name.startsWith(target)) return 1;
+  if (name.includes(target)) return 2;
+  return 3;
 }
 
 function normalizeRfc(rfc: string | undefined): string | undefined {

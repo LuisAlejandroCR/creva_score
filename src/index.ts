@@ -3,6 +3,7 @@
 import { MemoryCacheStore } from './infra/cache';
 import { CromaClient } from './infra/croma-client';
 import { Env, loadEnv } from './infra/env';
+import { Logger, noopLogger } from './infra/logger';
 import { SiemClient } from './siem/siem.client';
 import { BusinessVerificationService } from './business-verification/business-verification.service';
 import { BusinessVerificationFactorConfig } from './business-verification/business-verification.factor';
@@ -10,6 +11,7 @@ import { BusinessVerificationFactorConfig } from './business-verification/busine
 export * from './infra/cache';
 export * from './infra/croma-client';
 export * from './infra/env';
+export * from './infra/logger';
 export * from './infra/types';
 export * from './infra/validated-call';
 export * from './siem/siem.client';
@@ -23,11 +25,16 @@ export interface BusinessVerificationSetup {
   env: Env;
 }
 
-export function createBusinessVerification(env: Env = loadEnv()): BusinessVerificationSetup {
+export function createBusinessVerification(
+  env: Env = loadEnv(),
+  logger: Logger = noopLogger,
+): BusinessVerificationSetup {
   const croma = new CromaClient({
     apiKey: env.CROMA_API_KEY,
     baseUrl: env.CROMA_BASE_URL,
     waitSeconds: env.CROMA_WAIT_SECONDS,
+    timeoutMs: env.CROMA_TIMEOUT_MS,
+    logger,
   });
 
   const service = new BusinessVerificationService(new SiemClient(croma), new MemoryCacheStore(), {

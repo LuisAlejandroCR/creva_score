@@ -1,4 +1,4 @@
-import { EnvValidationError, isCromaConfigured, loadEnv } from './env';
+import { EnvValidationError, isCromaConfigured, loadEnv } from '../../src/infra/env';
 
 describe('loadEnv', () => {
   it('starts without Croma credentials', () => {

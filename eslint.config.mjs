@@ -1,0 +1,33 @@
+import eslint from '@eslint/js';
+import tseslint from 'typescript-eslint';
+import prettier from 'eslint-config-prettier';
+
+export default tseslint.config(
+  { ignores: ['dist/**', 'coverage/**', 'node_modules/**', 'jest.config.js'] },
+  eslint.configs.recommended,
+  ...tseslint.configs.recommended,
+  prettier,
+  {
+    rules: {
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-explicit-any': 'error',
+      'no-console': 'error',
+      eqeqeq: ['error', 'always', { null: 'ignore' }],
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "MemberExpression[object.name='process'][property.name='env']",
+          message: 'Read configuration through loadEnv() so it stays validated and typed.',
+        },
+      ],
+    },
+  },
+  {
+    files: ['src/infra/env.ts', 'src/infra/logger.ts'],
+    rules: { 'no-restricted-syntax': 'off', 'no-console': 'off' },
+  },
+  {
+    files: ['test/**/*.ts'],
+    rules: { 'no-restricted-syntax': 'off' },
+  },
+);

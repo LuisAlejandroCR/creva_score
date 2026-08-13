@@ -9,9 +9,10 @@ const envSchema = z.object({
   CROMA_BASE_URL: z.string().url().default('https://api.croma.run'),
   CROMA_ORGANIZATION_ID: z.string().min(1).optional(),
   CROMA_WAIT_SECONDS: z.coerce.number().int().min(1).max(55).default(55),
+  CROMA_TIMEOUT_MS: z.coerce.number().int().min(1000).max(120000).default(60000),
 
-  // Exact field name not confirmed against the provider yet.
-  SIEM_DETAIL_RFC_FIELD: z.string().min(1).default('rfc'),
+  // Dot path into the detail response.
+  SIEM_DETAIL_RFC_FIELD: z.string().min(1).default('establishment.rfc'),
 
   BUSINESS_VERIFICATION_CACHE_TTL_MS: z.coerce.number().int().min(0).default(7 * DAY_MS),
   BUSINESS_VERIFICATION_MAX_DETAIL_LOOKUPS: z.coerce.number().int().min(0).max(5).default(1),

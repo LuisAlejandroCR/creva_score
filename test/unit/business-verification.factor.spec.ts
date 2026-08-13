@@ -1,10 +1,10 @@
-import { sourceOk, sourceUnavailable } from '../infra/types';
-import { BusinessVerification } from './business-verification.service';
+import { sourceOk, sourceUnavailable } from '../../src/infra/types';
+import { BusinessVerification } from '../../src/business-verification/business-verification.service';
 import {
   BUSINESS_VERIFICATION_KEY,
   applyBusinessVerification,
   buildBusinessVerificationComponent,
-} from './business-verification.factor';
+} from '../../src/business-verification/business-verification.factor';
 
 const config = { points: 20, maxScore: 100 };
 

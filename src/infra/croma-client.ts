@@ -1,10 +1,12 @@
 // croma-client: HTTP client for the government-data provider.
 
+import { Logger, noopLogger } from './logger';
 import { SourceResult, sourceOk, sourceUnavailable } from './types';
 
 const TERMINAL_JOB_STATUSES = new Set(['completed', 'failed', 'canceled', 'expired']);
 const DEFAULT_POLL_INTERVAL_MS = 1000;
 const DEFAULT_MAX_POLLS = 60;
+const DEFAULT_TIMEOUT_MS = 60000;
 
 export interface RateLimitSnapshot {
   limit?: string;
@@ -44,7 +46,9 @@ export interface CromaClientOptions {
   fetchImpl?: typeof globalThis.fetch;
   pollIntervalMs?: number;
   maxPolls?: number;
+  timeoutMs?: number;
   sleep?: (ms: number) => Promise<void>;
+  logger?: Logger;
 }
 
 export interface CromaCallable {
@@ -58,7 +62,9 @@ export class CromaClient implements CromaCallable {
   private readonly fetchImpl: typeof globalThis.fetch;
   private readonly pollIntervalMs: number;
   private readonly maxPolls: number;
+  private readonly timeoutMs: number;
   private readonly sleep: (ms: number) => Promise<void>;
+  private readonly logger: Logger;
   private rateLimit: RateLimitSnapshot = {};
 
   constructor(options: CromaClientOptions = {}) {
@@ -68,7 +74,9 @@ export class CromaClient implements CromaCallable {
     this.fetchImpl = options.fetchImpl ?? globalThis.fetch;
     this.pollIntervalMs = options.pollIntervalMs ?? DEFAULT_POLL_INTERVAL_MS;
     this.maxPolls = options.maxPolls ?? DEFAULT_MAX_POLLS;
+    this.timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
     this.sleep = options.sleep ?? ((ms) => new Promise((resolve) => setTimeout(resolve, ms)));
+    this.logger = options.logger ?? noopLogger;
   }
 
   // Provider limiter fails open: an empty snapshot means unknown, not available quota.
@@ -78,15 +86,28 @@ export class CromaClient implements CromaCallable {
 
   async call<T>(path: string, body: unknown, options: CallOptions): Promise<SourceResult<T>> {
     if (!this.apiKey) {
+      this.logger.log('warn', 'croma.skipped', { source: options.source, path, reason: 'missing_api_key' });
       return sourceUnavailable<T>(options.source, 'missing_api_key');
     }
 
+    const startedAt = Date.now();
+    let result: SourceResult<T>;
     try {
-      return await this.request<T>(path, body, options);
+      result = await this.request<T>(path, body, options);
     } catch (error) {
-      const reason = error instanceof Error ? error.message : 'unknown_error';
-      return sourceUnavailable<T>(options.source, `request_failed:${reason}`, new Date().toISOString());
+      const reason = error instanceof Error ? error.name === 'TimeoutError' ? 'timeout' : error.message : 'unknown_error';
+      result = sourceUnavailable<T>(options.source, `request_failed:${reason}`, new Date().toISOString());
     }
+
+    this.logger.log(result.available ? 'info' : 'warn', 'croma.call', {
+      source: options.source,
+      path,
+      available: result.available,
+      error: result.error,
+      elapsed_ms: Date.now() - startedAt,
+      rate_limit_remaining: this.rateLimit.remaining,
+    });
+    return result;
   }
 
   private async request<T>(path: string, body: unknown, options: CallOptions): Promise<SourceResult<T>> {
@@ -106,6 +127,7 @@ export class CromaClient implements CromaCallable {
           Prefer: `wait=${this.waitSeconds}`,
         },
         body: JSON.stringify(body),
+        signal: AbortSignal.timeout(this.timeoutMs),
       });
 
       this.captureRateLimit(response);
@@ -158,6 +180,7 @@ export class CromaClient implements CromaCallable {
       const response = await this.fetchImpl(url, {
         method: 'GET',
         headers: { Authorization: `Bearer ${this.apiKey}` },
+        signal: AbortSignal.timeout(this.timeoutMs),
       });
       this.captureRateLimit(response);
 

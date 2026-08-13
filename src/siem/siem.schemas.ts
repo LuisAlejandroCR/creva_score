@@ -9,7 +9,7 @@ export const SIEM_SOURCE = 'mx.siem';
 const nullableString = z.string().nullish().transform((value) => value ?? null);
 const nullableNumber = z.number().nullish().transform((value) => value ?? null);
 
-export const establishmentSummarySchema = z.object({
+const establishmentSummarySchema = z.object({
   establishment_id: z.string(),
   commercial_name: nullableString,
   chamber: nullableString,
@@ -17,7 +17,7 @@ export const establishmentSummarySchema = z.object({
   state_code: nullableNumber,
 });
 
-export const paginationSchema = z.object({
+const paginationSchema = z.object({
   total: z.number(),
   page_size: z.number(),
   total_pages: z.number(),
@@ -34,6 +34,7 @@ export const establishmentDetailSchema = z
   .object({
     found: z.boolean(),
     establishment_id: nullableString,
+    establishment: z.record(z.unknown()).nullish().transform((value) => value ?? null),
   })
   .passthrough();
 
