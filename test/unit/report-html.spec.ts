@@ -281,15 +281,33 @@ describe('renderReportHtml', () => {
     expect(html.indexOf('Fuentes consultadas')).toBeGreaterThan(foldedFrom);
   });
 
-  it('gives every section a dot that points at a section that exists', () => {
+  it('names every stage and wires each tab to the pane it controls', () => {
     const html = renderReportHtml(report());
-    const targets = [...html.matchAll(/data-goto="([a-z-]+)"/g)].map((match) => match[1]);
+    const stages = [...html.matchAll(/data-stage="([a-z]+)"/g)].map((match) => match[1]);
 
-    expect(targets.length).toBeGreaterThan(0);
-    for (const target of targets) expect(html).toContain(`id="${target}"`);
+    expect(stages).toEqual(['summary', 'signals', 'evidence', 'market', 'audit']);
+    for (const stage of stages) {
+      expect(html).toContain(`aria-controls="pane-${stage}"`);
+      expect(html).toContain(`id="pane-${stage}"`);
+      expect(html).toContain(`aria-labelledby="tab-${stage}"`);
+    }
+    for (const name of ['Resumen', 'Señales', 'Evidencia', 'Mercado', 'Auditoría']) {
+      expect(html).toContain(name);
+    }
   });
 
-  it('drops the market dot when there is no market section to reach', () => {
+  it('opens on the first stage and leaves the rest out of the way', () => {
+    const html = renderReportHtml(report());
+    const panes = html.match(/<section class="pane"[^>]*>/g) ?? [];
+
+    expect(panes).toHaveLength(5);
+    expect(panes.filter((pane) => pane.includes(' hidden'))).toHaveLength(4);
+    expect(panes[0]).not.toContain(' hidden');
+    expect(html.match(/aria-selected="true"/g)).toHaveLength(1);
+    expect(html.match(/tabindex="0"/g)).toHaveLength(1);
+  });
+
+  it('drops the market stage when there is no market data to show', () => {
     const html = renderReportHtml(
       buildReport({
         subject: { business_name: 'ACME', state_code: null },
@@ -301,8 +319,9 @@ describe('renderReportHtml', () => {
       }),
     );
 
-    expect(html).not.toContain('data-goto="sec-market"');
-    expect(html).toContain('data-goto="sec-audit"');
+    expect(html).not.toContain('data-stage="market"');
+    expect(html).toContain('data-stage="audit"');
+    expect(html.match(/<section class="pane"[^>]*>/g)).toHaveLength(4);
   });
 
   it('marks the evidence as cited, never as verified by the act of opening it', () => {

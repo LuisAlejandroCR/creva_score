@@ -121,6 +121,8 @@ Genera `creva-report.html` y `creva-report.json`. El HTML es **un solo archivo**
 
 Los únicos enlaces que salen del archivo son a los documentos oficiales citados, para que cualquiera pueda comprobarlos.
 
+El reporte está dividido en cinco pasos —Resumen, Señales, Evidencia, Mercado y Auditoría— y te mueves entre ellos cuando quieras, hacia adelante o hacia atrás. Lo que ya abriste o filtraste sigue como lo dejaste al volver.
+
 La evidencia viene plegada y se abre con un clic o con el teclado. De cada fuente se muestran las primeras señales, y el resto lo pides tú de a poco — nada te cae encima de golpe. Puedes filtrar por fuente, ordenar por fecha, y tocar cualquiera de los tres resúmenes de arriba te lleva directo a la evidencia que lo respalda.
 
 Las tasas de referencia se comparan entre sí en una misma línea, con la escala escrita al lado para que no parezca grande una diferencia que es pequeña. El valor de la UDI va aparte, porque no es una tasa y compararlo contra ellas no significaría nada.

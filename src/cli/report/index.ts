@@ -8,26 +8,26 @@ import { styles } from './styles';
 
 export { moreLabel, nextVisible } from './lanes';
 
-const SECTIONS = [
-  { id: 'sec-hero', label: 'Resumen' },
-  { id: 'sec-composition', label: 'Composición' },
-  { id: 'sec-evidence', label: 'Evidencia' },
-  { id: 'sec-market', label: 'Contexto de mercado' },
-  { id: 'sec-why', label: 'Por qué importa' },
-  { id: 'sec-audit', label: 'Sobre este análisis' },
-];
+interface Stage {
+  id: string;
+  num: string;
+  name: string;
+  body: string;
+}
 
 export function renderReportHtml(report: CrevaReport): string {
   const data = JSON.stringify(report).replace(/</g, '\\u003c');
   const lanes = buildLanes(report);
   const name = report.subject?.business_name ?? 'Revisión general';
-  const hasMarket = report.signals.some((signal) => signal.category === 'reference_rate');
-  const dots = SECTIONS.filter((section) => hasMarket || section.id !== 'sec-market')
-    .map(
-      (section) =>
-        `<button class="dot-nav" type="button" data-goto="${section.id}" aria-label="Ir a ${escapeHtml(section.label)}"></button>`,
-    )
-    .join('');
+  const marketBody = market(report);
+
+  const stages: Stage[] = [
+    { id: 'summary', num: '01', name: 'Resumen', body: hero(report, lanes) },
+    { id: 'signals', num: '02', name: 'Señales', body: composition(report, lanes) },
+    { id: 'evidence', num: '03', name: 'Evidencia', body: evidence(lanes) },
+    ...(marketBody === '' ? [] : [{ id: 'market', num: '04', name: 'Mercado', body: marketBody }]),
+    { id: 'audit', num: '05', name: 'Auditoría', body: `${why(report)}${audit(report)}${closing(report)}` },
+  ];
 
   return `<!doctype html>
 <html lang="es-MX">
@@ -47,23 +47,34 @@ export function renderReportHtml(report: CrevaReport): string {
   <span class="bar-status">${escapeHtml(statusWord(report))}</span>
 </header>
 
-<nav class="dots" id="dots" aria-label="Secciones del reporte">${dots}</nav>
-
 <main>
   ${investigation(report, lanes, name)}
 
   <section class="stage report staging" id="stage-report">
-    ${hero(report, lanes)}
-    ${composition(report, lanes)}
-    ${evidence(lanes)}
-    ${market(report)}
-    ${why(report)}
-    ${audit(report)}
-    ${closing(report)}
+    <div class="workspace">
+      <nav class="stages" id="stages" role="tablist" aria-label="Etapas del reporte">${stages.map(tab).join('')}</nav>
+      <div class="panes">${stages.map(pane).join('')}</div>
+    </div>
   </section>
 </main>
 
 <script>window.CREVA_REPORT=${data};${script()}</script>
 </body>
 </html>`;
+}
+
+function tab(stage: Stage, index: number): string {
+  const first = index === 0;
+
+  return `<button class="stage-tab${first ? ' current' : ''}" type="button" role="tab" id="tab-${stage.id}"
+    data-stage="${stage.id}" aria-controls="pane-${stage.id}" aria-selected="${first ? 'true' : 'false'}" tabindex="${first ? '0' : '-1'}">
+    <span class="stage-num">${stage.num}</span>
+    <span class="stage-name">${escapeHtml(stage.name)}</span>
+    <span class="stage-mark" aria-hidden="true">${first ? '●' : '○'}</span>
+  </button>`;
+}
+
+function pane(stage: Stage, index: number): string {
+  return `<section class="pane" role="tabpanel" id="pane-${stage.id}" data-pane="${stage.id}"
+    aria-labelledby="tab-${stage.id}" tabindex="-1"${index === 0 ? '' : ' hidden'}>${stage.body}</section>`;
 }

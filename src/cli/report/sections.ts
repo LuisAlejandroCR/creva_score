@@ -69,7 +69,7 @@ export function hero(report: CrevaReport, lanes: SourceLane[]): string {
     )
     .join('');
 
-  return `<section class="block hero" id="sec-hero" data-enter="hero">
+  return `<section class="block hero" data-enter="hero">
   <p class="eyebrow">Perfil público del negocio</p>
   <h1 class="subject big">${escapeHtml(report.subject?.business_name ?? 'Revisión general')}</h1>
   <p class="status pill-${tone}">${escapeHtml(statusWord(report))}</p>
@@ -102,7 +102,7 @@ export function composition(report: CrevaReport, lanes: SourceLane[]): string {
     })
     .join('');
 
-  return `<section class="block composition" id="sec-composition" data-enter="rail">
+  return `<section class="block composition" data-enter="rail">
   <h2>Composición de las señales</h2>
   <p class="blurb">Toca una fuente para aislarla.</p>
 
@@ -127,7 +127,7 @@ export function evidence(lanes: SourceLane[]): string {
     )
     .join('');
 
-  return `<section class="block evidence" id="sec-evidence" data-enter="evidence">
+  return `<section class="block evidence" data-enter="evidence">
   <h2>Evidencia</h2>
   <p class="blurb">Cada señal con su fuente y su fecha. Se muestran las primeras; el resto se pide.</p>
 
@@ -236,7 +236,7 @@ export function market(report: CrevaReport): string {
       .join('')}
   </div>`;
 
-  return `<section class="block market" id="sec-market" data-enter="market">
+  return `<section class="block market" data-enter="market">
   <h2>Contexto de mercado</h2>
   <p class="blurb">Publicado por el Banco de México. Cada cifra trae su propia fecha, porque no se publican el mismo día.</p>
   ${stripBlock}
@@ -270,7 +270,7 @@ export function why(report: CrevaReport): string {
     )
     .join('');
 
-  return `<section class="block why" id="sec-why" data-enter="market">
+  return `<section class="block why" data-enter="market">
   <h2>Por qué importa</h2>
   <ol class="why-steps">${steps}</ol>
 </section>`;
@@ -302,7 +302,7 @@ export function audit(report: CrevaReport): string {
     .join('');
 
   // The disclosure stays open. Only the reference material behind it folds away.
-  return `<section class="block audit" id="sec-audit" data-enter="audit">
+  return `<section class="block audit" data-enter="audit">
   <h2>Sobre este análisis</h2>
   <p class="blurb">${escapeHtml(report.disclosure.describes)} Ventana de ${report.disclosure.window_days} días · versión ${escapeHtml(report.disclosure.score_version)}.</p>
 

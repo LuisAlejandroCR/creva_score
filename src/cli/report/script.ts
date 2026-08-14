@@ -41,9 +41,80 @@ export function script(): string {
     if(progressW)progressW.textContent=n===1?'fuente conectada':'fuentes conectadas';
   }
 
-  function enterBlocks(){
-    var blocks=[].slice.call(report.querySelectorAll('[data-enter]'));
-    blocks.forEach(function(b,i){setTimeout(function(){b.classList.add('on');},reduce?0:i*150);});
+  var tabs=[].slice.call(document.querySelectorAll('.stage-tab'));
+  var panes=[].slice.call(document.querySelectorAll('.pane'));
+  var order=tabs.map(function(t){return t.getAttribute('data-stage');});
+  var current=order[0];
+  var entered={};
+
+  function paneOf(id){return document.getElementById('pane-'+id);}
+  function tabOf(id){return document.getElementById('tab-'+id);}
+
+  function enterStage(id){
+    var pane=paneOf(id);
+    if(!pane)return;
+    var tab=tabOf(id);
+    if(tab)tab.classList.add('visited');
+    [].slice.call(pane.querySelectorAll('[data-enter]')).forEach(function(b,i){
+      setTimeout(function(){b.classList.add('on');},reduce?0:i*120);
+    });
+    if(entered[id])return;
+    entered[id]=true;
+    if(id==='summary')revealSummary();
+    if(id==='signals')growComposition();
+    if(id==='market')pickPoint(0);
+    if(id==='audit')runWhy();
+  }
+
+  function goToStage(id,opts){
+    if(!paneOf(id))return;
+    var options=opts||{};
+    var back=order.indexOf(id)<order.indexOf(current);
+    current=id;
+
+    panes.forEach(function(p){
+      var on=p.getAttribute('data-pane')===id;
+      p.hidden=!on;
+      p.classList.remove('arriving','arriving-back');
+      if(on&&!reduce)p.classList.add(back?'arriving-back':'arriving');
+    });
+    tabs.forEach(function(t){
+      var on=t.getAttribute('data-stage')===id;
+      t.classList.toggle('current',on);
+      t.setAttribute('aria-selected',on?'true':'false');
+      t.setAttribute('tabindex',on?'0':'-1');
+    });
+
+    // Landing at the top is what keeps the stage header in view; scrollIntoView on an
+    // inner panel drops the reader into the middle with the context above them.
+    if(options.keepScroll!==true)window.scrollTo({top:0,behavior:reduce?'auto':'smooth'});
+    enterStage(id);
+    tabs.forEach(function(t){
+      var on=t.getAttribute('data-stage')===id;
+      t.querySelector('.stage-mark').textContent=on?'●':(t.classList.contains('visited')?'✓':'○');
+    });
+    trackReading();
+    if(options.focusPane===true)paneOf(id).focus();
+  }
+
+  // B55's geometry, reused: it now measures how much of the active stage has been read,
+  // and a stage is only marked complete once the reader actually reached its end.
+  function trackReading(){
+    var pane=paneOf(current);
+    var tab=tabOf(current);
+    if(!pane||!tab)return;
+    var box=pane.getBoundingClientRect();
+    var scrollable=box.height-window.innerHeight;
+    var read=scrollable<=0?1:Math.min(Math.max(-box.top/scrollable,0),1);
+    tab.style.setProperty('--read',Math.round(read*100)+'%');
+  }
+
+  function moveTab(step){
+    var index=order.indexOf(current)+step;
+    if(index<0||index>=order.length)return;
+    var next=order[index];
+    goToStage(next);
+    tabOf(next).focus();
   }
 
   function revealSummary(){
@@ -73,20 +144,16 @@ export function script(): string {
     bar.classList.add('on');
     bar.setAttribute('aria-hidden','false');
     if(ambient)ambient.style.opacity='.55';
-    enterBlocks();
     if(figure){
       setTimeout(function(){figure.classList.add('settled');countUp(figure);},reduce?0:220);
     }
-    setTimeout(revealSummary,reduce?0:1300);
-    setTimeout(growComposition,reduce?0:1900);
-    pickPoint(0);
-    watchWhy();
-    watchSections();
+    goToStage('summary',{keepScroll:true});
+    window.addEventListener('scroll',trackReading,{passive:true});
   }
 
   // The dot leaves the network and lands where the figure will be, so the two scenes read as one.
   function travelIntoFigure(done){
-    var dot=document.getElementById('root-dot');
+    var dot=flash||document.getElementById('root-dot');
     if(!dot||!figure||!morph||typeof dot.getBoundingClientRect!=='function'){done();return;}
 
     var from=dot.getBoundingClientRect();
@@ -126,16 +193,21 @@ export function script(): string {
     nodes.forEach(function(node,i){setTimeout(function(){node.classList.add('on');connected(i);},900+i*260);});
 
     var settled=900+nodes.length*260;
-    setTimeout(function(){if(flash)flash.classList.add('on');},settled+240);
+    // The total must not share the screen with the tree it came from: the network
+    // clears first, the figure is announced alone, and only then does it travel.
     setTimeout(function(){
       sparks.forEach(function(s){s.classList.remove('on');});
-      if(flash)flash.classList.remove('on');
+      investigate.classList.add('cleared');
+    },settled+520);
+    setTimeout(function(){if(flash)flash.classList.add('on');},settled+1240);
+    setTimeout(function(){
       investigate.classList.add('collapse');
       travelIntoFigure(function(){
+        if(flash)flash.classList.remove('on');
         investigate.classList.add('hidden');
         settle();
       });
-    },settled+1500);
+    },settled+2440);
   }
 
   function panels(){return [].slice.call(document.querySelectorAll('.panel'));}
@@ -257,7 +329,14 @@ export function script(): string {
     if(!target)return;
     panels().forEach(function(p){p.classList.toggle('active',p===target);});
     openPanel(target);
-    target.scrollIntoView({behavior:reduce?'auto':'smooth',block:'center'});
+    goToStage('evidence',{focusPane:true});
+
+    var first=target.querySelector('.item');
+    if(first&&!reduce){
+      first.classList.remove('spotlight');
+      void first.offsetWidth;
+      first.classList.add('spotlight');
+    }
   }
 
   function pickComposition(id,allowToggle){
@@ -294,73 +373,24 @@ export function script(): string {
   }
 
   // Each step completes the one before it, so the reader sees a sequence resolve.
-  function watchWhy(){
+  function runWhy(){
     var list=document.querySelector('.why-steps');
     var steps=[].slice.call(document.querySelectorAll('.why-step'));
     if(!list||steps.length===0)return;
 
-    if(reduce||typeof IntersectionObserver!=='function'){
+    if(reduce){
       steps.forEach(function(s){s.classList.add('on','done');});
       return;
     }
 
-    // All three fit on screen at once, so the sequence is paced in time rather than by
-    // scroll position: observing each step separately would light them all together.
-    function run(){
-      steps.forEach(function(step,i){
-        setTimeout(function(){
-          for(var j=0;j<i;j++)steps[j].classList.add('done');
-          step.classList.add('on');
-        },i*700);
-      });
-      setTimeout(function(){steps[steps.length-1].classList.add('done');},steps.length*700+200);
-    }
-
     list.classList.add('staged');
-    var started=false;
-    var seen=new IntersectionObserver(function(entries){
-      entries.forEach(function(entry){
-        if(!entry.isIntersecting||started)return;
-        started=true;
-        seen.disconnect();
-        run();
-      });
-    },{threshold:.35});
-    seen.observe(list);
-  }
-
-  function watchSections(){
-    var dots=[].slice.call(document.querySelectorAll('.dot-nav'));
-    var wrap=document.getElementById('dots');
-    if(dots.length===0||!wrap)return;
-
-    var targets=dots.map(function(d){return document.getElementById(d.getAttribute('data-goto'));});
-    function mark(id){
-      dots.forEach(function(d){d.setAttribute('aria-current',d.getAttribute('data-goto')===id?'true':'false');});
-    }
-    mark(dots[0].getAttribute('data-goto'));
-    wrap.classList.add('on');
-
-    if(typeof IntersectionObserver!=='function')return;
-
-    // Sections are separated by wide gaps, so "whichever crossed a line last" leaves the
-    // indicator stale. The nearest section to the middle of the viewport always has an answer.
-    function nearest(){
-      var middle=window.innerHeight/2;
-      var best=null,bestGap=Infinity;
-      targets.forEach(function(t){
-        if(!t)return;
-        var box=t.getBoundingClientRect();
-        var gap=Math.abs((box.top+box.bottom)/2-middle);
-        if(gap<bestGap){bestGap=gap;best=t;}
-      });
-      if(best)mark(best.id);
-    }
-
-    var seen=new IntersectionObserver(nearest,{threshold:[0,.25,.5,.75,1]});
-    targets.forEach(function(t){if(t)seen.observe(t);});
-    window.addEventListener('scroll',nearest,{passive:true});
-    nearest();
+    steps.forEach(function(step,i){
+      setTimeout(function(){
+        for(var j=0;j<i;j++)steps[j].classList.add('done');
+        step.classList.add('on');
+      },i*700);
+    });
+    setTimeout(function(){steps[steps.length-1].classList.add('done');},steps.length*700+200);
   }
 
   function toggleAudit(){
@@ -388,6 +418,15 @@ export function script(): string {
     if(date)date.textContent=picked.getAttribute('data-date');
   }
 
+  document.addEventListener('keydown',function(e){
+    if(!e.target||!e.target.closest||!e.target.closest('.stage-tab'))return;
+    var key=e.key;
+    if(key==='ArrowDown'||key==='ArrowRight'){e.preventDefault();moveTab(1);return;}
+    if(key==='ArrowUp'||key==='ArrowLeft'){e.preventDefault();moveTab(-1);return;}
+    if(key==='Home'){e.preventDefault();goToStage(order[0]);tabOf(order[0]).focus();return;}
+    if(key==='End'){e.preventDefault();var last=order[order.length-1];goToStage(last);tabOf(last).focus();}
+  });
+
   document.addEventListener('click',function(e){
     var t=e.target;
     if(!t||!t.closest)return;
@@ -397,12 +436,8 @@ export function script(): string {
 
     if(t.closest('#audit-toggle')){toggleAudit();return;}
 
-    var goto=t.closest('.dot-nav');
-    if(goto){
-      var section=document.getElementById(goto.getAttribute('data-goto'));
-      if(section)section.scrollIntoView({behavior:reduce?'auto':'smooth',block:'start'});
-      return;
-    }
+    var stageTab=t.closest('.stage-tab');
+    if(stageTab){goToStage(stageTab.getAttribute('data-stage'));return;}
 
     var sort=t.closest('.sort-btn');
     if(sort){sortPanel(sort.closest('.panel'),sort.getAttribute('data-sort'));return;}

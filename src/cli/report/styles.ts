@@ -30,7 +30,8 @@ box-shadow:0 0 0 0 rgba(196,30,58,.28)}
 .morph.travel{animation:morphGlow 760ms var(--ease) forwards}
 @keyframes morphGlow{0%{box-shadow:0 0 0 0 rgba(196,30,58,.28)}100%{box-shadow:0 0 0 46px rgba(196,30,58,0)}}
 
-main{position:relative;z-index:1;max-width:60rem;margin:0 auto;padding:0 clamp(1.2rem,4vw,2.5rem)}
+main{position:relative;z-index:1;max-width:72rem;margin:0 auto;padding:0 clamp(1.2rem,4vw,2.5rem)}
+.investigate,.hero{max-width:60rem;margin-left:auto;margin-right:auto}
 /* .stage sets display, so the escape hatch has to outrank it */
 .stage.hidden{display:none}
 .staging{opacity:0;pointer-events:none}
@@ -43,6 +44,8 @@ main{position:relative;z-index:1;max-width:60rem;margin:0 auto;padding:0 clamp(1
 .investigate{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;
 transition:opacity 560ms var(--ease),transform 560ms var(--ease),filter 560ms var(--ease)}
 .investigate.collapse{opacity:0;transform:scale(.9);filter:blur(7px)}
+.investigate .net,.investigate .ticks,.investigate .progress{transition:opacity 460ms var(--ease),transform 460ms var(--ease)}
+.investigate.cleared .net,.investigate.cleared .ticks,.investigate.cleared .progress{opacity:0;transform:scale(.94)}
 .investigating{font-size:.82rem;letter-spacing:.28em;text-transform:uppercase;color:var(--crimson-dark);margin:0 0 1rem}
 .investigating::after{content:'';display:inline-block;width:1.6em;text-align:left;animation:dots 1.6s steps(4,end) infinite}
 @keyframes dots{0%{content:''}25%{content:'.'}50%{content:'..'}75%{content:'...'}}
@@ -75,10 +78,11 @@ font-size:.76rem;letter-spacing:.14em;color:var(--subtle)}
 @keyframes tickPop{0%{transform:scale(.4)}55%{transform:scale(1.5)}100%{transform:scale(1)}}
 .progress{margin:.9rem 0 0;font-size:.76rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
 .progress-n{font-weight:700;color:var(--crimson-dark);font-size:1rem}
-.flash{position:absolute;margin:0;font-size:clamp(1.2rem,3.4vw,2rem);font-weight:700;letter-spacing:-.01em;
-opacity:0;transform:translateY(10px);transition:opacity 320ms var(--ease),transform 320ms var(--ease)}
+.flash{position:absolute;left:50%;top:50%;margin:0;font-size:clamp(1.6rem,4.4vw,2.8rem);font-weight:700;letter-spacing:-.02em;
+opacity:0;transform:translate(-50%,-50%) scale(.94);white-space:nowrap;
+transition:opacity 380ms var(--ease),transform 380ms var(--ease)}
 .flash strong{color:var(--crimson)}
-.flash.on{opacity:1;transform:none}
+.flash.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
 
 .bar{position:fixed;top:0;left:0;right:0;z-index:5;display:flex;gap:1rem;align-items:center;
 padding:.85rem clamp(1.2rem,4vw,2.5rem);background:rgba(246,241,231,0);
@@ -102,7 +106,7 @@ border-bottom-color:var(--bd);box-shadow:0 8px 24px rgba(26,22,19,.05)}
 [data-enter].on{opacity:1;transform:none;filter:none;clip-path:inset(0 0 0 0)}
 [data-enter="audit"].on{opacity:.92}
 
-.hero{padding-top:6rem;text-align:center;margin-bottom:7rem}
+.hero{text-align:center;margin-bottom:4rem}
 .subject.big{font-size:clamp(1.9rem,5vw,3.2rem)}
 .status{display:inline-block;margin:1rem 0 0;padding:.35rem 1rem;border-radius:999px;
 font-size:.74rem;letter-spacing:.16em;text-transform:uppercase;font-weight:600;
@@ -221,6 +225,8 @@ transition:width var(--mid) var(--ease)}
 .item:hover::before{width:3px}
 .item:focus-within::before{width:3px}
 .item.fresh{animation:slideIn 420ms var(--ease)}
+.item.spotlight{animation:spotlight 1600ms var(--ease)}
+@keyframes spotlight{0%{background:rgba(255,232,238,.9)}100%{background:transparent}}
 @keyframes slideIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
 .item-label{margin:0 0 .25rem;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--crimson-dark)}
 .item.tone-positive .item-label{color:var(--ok)}
@@ -290,13 +296,35 @@ transform:scaleY(0);transform-origin:top;transition:transform var(--slow) var(--
 .why-head{margin:0 0 .3rem;font-weight:650}
 .why-body .blurb{margin:0}
 
-.dots{position:fixed;right:1.6rem;top:50%;transform:translateY(-50%);z-index:5;
-display:none;flex-direction:column;gap:.7rem;opacity:0;transition:opacity var(--slow) var(--ease)}
-.dots.on{opacity:1}
-.dot-nav{width:9px;height:9px;padding:0;border-radius:50%;border:1px solid var(--subtle);
-background:none;cursor:pointer;transition:all var(--mid) var(--ease)}
-.dot-nav:hover{border-color:var(--crimson)}
-.dot-nav[aria-current="true"]{background:var(--crimson);border-color:var(--crimson);transform:scale(1.35)}
+.workspace{display:grid;grid-template-columns:12.5rem minmax(0,1fr);gap:3rem;align-items:start;padding-top:5.5rem}
+.stages{position:sticky;top:5rem;display:flex;flex-direction:column;gap:.1rem}
+.stage-tab{position:relative;overflow:hidden;display:flex;align-items:center;gap:.6rem;width:100%;padding:.7rem .8rem;
+background:none;border:0;border-radius:10px;cursor:pointer;color:var(--muted);text-align:left;
+font-size:.86rem;transition:background var(--mid) var(--ease),color var(--mid) var(--ease)}
+.stage-tab:hover{background:rgba(255,255,255,.55);color:var(--tx)}
+/* how far into the active stage the reader has actually got */
+.stage-tab::before{content:'';position:absolute;left:0;top:0;bottom:0;width:var(--read,0%);
+background:linear-gradient(90deg,rgba(255,143,174,.34),rgba(255,143,174,0));
+opacity:0;pointer-events:none;transition:width 140ms linear,opacity var(--mid) var(--ease)}
+.stage-tab.current::before{opacity:1}
+.stage-num,.stage-name,.stage-mark{position:relative}
+.stage-num{font-size:.7rem;letter-spacing:.1em;color:var(--subtle);flex:none}
+.stage-name{flex:1;white-space:nowrap}
+.stage-mark{font-size:.7rem;flex:none;color:var(--bd)}
+.stage-tab.visited .stage-mark{color:var(--ok)}
+.stage-tab.current{background:var(--s1);color:var(--tx);font-weight:640;
+box-shadow:0 6px 18px rgba(26,22,19,.05)}
+.stage-tab.current .stage-num{color:var(--crimson-dark)}
+.stage-tab.current .stage-mark{color:var(--crimson)}
+
+.panes{min-width:0}
+.pane{min-width:0}
+.pane.arriving{animation:paneIn 520ms var(--ease)}
+.pane.arriving-back{animation:paneBack 520ms var(--ease)}
+@keyframes paneIn{from{opacity:0;transform:translateY(26px) scale(.985);filter:blur(6px)}
+to{opacity:1;transform:none;filter:none}}
+@keyframes paneBack{from{opacity:0;transform:translateY(-22px) scale(.99);filter:blur(5px)}
+to{opacity:1;transform:none;filter:none}}
 
 .audit{margin-bottom:3rem;font-size:.94rem}
 .audit-toggle{margin-top:1rem;padding:.5rem 1rem;border-radius:999px;border:1px solid var(--bd);
@@ -318,7 +346,19 @@ transition:all var(--mid) var(--ease)}
 .closing-tally{margin:0;color:var(--muted);font-size:.86rem}
 
 /* The side rail needs room the report itself is not using; below that it would overlap the text. */
-@media(min-width:1080px){.dots{display:flex}}
+@media(max-width:900px){.workspace{grid-template-columns:1fr;gap:1.2rem;padding-top:4.4rem}}
+
+@media(max-width:900px){
+  /* the sidebar becomes a sticky strip; it never becomes a hamburger */
+  .stages{position:sticky;top:3.2rem;z-index:4;flex-direction:row;gap:.3rem;
+  overflow-x:auto;scrollbar-width:none;padding:.5rem 0;
+  background:rgba(246,241,231,.92);backdrop-filter:blur(12px)}
+  .stages::-webkit-scrollbar{display:none}
+  .stage-tab{width:auto;flex:none;min-height:44px;padding:.5rem .8rem}
+  .stage-name{display:none}
+  .stage-num{font-size:.82rem;letter-spacing:.06em}
+  .stage-tab.current .stage-name{display:inline}
+}
 
 @media(max-width:640px){
   main{padding:0 1.1rem}
@@ -358,7 +398,8 @@ transition:all var(--mid) var(--ease)}
   [data-enter],.bar,.panel-body,.panel-inner,.net .link,.net .node circle,.net .node text,
   .investigate,.net,.figure,.insight,.dot,.tick,.flash,.summary-done,.explore-cue,
   .filter-result,.item,.item::before,.point,.point-tag,.meta-dot,.doc-go,.panel-seen,
-  .dots,.dot-nav,.why-step,.why-n,.why-num,.why-check,.why-line::after{transition:none}
+  .why-step,.why-n,.why-num,.why-check,.why-line::after,.stage-tab,.stage-tab::before{transition:none}
+  .pane.arriving,.pane.arriving-back{animation:none}
   .net .spark{display:none}
   .item:hover{transform:none}
   /* the sequence is the content here, so it arrives complete rather than not at all */
