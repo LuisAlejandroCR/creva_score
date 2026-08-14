@@ -295,32 +295,38 @@ export function script(): string {
 
   // Each step completes the one before it, so the reader sees a sequence resolve.
   function watchWhy(){
+    var list=document.querySelector('.why-steps');
     var steps=[].slice.call(document.querySelectorAll('.why-step'));
-    if(steps.length===0)return;
-
-    function reach(index){
-      for(var i=0;i<steps.length;i++){
-        if(i<index)steps[i].classList.add('on','done');
-        else if(i===index)steps[i].classList.add('on');
-      }
-      if(index===steps.length-1)setTimeout(function(){steps[index].classList.add('done');},reduce?0:900);
-    }
+    if(!list||steps.length===0)return;
 
     if(reduce||typeof IntersectionObserver!=='function'){
       steps.forEach(function(s){s.classList.add('on','done');});
       return;
     }
 
-    var list=document.querySelector('.why-steps');
-    if(list)list.classList.add('staged');
+    // All three fit on screen at once, so the sequence is paced in time rather than by
+    // scroll position: observing each step separately would light them all together.
+    function run(){
+      steps.forEach(function(step,i){
+        setTimeout(function(){
+          for(var j=0;j<i;j++)steps[j].classList.add('done');
+          step.classList.add('on');
+        },i*700);
+      });
+      setTimeout(function(){steps[steps.length-1].classList.add('done');},steps.length*700+200);
+    }
 
+    list.classList.add('staged');
+    var started=false;
     var seen=new IntersectionObserver(function(entries){
       entries.forEach(function(entry){
-        if(!entry.isIntersecting)return;
-        reach(steps.indexOf(entry.target));
+        if(!entry.isIntersecting||started)return;
+        started=true;
+        seen.disconnect();
+        run();
       });
-    },{threshold:.6});
-    steps.forEach(function(s){seen.observe(s);});
+    },{threshold:.35});
+    seen.observe(list);
   }
 
   function watchSections(){
@@ -336,12 +342,25 @@ export function script(): string {
     wrap.classList.add('on');
 
     if(typeof IntersectionObserver!=='function')return;
-    var seen=new IntersectionObserver(function(entries){
-      entries.forEach(function(entry){
-        if(entry.isIntersecting)mark(entry.target.id);
+
+    // Sections are separated by wide gaps, so "whichever crossed a line last" leaves the
+    // indicator stale. The nearest section to the middle of the viewport always has an answer.
+    function nearest(){
+      var middle=window.innerHeight/2;
+      var best=null,bestGap=Infinity;
+      targets.forEach(function(t){
+        if(!t)return;
+        var box=t.getBoundingClientRect();
+        var gap=Math.abs((box.top+box.bottom)/2-middle);
+        if(gap<bestGap){bestGap=gap;best=t;}
       });
-    },{rootMargin:'-45% 0px -45% 0px'});
+      if(best)mark(best.id);
+    }
+
+    var seen=new IntersectionObserver(nearest,{threshold:[0,.25,.5,.75,1]});
     targets.forEach(function(t){if(t)seen.observe(t);});
+    window.addEventListener('scroll',nearest,{passive:true});
+    nearest();
   }
 
   function toggleAudit(){
