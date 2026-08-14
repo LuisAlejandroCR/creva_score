@@ -23,7 +23,8 @@ export default tseslint.config(
     },
   },
   {
-    files: ['src/config/env.ts', 'src/common/logger.ts'],
+    // Browser install locations are OS facts, not application configuration.
+    files: ['src/config/env.ts', 'src/common/logger.ts', 'src/modules/mcp/report-document.ts'],
     rules: { 'no-restricted-syntax': 'off', 'no-console': 'off' },
   },
   {

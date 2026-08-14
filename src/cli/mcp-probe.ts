@@ -20,7 +20,7 @@ interface JsonRpcMessage {
     protocolVersion?: string;
     tools?: Array<{ name: string }>;
     isError?: boolean;
-    content?: Array<{ text?: string }>;
+    content?: Array<{ type?: string; text?: string; uri?: string; name?: string }>;
   };
   error?: { message?: string };
 }
@@ -80,7 +80,11 @@ export function summarise(stdout: string, stderr: string): ProbeReport {
     report.called = {
       name: 'tools/call',
       isError: call.result.isError === true,
-      text: call.result.content?.[0]?.text ?? '',
+      text: (call.result.content ?? [])
+        .map((block) =>
+          block.text !== undefined ? block.text : `[${block.type ?? 'bloque'}] ${block.name ?? ''} ${block.uri ?? ''}`.trim(),
+        )
+        .join('\n'),
     };
   }
   return report;

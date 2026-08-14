@@ -111,7 +111,7 @@ Expone sus composiciones como herramientas MCP por stdio:
 
 | Herramienta | Qué devuelve |
 |---|---|
-| `creva_report` | El reporte completo: todas las señales con su fuente y su fecha, más la ficha de qué **no** estima |
+| `creva_report` | El reporte completo: todas las señales con su fuente y su fecha, más la ficha de qué **no** estima. Con `document: true` además imprime el resumen ejecutivo en PDF y devuelve dónde quedó |
 | `creva_verify_business` | Solo el sello del directorio |
 | `creva_regulatory_radar` | Solo las reglas y novedades |
 | `creva_score_disclosure` | Solo la ficha de declaración |
@@ -133,6 +133,14 @@ node dist/cli/mcp-probe.js --tool creva_regulatory_radar --args (ConvertTo-Json 
 ```
 
 Para conectarlo a un cliente MCP basta la ruta absoluta al servidor; **no hace falta `cwd` ni copiar credenciales**, porque el servidor busca el `.env` del proyecto junto a su propio build:
+
+**Pedir el documento**, no solo los datos:
+
+```bash
+node dist/cli/mcp-probe.js --tool creva_report --args (ConvertTo-Json @{ business_name = 'ABARROTES ERENDIRA'; state_code = 8; document = $true } -Compress)
+```
+
+Imprime el PDF de dos páginas con el Chromium que ya esté instalado —Edge o Chrome, sin dependencias nuevas— y devuelve su ruta y un `resource_link`. **Si no hay navegador, entrega el reporte interactivo en su lugar** y lo dice. Con `embed: true` adjunta además el binario en la respuesta; pesa mucho, así que va apagado por defecto.
 
 ```json
 {

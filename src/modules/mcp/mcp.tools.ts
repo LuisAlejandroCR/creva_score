@@ -1,15 +1,23 @@
 // mcp.tools: tool definitions exposing this project's compositions over MCP.
 
+import { readFileSync } from 'node:fs';
 import { z } from 'zod/v3';
 import { buildVerificationBadge } from '../business-verification/business-verification.badge';
 import { getVerificationStatus } from '../business-verification/business-verification.service';
 import { CrevaScoreSetup } from '../creva-score/creva-score.factory';
 import { buildReport } from '../creva-score/creva-report.builder';
+import { renderReportHtml } from '../../cli/report';
+import { buildReportDocument, fileUrl } from './report-document';
 import { renderScoreDisclosure } from '../score-disclosure/score-disclosure.service';
+
+export type McpContent =
+  | { type: 'text'; text: string }
+  | { type: 'resource_link'; uri: string; name: string; mimeType: string; description: string }
+  | { type: 'resource'; resource: { uri: string; mimeType: string; blob: string } };
 
 export interface McpToolResult {
   [key: string]: unknown;
-  content: Array<{ type: 'text'; text: string }>;
+  content: McpContent[];
   isError?: boolean;
 }
 
@@ -50,6 +58,14 @@ const reportShape = {
     .optional()
     .describe('Código INEGI de la entidad federativa.'),
   rfc: z.string().optional().describe('RFC del negocio. Se compara en local; nunca se envía al proveedor.'),
+  document: z
+    .boolean()
+    .optional()
+    .describe('Si es true, además genera el resumen ejecutivo en PDF y devuelve su ubicación.'),
+  embed: z
+    .boolean()
+    .optional()
+    .describe('Si es true, adjunta el PDF en la respuesta. Pesa mucho: pídelo solo si el cliente lo necesita incrustado.'),
 };
 
 const radarShape = {};
@@ -62,6 +78,14 @@ const NOTE_BY_STATUS: Record<'verified' | 'not_listed' | 'ambiguous', string> = 
   ambiguous:
     'Sin sello: se encontraron varios negocios con nombres parecidos y no se pudo identificar cuál es. No es lo mismo que no estar registrado. Acota con state_code o envía el rfc.',
 };
+
+// Tool results now carry links and blobs too, so callers ask for the text explicitly.
+export function textOf(result: McpToolResult): string {
+  return result.content
+    .filter((block): block is { type: 'text'; text: string } => block.type === 'text')
+    .map((block) => block.text)
+    .join('\n');
+}
 
 function text(value: string, isError = false): McpToolResult {
   return { content: [{ type: 'text', text: value }], ...(isError && { isError: true }) };
@@ -193,7 +217,42 @@ export function buildReportTool(setup: CrevaScoreSetup): McpToolDefinition<typeo
         disclosure: setup.disclosure,
       });
 
-      return text(JSON.stringify(report, null, 2));
+      const content: McpContent[] = [];
+
+      if (args.document === true) {
+        const document = await buildReportDocument(
+          renderReportHtml(report),
+          report.subject?.business_name ?? 'revision-general',
+        );
+
+        content.push({
+          type: 'text',
+          text: `Documento ${document.kind.toUpperCase()} · ${Math.round(document.bytes / 1024)} KB
+${document.path}
+${document.note}`,
+        });
+        content.push({
+          type: 'resource_link',
+          uri: fileUrl(document.path),
+          name: document.kind === 'pdf' ? 'creva-reporte.pdf' : 'creva-reporte.html',
+          mimeType: document.kind === 'pdf' ? 'application/pdf' : 'text/html',
+          description: document.note,
+        });
+
+        if (args.embed === true) {
+          content.push({
+            type: 'resource',
+            resource: {
+              uri: fileUrl(document.path),
+              mimeType: document.kind === 'pdf' ? 'application/pdf' : 'text/html',
+              blob: readFileSync(document.path).toString('base64'),
+            },
+          });
+        }
+      }
+
+      content.push({ type: 'text', text: JSON.stringify(report, null, 2) });
+      return { content };
     },
   };
 }

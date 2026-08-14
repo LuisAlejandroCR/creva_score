@@ -13,7 +13,7 @@ import { buildScoreDisclosure } from '../../src/modules/score-disclosure/score-d
 import { SieClient } from '../../src/modules/reference-rates/providers/banxico-sie.provider';
 import { DEFAULT_RATE_DEFINITIONS, ReferenceRatesService } from '../../src/modules/reference-rates/reference-rates.service';
 import { createStderrLogger } from '../../src/common/logger';
-import { buildRegulatoryRadarTool, buildVerifyBusinessTool } from '../../src/modules/mcp/mcp.tools';
+import { buildRegulatoryRadarTool, buildVerifyBusinessTool, textOf } from '../../src/modules/mcp/mcp.tools';
 
 const API_KEY = 'croma_live_mcp_must_never_emit_this';
 
@@ -89,7 +89,7 @@ describe('MCP invariants', () => {
           const setup = setupWith(sourceUnavailable('mx.siem', reason));
 
           const result = await buildVerifyBusinessTool(setup).handler({ business_name: name });
-          const payload = JSON.parse(result.content[0]!.text) as { status: string; badge?: unknown };
+          const payload = JSON.parse(textOf(result)) as { status: string; badge?: unknown };
 
           expect(result.isError).toBe(true);
           expect(payload.status).toBe('unavailable');
