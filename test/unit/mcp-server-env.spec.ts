@@ -26,10 +26,10 @@ describe('mcp server environment', () => {
   it('leaves an absolute cache path exactly as configured', () => {
     const absolute = join('D:', 'cache', 'creva.json');
 
-    expect(anchorCachePath({ CACHE_FILE_PATH: absolute }, 'C:\proyecto').CACHE_FILE_PATH).toBe(absolute);
+    expect(anchorCachePath({ CACHE_FILE_PATH: absolute }, join('C:', 'proyecto')).CACHE_FILE_PATH).toBe(absolute);
   });
 
   it('leaves the environment untouched when no cache path is configured', () => {
-    expect(anchorCachePath({ CROMA_API_KEY: 'x' }, 'C:\proyecto')).toEqual({ CROMA_API_KEY: 'x' });
+    expect(anchorCachePath({ CROMA_API_KEY: 'x' }, join('C:', 'proyecto'))).toEqual({ CROMA_API_KEY: 'x' });
   });
 });
