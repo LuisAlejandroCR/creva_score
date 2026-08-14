@@ -2,11 +2,12 @@
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { join } from 'node:path';
+
 import { createCrevaScore } from '../creva-score/creva-score.factory';
 import { loadEnvWithFallback } from '../../config/env';
 import { createStderrLogger } from '../../common/logger';
 import { readEnvFile } from '../../cli/env-file';
+import { anchorCachePath, envSources, packageRoot } from './mcp.env';
 import { buildRegulatoryRadarTool, buildScoreDisclosureTool, buildVerifyBusinessTool } from './mcp.tools';
 
 export const MCP_SERVER_NAME = 'creva-score';
@@ -14,7 +15,16 @@ export const MCP_SERVER_VERSION = '0.1.0';
 
 export function createMcpServer(): McpServer {
   const logger = createStderrLogger();
-  const env = loadEnvWithFallback(readEnvFile(join(process.cwd(), '.env')));
+  const root = packageRoot(__dirname);
+  const env = loadEnvWithFallback(
+    anchorCachePath(
+      envSources(__dirname, process.cwd()).reduce<NodeJS.ProcessEnv>(
+        (merged, source) => ({ ...merged, ...readEnvFile(source) }),
+        {},
+      ),
+      root,
+    ),
+  );
   const setup = createCrevaScore(env, logger);
 
   const server = new McpServer({ name: MCP_SERVER_NAME, version: MCP_SERVER_VERSION });
