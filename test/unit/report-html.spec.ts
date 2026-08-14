@@ -254,6 +254,57 @@ describe('renderReportHtml', () => {
     expect(siemPanel).not.toContain('data-sort=');
   });
 
+  it('numbers the three reasons so they read as a sequence', () => {
+    const html = renderReportHtml(report());
+
+    expect(html.match(/class="why-step" data-step="\d"/g)).toHaveLength(3);
+    for (const number of ['01', '02', '03']) expect(html).toContain(`<span class="why-num">${number}</span>`);
+    // The steps must not be dimmed by the stylesheet alone: only the script may stage them,
+    // because only the script can undo it. The qualified rule is the one allowed to dim.
+    expect(html).toContain('.why-steps.staged .why-step{opacity:.32}');
+
+    const unqualified = html.match(/^\.why-step\{[^}]*\}/m)?.[0] ?? '';
+
+    expect(unqualified).toContain('display:grid');
+    expect(unqualified).not.toContain('opacity:.32');
+  });
+
+  it('folds the reference material but never the disclosure itself', () => {
+    const html = renderReportHtml(report());
+    const foldedFrom = html.indexOf('<div class="audit-more"');
+
+    expect(html).toContain('aria-controls="audit-more"');
+    expect(html).toContain('id="audit-more" hidden');
+    // The claims the score refuses to make sit above the fold, always open.
+    expect(html.indexOf('Lo que NO hace')).toBeLessThan(foldedFrom);
+    expect(html.indexOf('dejes de pagar')).toBeLessThan(foldedFrom);
+    expect(html.indexOf('Fuentes consultadas')).toBeGreaterThan(foldedFrom);
+  });
+
+  it('gives every section a dot that points at a section that exists', () => {
+    const html = renderReportHtml(report());
+    const targets = [...html.matchAll(/data-goto="([a-z-]+)"/g)].map((match) => match[1]);
+
+    expect(targets.length).toBeGreaterThan(0);
+    for (const target of targets) expect(html).toContain(`id="${target}"`);
+  });
+
+  it('drops the market dot when there is no market section to reach', () => {
+    const html = renderReportHtml(
+      buildReport({
+        subject: { business_name: 'ACME', state_code: null },
+        verification: verified,
+        radar,
+        rates: sourceUnavailable('mx.banxico.sie', 'http_500'),
+        disclosure,
+        now,
+      }),
+    );
+
+    expect(html).not.toContain('data-goto="sec-market"');
+    expect(html).toContain('data-goto="sec-audit"');
+  });
+
   it('marks the evidence as cited, never as verified by the act of opening it', () => {
     const html = renderReportHtml(report());
 

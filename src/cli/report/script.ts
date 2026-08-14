@@ -80,6 +80,8 @@ export function script(): string {
     setTimeout(revealSummary,reduce?0:1300);
     setTimeout(growComposition,reduce?0:1900);
     pickPoint(0);
+    watchWhy();
+    watchSections();
   }
 
   // The dot leaves the network and lands where the figure will be, so the two scenes read as one.
@@ -291,6 +293,68 @@ export function script(): string {
     go.setAttribute('data-lane',picked.getAttribute('data-lane'));
   }
 
+  // Each step completes the one before it, so the reader sees a sequence resolve.
+  function watchWhy(){
+    var steps=[].slice.call(document.querySelectorAll('.why-step'));
+    if(steps.length===0)return;
+
+    function reach(index){
+      for(var i=0;i<steps.length;i++){
+        if(i<index)steps[i].classList.add('on','done');
+        else if(i===index)steps[i].classList.add('on');
+      }
+      if(index===steps.length-1)setTimeout(function(){steps[index].classList.add('done');},reduce?0:900);
+    }
+
+    if(reduce||typeof IntersectionObserver!=='function'){
+      steps.forEach(function(s){s.classList.add('on','done');});
+      return;
+    }
+
+    var list=document.querySelector('.why-steps');
+    if(list)list.classList.add('staged');
+
+    var seen=new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if(!entry.isIntersecting)return;
+        reach(steps.indexOf(entry.target));
+      });
+    },{threshold:.6});
+    steps.forEach(function(s){seen.observe(s);});
+  }
+
+  function watchSections(){
+    var dots=[].slice.call(document.querySelectorAll('.dot-nav'));
+    var wrap=document.getElementById('dots');
+    if(dots.length===0||!wrap)return;
+
+    var targets=dots.map(function(d){return document.getElementById(d.getAttribute('data-goto'));});
+    function mark(id){
+      dots.forEach(function(d){d.setAttribute('aria-current',d.getAttribute('data-goto')===id?'true':'false');});
+    }
+    mark(dots[0].getAttribute('data-goto'));
+    wrap.classList.add('on');
+
+    if(typeof IntersectionObserver!=='function')return;
+    var seen=new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if(entry.isIntersecting)mark(entry.target.id);
+      });
+    },{rootMargin:'-45% 0px -45% 0px'});
+    targets.forEach(function(t){if(t)seen.observe(t);});
+  }
+
+  function toggleAudit(){
+    var button=document.getElementById('audit-toggle');
+    var body=document.getElementById('audit-more');
+    if(!button||!body)return;
+    var open=body.hidden;
+    body.hidden=!open;
+    button.setAttribute('aria-expanded',open?'true':'false');
+    var mark=button.querySelector('.audit-toggle-mark');
+    if(mark)mark.textContent=open?'−':'+';
+  }
+
   function pickPoint(index){
     var points=[].slice.call(document.querySelectorAll('.point'));
     var picked=points[index];
@@ -311,6 +375,15 @@ export function script(): string {
 
     var head=t.closest('.panel-head');
     if(head){togglePanel(head.parentNode);return;}
+
+    if(t.closest('#audit-toggle')){toggleAudit();return;}
+
+    var goto=t.closest('.dot-nav');
+    if(goto){
+      var section=document.getElementById(goto.getAttribute('data-goto'));
+      if(section)section.scrollIntoView({behavior:reduce?'auto':'smooth',block:'start'});
+      return;
+    }
 
     var sort=t.closest('.sort-btn');
     if(sort){sortPanel(sort.closest('.panel'),sort.getAttribute('data-sort'));return;}

@@ -69,7 +69,7 @@ export function hero(report: CrevaReport, lanes: SourceLane[]): string {
     )
     .join('');
 
-  return `<section class="block hero" data-enter="hero">
+  return `<section class="block hero" id="sec-hero" data-enter="hero">
   <p class="eyebrow">Perfil público del negocio</p>
   <h1 class="subject big">${escapeHtml(report.subject?.business_name ?? 'Revisión general')}</h1>
   <p class="status pill-${tone}">${escapeHtml(statusWord(report))}</p>
@@ -102,7 +102,7 @@ export function composition(report: CrevaReport, lanes: SourceLane[]): string {
     })
     .join('');
 
-  return `<section class="block composition" data-enter="rail">
+  return `<section class="block composition" id="sec-composition" data-enter="rail">
   <h2>Composición de las señales</h2>
   <p class="blurb">Toca una fuente para aislarla.</p>
 
@@ -127,7 +127,7 @@ export function evidence(lanes: SourceLane[]): string {
     )
     .join('');
 
-  return `<section class="block evidence" data-enter="evidence">
+  return `<section class="block evidence" id="sec-evidence" data-enter="evidence">
   <h2>Evidencia</h2>
   <p class="blurb">Cada señal con su fuente y su fecha. Se muestran las primeras; el resto se pide.</p>
 
@@ -236,7 +236,7 @@ export function market(report: CrevaReport): string {
       .join('')}
   </div>`;
 
-  return `<section class="block market" data-enter="market">
+  return `<section class="block market" id="sec-market" data-enter="market">
   <h2>Contexto de mercado</h2>
   <p class="blurb">Publicado por el Banco de México. Cada cifra trae su propia fecha, porque no se publican el mismo día.</p>
   ${stripBlock}
@@ -248,13 +248,31 @@ export function market(report: CrevaReport): string {
 export function why(report: CrevaReport): string {
   const verified = report.signals.some((s) => s.category === 'business_verification' && s.tone === 'positive');
 
-  return `<section class="block why" data-enter="market">
+  const steps = [
+    {
+      head: verified ? 'Negocio verificado' : 'Negocio consultado',
+      blurb: 'Contra el directorio oficial, con la fecha de la consulta.',
+    },
+    { head: 'Contexto normativo', blurb: 'Lo que se publicó y lo que ya estaba vigente.' },
+    { head: 'Contexto financiero', blurb: 'La referencia contra la que se mide una oferta de crédito.' },
+  ]
+    .map(
+      (step, index) => `<li class="why-step" data-step="${index}">
+    <span class="why-rail" aria-hidden="true">
+      <span class="why-n"><span class="why-num">${String(index + 1).padStart(2, '0')}</span><span class="why-check">✓</span></span>
+      <span class="why-line"></span>
+    </span>
+    <span class="why-body">
+      <span class="why-head">${escapeHtml(step.head)}</span>
+      <span class="blurb">${escapeHtml(step.blurb)}</span>
+    </span>
+  </li>`,
+    )
+    .join('');
+
+  return `<section class="block why" id="sec-why" data-enter="market">
   <h2>Por qué importa</h2>
-  <div class="why-steps">
-    <div class="why-step"><p class="why-head">${verified ? 'Negocio verificado' : 'Negocio consultado'}</p><p class="blurb">Contra el directorio oficial, con la fecha de la consulta.</p></div>
-    <div class="why-step"><p class="why-head">Contexto normativo</p><p class="blurb">Lo que se publicó y lo que ya estaba vigente.</p></div>
-    <div class="why-step"><p class="why-head">Contexto financiero</p><p class="blurb">La referencia contra la que se mide una oferta de crédito.</p></div>
-  </div>
+  <ol class="why-steps">${steps}</ol>
 </section>`;
 }
 
@@ -283,7 +301,8 @@ export function audit(report: CrevaReport): string {
     )
     .join('');
 
-  return `<section class="block audit" data-enter="audit">
+  // The disclosure stays open. Only the reference material behind it folds away.
+  return `<section class="block audit" id="sec-audit" data-enter="audit">
   <h2>Sobre este análisis</h2>
   <p class="blurb">${escapeHtml(report.disclosure.describes)} Ventana de ${report.disclosure.window_days} días · versión ${escapeHtml(report.disclosure.score_version)}.</p>
 
@@ -292,16 +311,22 @@ export function audit(report: CrevaReport): string {
     <ul class="notes">${report.disclosure.does_not_estimate.map((claim) => `<li>${escapeHtml(claim)}</li>`).join('')}</ul>
   </div>
 
-  <p class="label spaced">De dónde sale cada dato</p>
-  <div class="audit-grid">${levels}</div>
-  ${notes}
+  <button class="audit-toggle" id="audit-toggle" type="button" aria-expanded="false" aria-controls="audit-more">
+    Ver la procedencia y las fuentes <span class="audit-toggle-mark" aria-hidden="true">+</span>
+  </button>
 
-  ${
-    rows === ''
-      ? ''
-      : `<p class="label spaced">Fuentes consultadas</p>
-  <table class="sources"><thead><tr><th>Proveedor</th><th>Conjunto de datos</th><th>Consultado</th></tr></thead><tbody>${rows}</tbody></table>`
-  }
+  <div class="audit-more" id="audit-more" hidden>
+    <p class="label spaced">De dónde sale cada dato</p>
+    <div class="audit-grid">${levels}</div>
+    ${notes}
+
+    ${
+      rows === ''
+        ? ''
+        : `<p class="label spaced">Fuentes consultadas</p>
+    <table class="sources"><thead><tr><th>Proveedor</th><th>Conjunto de datos</th><th>Consultado</th></tr></thead><tbody>${rows}</tbody></table>`
+    }
+  </div>
 </section>`;
 }
 

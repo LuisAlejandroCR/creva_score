@@ -148,7 +148,7 @@ color:var(--ok);opacity:0;transition:opacity var(--slow) var(--ease)}
 .summary-done.on{opacity:1}
 .explore-cue{margin:2rem 0 0;font-size:.78rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);
 opacity:0;transition:opacity var(--slow) var(--ease)}
-.explore-cue.on{opacity:1;animation:nudge 2.6s var(--ease) infinite}
+.explore-cue.on{opacity:1;animation:nudge 2.6s var(--ease) 5}
 @keyframes nudge{0%,100%{transform:translateY(0)}50%{transform:translateY(5px)}}
 
 .comp{display:grid;gap:1.6rem;grid-template-columns:minmax(0,1fr) minmax(11rem,15rem);align-items:center}
@@ -260,14 +260,50 @@ font-size:.74rem;color:var(--muted);white-space:nowrap;transition:color var(--mi
 .rate-value{font-size:clamp(1.6rem,3.6vw,2.2rem);margin:0;font-weight:700;letter-spacing:-.02em;color:var(--tx)}
 .rate-label{margin:.2rem 0 .25rem;font-size:.82rem;letter-spacing:.06em;color:var(--muted)}
 .pulse{height:1px;margin-top:2.2rem;background:linear-gradient(90deg,transparent,var(--rosa),transparent);
-background-size:200% 100%;animation:sweep 6s linear infinite}
+background-size:200% 100%;animation:sweep 6s linear 3}
 @keyframes sweep{to{background-position:200% 0}}
 
-.why-steps{display:grid;gap:.7rem;grid-template-columns:repeat(auto-fit,minmax(15rem,1fr))}
-.why-step{background:rgba(255,255,255,.62);border:1px solid var(--bd);border-radius:16px;padding:1.2rem}
+.why-steps{list-style:none;margin:1.4rem 0 0;padding:0;display:grid}
+.why-step{display:grid;grid-template-columns:2.6rem 1fr;gap:1rem;padding-bottom:2rem;
+transition:opacity var(--slow) var(--ease)}
+.why-step:last-child{padding-bottom:0}
+/* the dimming is applied only once the script can undo it, so the text is never stranded */
+.why-steps.staged .why-step{opacity:.32}
+.why-steps.staged .why-step.on{opacity:1}
+.why-rail{display:flex;flex-direction:column;align-items:center}
+.why-n{position:relative;width:2.4rem;height:2.4rem;flex:none;border-radius:50%;
+border:1px solid var(--bd);background:var(--s1);display:flex;align-items:center;justify-content:center;
+transition:border-color var(--mid) var(--ease),background var(--mid) var(--ease)}
+.why-num,.why-check{position:absolute;transition:opacity var(--mid) var(--ease),transform var(--mid) var(--ease)}
+.why-num{font-size:.78rem;font-weight:700;letter-spacing:.06em;color:var(--muted)}
+.why-check{font-size:1rem;color:var(--ok);opacity:0;transform:scale(.5)}
+.why-step.on .why-n{border-color:rgba(196,30,58,.35)}
+.why-step.done .why-n{border-color:rgba(46,106,72,.4);background:var(--s2)}
+.why-step.done .why-num{opacity:0}
+.why-step.done .why-check{opacity:1;transform:none}
+.why-line{flex:1;width:1px;margin-top:.5rem;background:var(--bd);position:relative;overflow:hidden}
+.why-line::after{content:'';position:absolute;inset:0;background:var(--ok);
+transform:scaleY(0);transform-origin:top;transition:transform var(--slow) var(--ease)}
+.why-step.done .why-line::after{transform:scaleY(1)}
+.why-step:last-child .why-line{display:none}
+.why-body{display:flex;flex-direction:column;padding-top:.35rem}
 .why-head{margin:0 0 .3rem;font-weight:650}
+.why-body .blurb{margin:0}
 
-.audit{margin-bottom:3rem}
+.dots{position:fixed;right:1.6rem;top:50%;transform:translateY(-50%);z-index:5;
+display:none;flex-direction:column;gap:.7rem;opacity:0;transition:opacity var(--slow) var(--ease)}
+.dots.on{opacity:1}
+.dot-nav{width:9px;height:9px;padding:0;border-radius:50%;border:1px solid var(--subtle);
+background:none;cursor:pointer;transition:all var(--mid) var(--ease)}
+.dot-nav:hover{border-color:var(--crimson)}
+.dot-nav[aria-current="true"]{background:var(--crimson);border-color:var(--crimson);transform:scale(1.35)}
+
+.audit{margin-bottom:3rem;font-size:.94rem}
+.audit-toggle{margin-top:1rem;padding:.5rem 1rem;border-radius:999px;border:1px solid var(--bd);
+background:none;color:var(--muted);font-size:.8rem;cursor:pointer;
+transition:all var(--mid) var(--ease)}
+.audit-toggle:hover{color:var(--tx);border-color:var(--subtle)}
+.audit-toggle-mark{margin-left:.3rem;font-size:1rem;line-height:1}
 .audit-card{background:rgba(255,255,255,.5);border:1px solid rgba(26,22,19,.06);border-radius:14px;padding:1.1rem 1.2rem;margin-bottom:.6rem}
 .audit-grid{display:grid;gap:.6rem;grid-template-columns:repeat(auto-fit,minmax(14rem,1fr))}
 .notes{margin:0;padding-left:1.1rem;color:var(--muted)}
@@ -281,21 +317,38 @@ background-size:200% 100%;animation:sweep 6s linear infinite}
 .closing-arc{font-size:clamp(1rem,2.6vw,1.5rem);font-weight:650;margin:0 0 .6rem;letter-spacing:-.01em}
 .closing-tally{margin:0;color:var(--muted);font-size:.86rem}
 
+/* The side rail needs room the report itself is not using; below that it would overlap the text. */
+@media(min-width:1080px){.dots{display:flex}}
+
 @media(max-width:640px){
+  main{padding:0 1.1rem}
   .net{width:100%}
-  .figure{font-size:clamp(4.5rem,26vw,8rem)}
-  .metric{aspect-ratio:1/.8}
+  .figure{font-size:clamp(4rem,22vw,6.5rem)}
+  .metric{aspect-ratio:1/.86}
+  .hero{padding-top:5rem;margin-bottom:4.5rem}
+  .block{margin-bottom:3.6rem}
   .comp{grid-template-columns:1fr}
   .comp-name{width:3.8rem}
-  .filters{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:.2rem}
+  .comp-row{min-height:44px}
+  .insight{min-height:52px}
+  .filters{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:.2rem;
+  margin-left:-1.1rem;margin-right:-1.1rem;padding-left:1.1rem;padding-right:1.1rem}
   .filters::-webkit-scrollbar{display:none}
-  .filter{flex:none;min-height:40px}
+  .filter{flex:none;min-height:44px;display:flex;align-items:center}
   .panel-head{min-height:56px}
   .panel-cta,.panel-seen{display:none}
   .bar-status{display:none}
-  .point-tag{font-size:.68rem}
   .sort{padding:.7rem 1rem}
-  .sort-btn{min-height:36px}
+  .sort-btn{min-height:44px}
+  .more{min-height:44px}
+  .audit-toggle{min-height:44px}
+  /* the visible dot stays small; the touch target around it does not */
+  .strip{padding:0 1.4rem}
+  .point::after{content:'';position:absolute;left:50%;top:50%;width:44px;height:44px;
+  transform:translate(-50%,-50%)}
+  .point-tag{font-size:.68rem}
+  .why-step{grid-template-columns:2.2rem 1fr;gap:.8rem}
+  .why-n{width:2rem;height:2rem}
 }
 
 @media(prefers-reduced-motion:reduce){
@@ -304,9 +357,12 @@ background-size:200% 100%;animation:sweep 6s linear infinite}
   .explore-cue.on,.item.fresh,.tick.on .tick-mark,.insight.on .insight-mark,.net .node.on circle{animation:none}
   [data-enter],.bar,.panel-body,.panel-inner,.net .link,.net .node circle,.net .node text,
   .investigate,.net,.figure,.insight,.dot,.tick,.flash,.summary-done,.explore-cue,
-  .filter-result,.item,.item::before,.point,.point-tag,.meta-dot,.doc-go,.panel-seen{transition:none}
+  .filter-result,.item,.item::before,.point,.point-tag,.meta-dot,.doc-go,.panel-seen,
+  .dots,.dot-nav,.why-step,.why-n,.why-num,.why-check,.why-line::after{transition:none}
   .net .spark{display:none}
   .item:hover{transform:none}
+  /* the sequence is the content here, so it arrives complete rather than not at all */
+  .why-step{opacity:1}
 }
 `;
 }
