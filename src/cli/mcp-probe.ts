@@ -25,8 +25,12 @@ interface JsonRpcMessage {
   error?: { message?: string };
 }
 
-export function parseProbeArgs(argv: string[]): { tool?: string; args: Record<string, unknown> } {
-  const parsed: { tool?: string; args: Record<string, unknown> } = { args: {} };
+export function parseProbeArgs(argv: string[]): {
+  tool?: string;
+  args: Record<string, unknown>;
+  argsError?: string;
+} {
+  const parsed: { tool?: string; args: Record<string, unknown>; argsError?: string } = { args: {} };
 
   for (let index = 0; index < argv.length; index++) {
     if (argv[index] === '--tool') parsed.tool = argv[index + 1];
@@ -36,7 +40,9 @@ export function parseProbeArgs(argv: string[]): { tool?: string; args: Record<st
         try {
           parsed.args = JSON.parse(raw) as Record<string, unknown>;
         } catch {
+          // Swallowing this made a quoting mistake look like a schema error.
           parsed.args = {};
+          parsed.argsError = raw;
         }
       }
     }
@@ -101,7 +107,25 @@ export function render(report: ProbeReport, toolName?: string): string {
 }
 
 async function main(): Promise<void> {
-  const { tool, args } = parseProbeArgs(process.argv.slice(2));
+  const { tool, args, argsError } = parseProbeArgs(process.argv.slice(2));
+
+  if (argsError !== undefined) {
+    process.stdout.write(
+      [
+        'Sonda MCP',
+        '',
+        '  ⚠️ --args no es JSON válido, así que se ignoró por completo.',
+        `     recibido: ${argsError}`,
+        '',
+        '  En PowerShell las comillas escapadas llegan literales. Usa:',
+        `     node dist/cli/mcp-probe.js --tool creva_verify_business --args (ConvertTo-Json @{ business_name = 'ABARROTES ERENDIRA'; state_code = 8 } -Compress)`,
+        '',
+      ].join('\n'),
+    );
+    process.exitCode = 1;
+    return;
+  }
+
   const child = spawn(process.execPath, [join(__dirname, '../modules/mcp/mcp.server.js')], {
     stdio: ['pipe', 'pipe', 'pipe'],
   });
