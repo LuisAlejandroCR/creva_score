@@ -4,6 +4,7 @@ import { z } from 'zod/v3';
 import { buildVerificationBadge } from '../business-verification/business-verification.badge';
 import { getVerificationStatus } from '../business-verification/business-verification.service';
 import { CrevaScoreSetup } from '../creva-score/creva-score.factory';
+import { buildReport } from '../creva-score/creva-report.builder';
 import { renderScoreDisclosure } from '../score-disclosure/score-disclosure.service';
 
 export interface McpToolResult {
@@ -32,6 +33,23 @@ const verifyBusinessShape = {
     .optional()
     .describe('Código INEGI de la entidad federativa. Acota una búsqueda que suele traer miles de resultados.'),
   rfc: z.string().optional().describe('RFC del negocio. Si se envía, se usa para confirmar que el registro es el correcto.'),
+};
+
+const reportShape = {
+  business_name: z
+    .string()
+    .min(2)
+    .max(200)
+    .optional()
+    .describe('Nombre del negocio. Si se omite, el reporte sale sin sello y lo dice.'),
+  state_code: z
+    .number()
+    .int()
+    .min(0)
+    .max(32)
+    .optional()
+    .describe('Código INEGI de la entidad federativa.'),
+  rfc: z.string().optional().describe('RFC del negocio. Se compara en local; nunca se envía al proveedor.'),
 };
 
 const radarShape = {};
@@ -141,6 +159,41 @@ export function buildRegulatoryRadarTool(
           2,
         ),
       );
+    },
+  };
+}
+
+export function buildReportTool(setup: CrevaScoreSetup): McpToolDefinition<typeof reportShape> {
+  return {
+    name: 'creva_report',
+    config: {
+      title: 'Reporte completo de verificación pública',
+      description:
+        'Devuelve el reporte entero de un negocio: las señales encontradas en cada registro de gobierno, cada una con su fuente y su fecha, las fuentes consultadas, y la ficha de qué describe el puntaje y qué NO estima. Es la misma composición que produce el reporte visual. No emite un veredicto ni una recomendación de crédito.',
+      inputSchema: reportShape,
+    },
+    async handler(args) {
+      const verification =
+        args.business_name === undefined
+          ? null
+          : await setup.service.verify({
+              businessName: args.business_name,
+              stateCode: args.state_code,
+              rfc: args.rfc,
+            });
+
+      const report = buildReport({
+        subject:
+          args.business_name === undefined
+            ? null
+            : { business_name: args.business_name, state_code: args.state_code ?? null },
+        verification,
+        radar: await setup.radar.scan(),
+        rates: await setup.rates.getRates(),
+        disclosure: setup.disclosure,
+      });
+
+      return text(JSON.stringify(report, null, 2));
     },
   };
 }

@@ -8,7 +8,12 @@ import { loadEnvWithFallback } from '../../config/env';
 import { createStderrLogger } from '../../common/logger';
 import { readEnvFile } from '../../cli/env-file';
 import { anchorCachePath, envSources, packageRoot } from './mcp.env';
-import { buildRegulatoryRadarTool, buildScoreDisclosureTool, buildVerifyBusinessTool } from './mcp.tools';
+import {
+  buildRegulatoryRadarTool,
+  buildReportTool,
+  buildScoreDisclosureTool,
+  buildVerifyBusinessTool,
+} from './mcp.tools';
 
 export const MCP_SERVER_NAME = 'creva-score';
 export const MCP_SERVER_VERSION = '0.1.0';
@@ -37,6 +42,9 @@ export function createMcpServer(): McpServer {
 
   const disclosure = buildScoreDisclosureTool(setup);
   server.registerTool(disclosure.name, disclosure.config, disclosure.handler);
+
+  const report = buildReportTool(setup);
+  server.registerTool(report.name, report.config, report.handler);
 
   return server;
 }

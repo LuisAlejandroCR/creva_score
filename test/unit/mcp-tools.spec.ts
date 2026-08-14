@@ -12,7 +12,7 @@ import { loadEnv } from '../../src/config/env';
 import { buildScoreDisclosure } from '../../src/modules/score-disclosure/score-disclosure.service';
 import { SieClient } from '../../src/modules/reference-rates/providers/banxico-sie.provider';
 import { DEFAULT_RATE_DEFINITIONS, ReferenceRatesService } from '../../src/modules/reference-rates/reference-rates.service';
-import { buildRegulatoryRadarTool, buildVerifyBusinessTool } from '../../src/modules/mcp/mcp.tools';
+import { buildRegulatoryRadarTool, buildReportTool, buildVerifyBusinessTool } from '../../src/modules/mcp/mcp.tools';
 
 class Croma implements CromaCallable {
   readonly calls: Array<{ path: string; body: unknown }> = [];
@@ -204,5 +204,60 @@ describe('creva_regulatory_radar', () => {
     const { setup } = setupWith(new Map());
 
     expect(Object.keys(buildRegulatoryRadarTool(setup).config.inputSchema)).toEqual([]);
+  });
+});
+
+
+describe('creva_report', () => {
+  const found = sourceOk('mx.siem', {
+    query: 'ACME',
+    establishments: [
+      { establishment_id: '1', commercial_name: 'ACME', chamber: 'x', state: 'Chihuahua', state_code: 8 },
+    ],
+    pagination: { total: 1, page_size: 10, total_pages: 1, page: 1 },
+  });
+
+  it('returns the whole composition, with every signal naming its source', async () => {
+    const { setup } = setupWith(new Map([[SIEM_SEARCH_PATH, found]]));
+    const result = await buildReportTool(setup).handler({ business_name: 'ACME', state_code: 8 });
+    const report = JSON.parse(result.content[0]!.text) as {
+      subject: { business_name: string } | null;
+      signals: Array<{ source: string; tone: string }>;
+      disclosure: { kind: string; does_not_estimate: string[] };
+    };
+
+    expect(report.subject?.business_name).toBe('ACME');
+    expect(report.signals.length).toBeGreaterThan(0);
+    for (const signal of report.signals) expect(signal.source.length).toBeGreaterThan(0);
+  });
+
+  it('carries the disclosure, so an assistant cannot summarise the caveats away', async () => {
+    const { setup } = setupWith(new Map([[SIEM_SEARCH_PATH, found]]));
+    const result = await buildReportTool(setup).handler({ business_name: 'ACME' });
+    const report = JSON.parse(result.content[0]!.text) as {
+      disclosure: { kind: string; does_not_estimate: string[] };
+    };
+
+    expect(report.disclosure.kind).toBe('descriptive');
+    expect(report.disclosure.does_not_estimate.length).toBeGreaterThan(0);
+  });
+
+  it('still answers without a business, and says the badge is missing', async () => {
+    const { setup } = setupWith(new Map());
+    const result = await buildReportTool(setup).handler({});
+    const report = JSON.parse(result.content[0]!.text) as { subject: unknown; notes: string[] };
+
+    expect(report.subject).toBeNull();
+    expect(report.notes.join(' ')).toContain('no consultó ningún negocio');
+  });
+
+  it('never grades the business', async () => {
+    const { setup } = setupWith(new Map([[SIEM_SEARCH_PATH, found]]));
+    const result = await buildReportTool(setup).handler({ business_name: 'ACME' });
+    const raw = result.content[0]!.text.toLowerCase();
+
+    for (const verdict of ['favorable', 'aprob', 'rechaz', 'confianza', 'riesgo']) {
+      expect(raw).not.toContain(verdict);
+    }
   });
 });

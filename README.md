@@ -107,7 +107,14 @@ Accesible por teclado y con `prefers-reduced-motion` respetado.
 
 ### Usarlo desde un agente (MCP)
 
-Expone sus composiciones como herramientas MCP por stdio: `creva_verify_business`, `creva_regulatory_radar` y `creva_score_disclosure`.
+Expone sus composiciones como herramientas MCP por stdio:
+
+| Herramienta | Qué devuelve |
+|---|---|
+| `creva_report` | El reporte completo: todas las señales con su fuente y su fecha, más la ficha de qué **no** estima |
+| `creva_verify_business` | Solo el sello del directorio |
+| `creva_regulatory_radar` | Solo las reglas y novedades |
+| `creva_score_disclosure` | Solo la ficha de declaración |
 
 ```bash
 npm run mcp
