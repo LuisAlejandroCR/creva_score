@@ -1,4 +1,4 @@
-import { join } from 'node:path';
+import { isAbsolute, join, resolve } from 'node:path';
 import { anchorCachePath, envSources, packageRoot } from '../../src/modules/mcp/mcp.env';
 
 const DIST = join('C:', 'proyecto', 'dist', 'modules', 'mcp');
@@ -24,9 +24,12 @@ describe('mcp server environment', () => {
   });
 
   it('leaves an absolute cache path exactly as configured', () => {
-    const absolute = join('D:', 'cache', 'creva.json');
+    // resolve() yields whatever "absolute" means on the platform running the test.
+    // A hard-coded Windows path is relative on Linux, which is how this went red on CI.
+    const absolute = resolve('cache', 'creva.json');
+    expect(isAbsolute(absolute)).toBe(true);
 
-    expect(anchorCachePath({ CACHE_FILE_PATH: absolute }, join('C:', 'proyecto')).CACHE_FILE_PATH).toBe(absolute);
+    expect(anchorCachePath({ CACHE_FILE_PATH: absolute }, resolve('proyecto')).CACHE_FILE_PATH).toBe(absolute);
   });
 
   it('leaves the environment untouched when no cache path is configured', () => {

@@ -10,72 +10,56 @@ Creva Score ayuda a las emprendedoras mexicanas a demostrar que su negocio es re
 
 Cuando una mujer abre su negocio y pide su primer crédito, el banco le pide historial. Ella no lo tiene todavía, no porque no venda, sino porque nunca le prestaron. Y como no le prestan, nunca lo construye.
 
-Entonces le dicen que no. No por su negocio, sino por un dato que falta.
+Lo injusto es que la información sí existe: su negocio está en registros públicos y su actividad está declarada. Nadie los junta y nadie los mira.
 
-Lo injusto es que la información sí existe: su negocio está en registros públicos, su actividad está declarada, sus movimientos están en su cuenta. Nadie los junta y nadie los mira.
-
-## ¿Qué hace Creva Score?
+## Qué hace
 
 Reúne lo que ya se puede saber de su negocio y lo convierte en algo que se entiende y se puede enseñar:
 
-- **Un puntaje que se explica solo.** Cada parte del puntaje dice de dónde salió y de qué fecha es. Nada de "así lo dice el sistema".
-- **Información oficial, no suposiciones.** La que está publicada por las propias instituciones.
-- **Cosas que sí puede hacer.** Si algo baja su puntaje, la app le dice qué cambiarlo, no solo que está mal.
+- **Un puntaje que se explica solo.** Cada parte dice de dónde salió y de qué fecha es.
+- **Información oficial, no suposiciones.**
+- **Cosas que sí puede hacer.** Si algo baja su puntaje, la app le dice qué cambiar.
 
-## ¿Cómo lo hacemos?
+## Cómo lo hacemos
 
-Con reglas claras, no con adivinanzas:
+**Nunca la castigamos por lo que no aparece.** Muchos registros oficiales son voluntarios. Que su negocio no esté ahí no dice nada malo de ella, así que no le resta.
 
-**Nunca la castigamos por lo que no aparece.** Muchos registros oficiales son voluntarios: un negocio puede no estar ahí simplemente porque nunca se inscribió. Que no aparezca no dice nada malo de ella, así que no le resta.
+**No usamos antecedentes penales.** Ni de ella, ni de nadie. Es una decisión firme y no va a cambiar.
 
-**No usamos información de antecedentes penales.** Ni de ella, ni de nadie. Un puntaje de crédito no se construye con eso. Es una decisión firme y no la vamos a cambiar.
+**Ella decide.** Consultamos sus datos porque ella lo autoriza, le decimos qué y para qué, y puede pedirnos que los borremos.
 
-**Ella decide.** Consultamos sus datos porque ella nos lo autoriza, le decimos qué vamos a consultar y para qué, y puede pedirnos que los borremos cuando quiera.
+**Que algo sea público no lo hace nuestro.** Un dato publicado sigue siendo de la persona a la que se refiere.
 
-**Que algo sea público no lo hace nuestro.** Un dato publicado por una institución sigue siendo de la persona a la que se refiere. Lo tratamos así.
+## México primero, y luego la región
 
-## ¿Por qué México primero, y luego la región?
+Empezamos en México porque ahí están nuestras usuarias. La misma idea funciona en Colombia y en Perú con los registros de cada país: es el mismo producto mirando otra ventanilla.
 
-Empezamos en México porque ahí están nuestras usuarias. Pero la misma idea funciona en Colombia y en Perú con los registros de cada país: es el mismo producto mirando otra ventanilla. Crecer a la región no es una promesa, es el siguiente paso natural.
+## Estado
 
-## Estado del proyecto
+🚧 **En construcción.** Las dos piezas funcionan de principio a fin contra los registros oficiales reales y su resultado se puede ver en pantalla. Todavía no hay una app que puedas abrir.
 
-🚧 **En construcción.** Las dos piezas ya funcionan de principio a fin contra los registros oficiales reales, y su resultado se puede ver en pantalla. Todavía no hay una app que puedas abrir: eso es lo que sigue.
+**1. El sello de tu negocio.** Busca tu negocio en el directorio oficial de establecimientos y, si está, emite un sello con su fuente y su fecha.
 
-### 1. El sello de tu negocio
+- **Tu puntaje no depende de esto.** Con sello o sin él, es exactamente el mismo.
+- **Lo medimos antes de decidirlo.** El directorio cubre muchísimo mejor a unos estados que a otros; si diera puntos, premiaría el código postal.
+- **No te damos un sello que no sea tuyo.** Si aparecen varios negocios con nombres parecidos, te lo decimos y no emitimos nada.
 
-Busca tu negocio en el directorio oficial de establecimientos y, si está, emite un sello que puedes enseñar.
+**2. Avisos de reglas que te afectan.** Revisa el diario oficial y la lista de reglas vigentes de la autoridad bancaria, y separa lo que toca tu crédito de lo que no.
 
-- **Tu puntaje no depende de esto.** Si tu negocio aparece en el directorio, ganas un sello; si no aparece, tu puntaje es exactamente el mismo. Ni mejor ni peor.
-- **Lo medimos antes de decidirlo.** Revisamos cuántos micronegocios están realmente registrados y encontramos que el directorio cubre muchísimo mejor a unos estados que a otros. Si eso diera puntos, estaríamos premiando el código postal. Por eso no da puntos.
-- **El sello se puede comprobar.** Dice de qué fuente salió y en qué fecha se consultó, para que cualquiera pueda verificarlo.
-- **No te damos un sello que no sea tuyo.** Si buscamos y aparecen muchos negocios con nombres parecidos, te lo decimos y no emitimos nada. Un sello a nombre de otro negocio no te sirve de nada frente a un banco, y a nosotros nos costaría lo único que importa aquí: que se pueda creer.
-- Si el servicio de consulta se cae, no pasa nada: tu puntaje se calcula igual.
+- **No consulta ningún dato tuyo:** es la misma revisión para todas.
+- **Distingue una novedad de una regla que ya existía.**
+- **Cada aviso trae su fuente, su fecha y el documento oficial detrás.**
+- Si una fuente no responde ese día, lo dice.
 
-### 2. Avisos de reglas que te afectan
+**Lo que guardamos.** Los resultados se guardan un rato para no repetir la misma consulta. Se archivan bajo una huella ilegible, no bajo el nombre de tu negocio, y se pueden borrar de verdad.
 
-Revisa lo que se publica en el diario oficial del gobierno y la lista de reglas vigentes de la autoridad bancaria, y separa lo que toca tu crédito de lo que no.
-
-- **No consulta ningún dato tuyo.** Es la misma revisión para todas: no hay nada personal de por medio.
-- **Distingue una novedad de una regla que ya existía**, para que no parezca noticia algo que lleva años publicado.
-- **Cada aviso trae su fuente y su fecha**, con el documento oficial detrás.
-- **Los temas que vigila salen de documentos reales**, no de palabras que nos sonaron bien: leímos el catálogo oficial completo de reglas y varios días del diario oficial, y elegimos con eso a la vista.
-- Si una fuente no responde ese día, lo dice. Preferimos avisarte que no pudimos mirar, a dejarte creer que no había nada.
-
-### Lo que guardamos, y cómo
-
-Consultar los registros oficiales toma su tiempo, así que guardamos el resultado un rato en lugar de preguntar lo mismo una y otra vez. Dos cosas que nos importan de eso:
-
-- **Lo guardado no lleva tu nombre en claro.** Se archiva bajo una huella ilegible, no bajo el nombre de tu negocio.
-- **Se puede borrar.** Si nos pides que quitemos tus datos, hay una forma de hacerlo de verdad, no solo de dejar de mostrarlos.
-
-Este proyecto se está construyendo durante el [IA Hackathon GovTech](https://usecroma.com/es/changelog/hackathon-govtech) (12–16 de agosto de 2026), sobre [Croma](https://usecroma.com), que da acceso a datos de gobierno de México, Colombia y Perú.
+Construido durante el [IA Hackathon GovTech](https://usecroma.com/es/changelog/hackathon-govtech) (12–16 de agosto de 2026) sobre [Croma](https://usecroma.com), que da acceso a datos de gobierno de México, Colombia y Perú.
 
 ## Tus datos
 
-Nuestro Aviso de Privacidad y nuestros Términos de Servicio están redactados y en revisión legal. Se publican aquí antes de que el producto se abra al público — no vamos a pedirte datos sin que puedas leer primero qué hacemos con ellos.
+Nuestro Aviso de Privacidad y Términos de Servicio están redactados y en revisión legal. Se publican aquí antes de que el producto se abra al público.
 
-Mientras tanto, esto es lo que ya está decidido y no va a cambiar:
+Lo que ya está decidido y no va a cambiar:
 
 - Consultamos registros oficiales **solo sobre tu negocio**, y solo si tú nos autorizas.
 - **No consultamos antecedentes penales** de nadie.
@@ -86,9 +70,7 @@ Mientras tanto, esto es lo que ya está decidido y no va a cambiar:
 
 ## Para devs
 
-> A partir de aquí el texto es técnico. Si llegaste buscando qué hace Creva Score, ya lo leíste arriba.
-
-**Requisitos:** Node 20 o superior.
+**Requisitos:** Node 20 o superior. CI corre sobre Node 22.
 
 ```bash
 npm install
@@ -97,7 +79,7 @@ cp .env.example .env    # y coloca tu credencial de Croma en CROMA_API_KEY
 
 Sin `CROMA_API_KEY` todo arranca igual: cada consulta responde "no disponible" y nada revienta.
 
-### Verlo funcionando
+### Demo por terminal
 
 ```bash
 npm run demo
@@ -109,111 +91,48 @@ Muestra los avisos regulatorios. Para incluir el sello de un negocio:
 node dist/cli/demo.js --negocio "ABARROTES ERENDIRA" --estado 8
 ```
 
-En `cmd.exe`, `npm run demo -- --negocio "…"` rompe las comillas: usa `node dist/cli/demo.js` directamente.
+El estado es opcional pero casi siempre necesario: buscar por nombre sin acotar suele devolver miles de coincidencias, y entonces no se emite sello. En `cmd.exe`, `npm run demo -- --negocio "…"` rompe las comillas.
 
-### Verlo como producto, no como terminal
+### Reporte
 
 ```bash
 node dist/cli/demo.js --negocio "ABARROTES ERENDIRA" --estado 8 --reporte
 ```
 
-Genera `creva-report.html` y `creva-report.json`. El HTML es **un solo archivo**: no carga nada de internet, no necesita servidor y se abre con doble clic. Muestra primero la investigación en curso, después las señales con su fuente y su fecha, y cierra con lo que el puntaje **no** estima.
+Genera `creva-report.html` y `creva-report.json`. El HTML es **un solo archivo**: no carga nada de internet, no necesita servidor y se abre con doble clic. Los únicos enlaces que salen son a los documentos oficiales citados.
 
-Los únicos enlaces que salen del archivo son a los documentos oficiales citados, para que cualquiera pueda comprobarlos.
+Cuatro etapas —Resumen, Señales, Mercado y Auditoría— con navegación hacia adelante y atrás; lo que abriste o filtraste sigue igual al volver. En **Señales**, elegir una fuente o mover el rango de años filtra a la vez las barras, la línea de tiempo y la evidencia, así que nunca hay dos cifras que se contradigan. **"Ver todo"** despliega las cuatro en una página para buscar con `Ctrl+F`; **"Descargar PDF"** da un resumen ejecutivo de dos páginas; **"Compartir"** abre WhatsApp con cifras públicas, nunca el RFC.
 
-El reporte está dividido en cuatro pasos —Resumen, Señales, Mercado y Auditoría— y te mueves entre ellos cuando quieras, hacia adelante o hacia atrás. Lo que ya abriste o filtraste sigue como lo dejaste al volver. A la izquierda, junto a los pasos, quedan siempre a la vista la fecha de consulta y la ventana revisada.
-
-El **Resumen** abre con la cifra que la búsqueda acaba de encontrar, grande y al centro de un círculo que muestra de un vistazo cuánto puso cada fuente. Debajo, tres tarjetas —fuentes consultadas, sello del directorio y la tasa de referencia— y una puerta a cada paso. Cada cifra se dice **una sola vez** en todo el reporte.
-
-**Señales** responde una sola pregunta de principio a fin: de dónde salió cada señal, y cuál es el documento que la respalda. Arriba, una barra por fuente con su cuenta y su porcentaje; tocar una **filtra todo lo que sigue** —la línea de tiempo y la evidencia— y un botón te devuelve al total. Antes eran dos pasos separados que repetían las mismas cifras y ofrecían tres filtros para las mismas cuatro fuentes.
-
-La línea de tiempo lleva una fila por fuente y un punto por señal, en la fecha que trae. Cuando dos señales caen casi el mismo día, el punto se apila en vez de taparse: **el lugar horizontal siempre es la fecha real**, nunca se corre para que quepa.
-
-Arriba de todo hay un **rango de años** que recorta la pantalla entera: las barras, la línea de tiempo y la evidencia se mueven juntas, así que nunca verás una barra que diga una cantidad y una lista que muestre otra. Puedes arrastrar las dos manijas o **escribir los años**; si escribes uno que no tiene señales, se ajusta al más cercano que sí las tenga en vez de rechazarlo. Se combina con la fuente que hayas elegido, no la reemplaza. Y si una fuente se queda sin señales en esos años, te lo dice con esas palabras — que no es lo mismo que no haber encontrado nada en toda la revisión.
-
-En la línea de tiempo, al pasar el cursor —o al llegar con el teclado— una línea fija debajo del gráfico te dice qué es ese punto antes de que lo toques.
-
-La evidencia viene plegada y se abre con un clic o con el teclado. De cada fuente se muestran las primeras señales, y el resto lo pides tú de a poco — nada te cae encima de golpe. Puedes ordenar por fecha.
-
-Cada renglón dice solo dos cosas: **qué es y de cuándo**, y **el renglón mismo es el enlace**: un clic y estás en el documento oficial, en otra pestaña. Sin ventanas de por medio. Si una señal no trae documento en línea, el renglón lo dice —"sin documento"— y no finge ser un enlace. Al final de esta pantalla, que es la más larga, hay una fila para **volver arriba**.
-
-Las tasas de referencia se comparan entre sí en una misma línea, con la escala escrita al lado para que no parezca grande una diferencia que es pequeña. El valor de la UDI va aparte, porque no es una tasa y compararlo contra ellas no significaría nada.
-
-Si prefieres verlo todo de corrido —para buscar una palabra— hay un botón **"Ver todo"** arriba a la derecha que despliega los cinco pasos en una sola página.
-
-Con **"Descargar PDF"** obtienes un resumen ejecutivo de **dos páginas**, pensado para enviarlo a quien evalúa tu solicitud. Es el mismo tablero, en papel, con las mismas cuatro cifras que abren la pantalla: la primera página se lee sola —negocio, sello, cifras, reparto por fuente y la evidencia más reciente—; la segunda lleva las tasas, lo que este análisis **no** estima y las fuentes con su fecha. Sin tablas y casi sin párrafos. La línea de tiempo **no va al papel**: veinticinco puntos sobre catorce años son para explorarlos con el dedo, no para mirarlos una vez impresos. Con **"Compartir"** se abre WhatsApp para que elijas tú a quién enviarlo. Desde el teléfono se manda el reporte completo como archivo; desde la computadora, el resumen escrito. En cualquier caso el mensaje lleva solo cifras públicas: **nunca tu RFC**.
-
-Al final hay una sección con lo que este análisis **no** hace, siempre a la vista. El detalle de dónde salió cada dato y la lista de fuentes se guardan detrás de un botón, para no competir con lo que importa.
-
-Se lee igual de bien en el teléfono. Y si tu sistema está configurado para reducir el movimiento, la página aparece completa y quieta, sin animaciones.
-
-Salida real de esa corrida, recortada:
-
-```text
-Creva Score — demostración
-No se consultó ninguna fuente en esta corrida: todo salió de la copia guardada.
-Cada dato conserva la fecha de su consulta original.
-
-Sello de tu negocio
--------------------
-  ✔ Encontramos "ABARROTES ERENDIRA" en el directorio oficial.
-  Estado: Chihuahua
-  Coincidencia por nombre, sin confirmar con RFC.
-  Fuente: Directorio oficial de establecimientos (SIEM) · consultado el 13 de agosto de 2026
-
-Reglas que te afectan
----------------------
-  Revisado el 13 de agosto de 2026 · 7 días de publicaciones
-
-  Novedades publicadas: 2
-  • [Novedad] Acuerdo por el que se modifican las Reglas de carácter general a que se
-    refiere la Ley Federal para la Prevención e Identificación de Operaciones con
-    Recursos de Procedencia Ilícita.
-    Fuente: Diario Oficial de la Federación · 07 de agosto de 2026
-
-  Reglas ya vigentes que aplican: 18
-```
-
-El estado (`--estado`) es opcional pero casi siempre necesario: buscar por nombre sin acotar suele devolver miles de coincidencias, y entonces no se emite sello.
+Accesible por teclado y con `prefers-reduced-motion` respetado.
 
 ### Usarlo desde un agente (MCP)
 
-El proyecto expone sus composiciones como herramientas MCP por stdio: `creva_verify_business`, `creva_regulatory_radar` y `creva_score_disclosure` — esta última responde qué declara el puntaje y qué **no** estima.
+Expone sus composiciones como herramientas MCP por stdio: `creva_verify_business`, `creva_regulatory_radar` y `creva_score_disclosure`.
 
 ```bash
 npm run mcp
 ```
 
-**Para probarlo sin cliente MCP**, hay una sonda que hace el saludo del protocolo y, si se lo pides, llama a una herramienta:
+Para probarlo sin cliente MCP hay una sonda que hace el saludo del protocolo y, si se lo pides, llama a una herramienta:
 
 ```bash
 npm run mcp:probe
-node dist/cli/mcp-probe.js --tool creva_regulatory_radar --args "{}"
 ```
 
-Informa qué herramientas expone el servidor y si algo ensució el canal del protocolo:
+⚠️ El argumento `--args` debe ser JSON válido tal como llega al proceso. En PowerShell las comillas escapadas pasan literales y lo rompen; la sonda te lo dice en vez de callarlo:
 
-```text
-Sonda MCP
-
-  servidor        creva-score v0.1.0
-  protocolo       2025-06-18
-  herramientas    creva_verify_business, creva_regulatory_radar, creva_score_disclosure
-  stdout          2 líneas, solo JSON-RPC: sí
-  stderr          vacío
-
-  El canal del protocolo quedó limpio.
+```bash
+node dist/cli/mcp-probe.js --tool creva_regulatory_radar --args (ConvertTo-Json @{} -Compress)
 ```
 
-Para conectarlo a un cliente MCP:
+Para conectarlo a un cliente MCP basta la ruta absoluta al servidor; **no hace falta `cwd` ni copiar credenciales**, porque el servidor busca el `.env` del proyecto junto a su propio build:
 
 ```json
 {
   "mcpServers": {
     "creva-score": {
       "command": "node",
-      "args": ["dist/modules/mcp/mcp.server.js"],
-      "cwd": "<ruta del repositorio>"
+      "args": ["<ruta del repositorio>/dist/modules/mcp/mcp.server.js"]
     }
   }
 }
@@ -225,16 +144,14 @@ Para conectarlo a un cliente MCP:
 npm run verify
 ```
 
-Corre typecheck, lint, las tres suites y el build. Las suites se pueden correr por separado con `npm run test:unit`, `npm run test:fuzz` y `npm run test:invariant`.
+Corre typecheck, lint, las tres suites y el build. Por separado: `npm run test:unit`, `npm run test:fuzz`, `npm run test:invariant`.
 
-Las invariantes son las que sostienen las promesas de arriba: que el sello nunca otorgue puntos, que el RFC no llegue a una llave de caché, que la credencial no salga en un registro, y que el servidor MCP no escriba en el canal del protocolo.
+Las invariantes sostienen las promesas de arriba: que el sello nunca otorgue puntos, que el RFC no llegue a una llave de caché, que la credencial no salga en un registro, y que el servidor MCP no escriba en el canal del protocolo.
 
 ### Consumo de la API
 
-La cuota base es de 100 consultas al día para toda la organización, ampliada temporalmente durante el hackathon. El diseño asume la base, no la ampliación. Verificar un negocio cuesta 2; el radar cuesta un día de gaceta por fecha revisada, más el catálogo. Los resultados se guardan en disco, así que repetir una consulta no gasta cuota.
+Cuota base de 100 consultas al día para toda la organización, ampliada temporalmente durante el hackathon; el diseño asume la base. Verificar un negocio cuesta 2; el radar cuesta un día de gaceta por fecha revisada más el catálogo. Los resultados se guardan en disco, así que repetir una consulta no gasta cuota.
 
-Algunas consultas se resuelven como trabajo en segundo plano: el cliente lo detecta, espera lo que la API le indique y no da la respuesta por buena hasta que el trabajo termina. Ese sondeo no consume la cuota diaria, así que una consulta lenta cuesta lo mismo que una rápida.
+Algunas consultas se resuelven en segundo plano: el cliente espera lo que la API le indique y ese sondeo no consume la cuota diaria, así que una consulta lenta cuesta lo mismo que una rápida.
 
 ## Licencia
-
-
