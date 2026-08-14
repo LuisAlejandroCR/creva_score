@@ -116,37 +116,25 @@ export function script(): string {
     tabOf(next).focus();
   }
 
+  // Rewind, then let it play. Nothing here is required for the chart to be correct.
+  function rewind(nodes,prop,zero){
+    if(reduce)return;
+    nodes.forEach(function(n){n.style[prop]=zero;});
+    requestAnimationFrame(function(){nodes.forEach(function(n){n.style[prop]='';});});
+    // If no frame ever arrives, put the data back rather than leave an empty chart.
+    setTimeout(function(){nodes.forEach(function(n){n.style[prop]='';});},1400);
+  }
+
   function revealSummary(){
     var cards=[].slice.call(document.querySelectorAll('.kpi'));
     var jumps=[].slice.call(document.querySelectorAll('.jump'));
     cards.forEach(function(c,i){setTimeout(function(){c.classList.add('on');},reduce?0:i*160);});
     jumps.forEach(function(j,i){setTimeout(function(){j.classList.add('on');},reduce?0:cards.length*160+i*110);});
-  }
-
-  // Rewind, then let it play. Nothing here is required for the chart to be correct.
-  function playGraphics(){
-    var bars=[].slice.call(document.querySelectorAll('.board .rank-bar'));
-    var arcs=[].slice.call(document.querySelectorAll('.board .ring-arc'));
-    bars.forEach(function(b){b.style.width='0';});
-    arcs.forEach(function(a){a.style.opacity='0';});
-    requestAnimationFrame(function(){
-      bars.forEach(function(b){b.style.width='';});
-      setTimeout(function(){arcs.forEach(function(a){a.style.opacity='';});},240);
-    });
-    // If no frame ever arrives, put the data back rather than leave an empty chart.
-    setTimeout(function(){
-      bars.forEach(function(b){b.style.width='';});
-      arcs.forEach(function(a){a.style.opacity='';});
-    },1400);
+    rewind([].slice.call(document.querySelectorAll('.landing .ring-arc')),'opacity','0');
   }
 
   function growComposition(){
-    if(!reduce)playGraphics();
-    // Remember what the untouched state says, so deselecting can restore it exactly.
-    var centre=document.querySelector('.board .ring-n');
-    var label=document.getElementById('comp-detail-label');
-    if(centre&&!centre.getAttribute('data-total'))centre.setAttribute('data-total',centre.textContent);
-    if(label&&!label.getAttribute('data-total-label'))label.setAttribute('data-total-label',label.innerHTML);
+    rewind([].slice.call(document.querySelectorAll('#ranked .rank-bar')),'width','0');
   }
 
   function settle(){
@@ -154,21 +142,18 @@ export function script(): string {
     bar.classList.add('on');
     bar.setAttribute('aria-hidden','false');
     if(ambient)ambient.style.opacity='.55';
-    if(figure){
-      setTimeout(function(){figure.classList.add('settled');countUp(figure);},reduce?0:220);
-    }
+    if(figure)setTimeout(function(){countUp(figure);},reduce?0:220);
     goToStage('summary',{keepScroll:true});
     window.addEventListener('scroll',trackReading,{passive:true});
   }
 
-  // The dot leaves the network and lands where the figure will be, so the two scenes read as one.
-  function travelIntoFigure(done){
-    var dot=flash||document.getElementById('root-dot');
-    if(!dot||!figure||!morph||typeof dot.getBoundingClientRect!=='function'){done();return;}
+  // The dot leaves the network and lands in the middle of the ring, so the total the
+  // investigation announced and the total the report holds are one movement.
+  function travelIntoFigure(from,done){
+    if(!from||!figure||!morph||!from.width){done();return;}
 
-    var from=dot.getBoundingClientRect();
     var to=figure.getBoundingClientRect();
-    if(!to.width||!from.width){done();return;}
+    if(!to.width){done();return;}
 
     // The report still sits below the investigation, so the figure lands
     // exactly one investigation-height higher once that stage leaves the flow.
@@ -211,9 +196,13 @@ export function script(): string {
     },settled+520);
     setTimeout(function(){if(flash)flash.classList.add('on');},settled+1240);
     setTimeout(function(){
+      // The rect is read while the line is still in place, and the line is put away in
+      // the same frame the scene starts leaving: painting it after that repaints it
+      // somewhere else, which reads as the total being announced a second time.
+      var from=flash?flash.getBoundingClientRect():null;
+      if(flash)flash.classList.remove('on');
       investigate.classList.add('collapse');
-      travelIntoFigure(function(){
-        if(flash)flash.classList.remove('on');
+      travelIntoFigure(from,function(){
         investigate.classList.add('hidden');
         settle();
       });
@@ -265,33 +254,6 @@ export function script(): string {
   }
 
   function panels(){return [].slice.call(document.querySelectorAll('.panel'));}
-
-  function setFilter(id){
-    var shown=0;
-    [].slice.call(document.querySelectorAll('.filter')).forEach(function(f){
-      var on=f.getAttribute('data-filter')===id;
-      f.classList.toggle('selected',on);
-      f.setAttribute('aria-pressed',on?'true':'false');
-    });
-    panels().forEach(function(p){
-      var lane=p.getAttribute('data-panel');
-      var on=id==='all'||lane===id;
-      p.hidden=!on;
-      if(on)shown+=parseInt(p.getAttribute('data-total'),10)||0;
-    });
-    var wrap=document.querySelector('.panels');
-    if(wrap&&!reduce){
-      wrap.classList.add('swapping');
-      setTimeout(function(){wrap.classList.remove('swapping');},180);
-    }
-    var out=document.getElementById('filter-result');
-    if(out){
-      var word=shown===1?'resultado':'resultados';
-      var label=id==='all'?shown+' '+word:id.toUpperCase()+' · '+shown+' '+word;
-      out.classList.add('blip');
-      setTimeout(function(){out.textContent=label;out.classList.remove('blip');},reduce?0:120);
-    }
-  }
 
   function nextVisible(visible,total){
     if(visible<6)return Math.min(6,total);
@@ -384,126 +346,182 @@ export function script(): string {
     openPanel(panel);
   }
 
-  function jumpToLane(id){
-    setFilter(id);
-    pickComposition(id);
-    var target=document.getElementById('lane-'+id);
-    if(!target)return;
-    panels().forEach(function(p){p.classList.toggle('active',p===target);});
-    openPanel(target);
-    goToStage('evidence',{focusPane:true});
-
-    var first=target.querySelector('.item');
-    if(!first)return;
-    pickEvidence(first);
-    if(!reduce){
-      first.classList.remove('spotlight');
-      void first.offsetWidth;
-      first.classList.add('spotlight');
-    }
-  }
-
-  function pickComposition(id,allowToggle){
+  // One selection drives the whole stage: the ranked rows are the only source control,
+  // and the timeline, the evidence list and the running count all read from it.
+  function pickLane(id,allowToggle){
     var list=document.getElementById('ranked');
-    var label=document.getElementById('comp-detail-label');
-    var go=document.getElementById('comp-go');
-    var centre=document.querySelector('.board .ring-n');
-    if(!list||!label||!go||!centre)return;
+    if(!list)return;
 
-    var current=list.querySelector('.rank.picked');
-    var same=allowToggle===true&&current!==null&&current.getAttribute('data-lane')===id;
+    var currentRow=list.querySelector('.rank.picked');
+    var same=allowToggle===true&&currentRow!==null&&currentRow.getAttribute('data-lane')===id;
+    var lane=same?null:(id===''?null:id);
     var picked=null;
 
     [].slice.call(list.querySelectorAll('.rank')).forEach(function(row){
-      var on=!same&&row.getAttribute('data-lane')===id;
+      var on=lane!==null&&row.getAttribute('data-lane')===lane;
       row.classList.toggle('picked',on);
+      row.setAttribute('aria-pressed',on?'true':'false');
       if(on)picked=row;
     });
     list.classList.toggle('picking',picked!==null);
 
-    focusTimeline(picked===null?null:picked.getAttribute('data-lane'));
+    var clear=document.getElementById('rank-clear');
+    if(clear)clear.hidden=picked===null;
 
-    if(picked===null){
-      centre.textContent=centre.getAttribute('data-total')||centre.textContent;
-      label.innerHTML=label.getAttribute('data-total-label')||label.innerHTML;
-      go.hidden=true;
-      return;
-    }
-    centre.textContent=picked.querySelector('.rank-n').textContent;
-    label.textContent=picked.querySelector('.rank-name').textContent.trim()+' · '+picked.querySelector('.rank-share').textContent+' de las señales';
-    go.hidden=false;
-    go.setAttribute('data-lane',picked.getAttribute('data-lane'));
+    focusTimeline(lane);
+    filterEvidence(lane,picked);
   }
 
-  // One lane focus drives the whole Signals stage: the ranked list, the ring, the
-  // timeline dots and its filter chips all read from it.
+  function filterEvidence(lane,picked){
+    var shown=0;
+    panels().forEach(function(p){
+      var id=p.getAttribute('data-panel');
+      var on=lane===null||id===lane;
+      p.hidden=!on;
+      if(on)shown+=parseInt(p.getAttribute('data-total'),10)||0;
+    });
+
+    var wrap=document.querySelector('.panels');
+    if(wrap&&!reduce){
+      wrap.classList.add('swapping');
+      setTimeout(function(){wrap.classList.remove('swapping');},180);
+    }
+
+    var out=document.getElementById('filter-result');
+    if(!out)return;
+    var word=shown===1?'resultado':'resultados';
+    var name=picked===null?'':picked.querySelector('.rank-name').textContent.trim();
+    var label=picked===null?shown+' '+word:name+' · '+shown+' '+word;
+    out.classList.add('blip');
+    setTimeout(function(){out.textContent=label;out.classList.remove('blip');},reduce?0:120);
+  }
+
+  // Source and year are two dimensions of the same view, so one function applies both.
+  // Muting only ever hides emphasis, never a date: every dot keeps its true position.
+  var laneFilter=null;
+  var yearFrom=null;
+  var yearTo=null;
+
   function focusTimeline(lane){
+    laneFilter=lane;
+    applyTimeline();
+  }
+
+  function sliceYears(){
+    var slice=document.getElementById('tl-slice');
+    if(!slice)return [];
+    return (slice.getAttribute('data-years')||'').split(',').map(Number);
+  }
+
+  // Two handles over the years that exist, so a drag can never land on an empty one.
+  function readSlice(){
+    var from=document.getElementById('tl-from');
+    var to=document.getElementById('tl-to');
+    var rails=document.querySelector('.tl-slice-rails');
+    var years=sliceYears();
+    if(!from||!to||!rails||years.length<2)return;
+
+    var a=parseInt(from.value,10)||0;
+    var b=parseInt(to.value,10)||0;
+    if(a>b){var swap=a;a=b;b=swap;from.value=String(a);to.value=String(b);}
+
+    yearFrom=years[a];
+    yearTo=years[b];
+    var last=years.length-1;
+    from.setAttribute('aria-valuetext',String(yearFrom));
+    to.setAttribute('aria-valuetext',String(yearTo));
+    rails.style.setProperty('--a',(a/last*100)+'%');
+    rails.style.setProperty('--b',(b/last*100)+'%');
+
+    var range=document.getElementById('tl-slice-range');
+    if(range)range.textContent=yearFrom===yearTo?String(yearFrom):yearFrom+' – '+yearTo;
+    var all=document.getElementById('tl-slice-all');
+    if(all)all.hidden=a===0&&b===last;
+    applyTimeline();
+  }
+
+  function resetSlice(){
+    var from=document.getElementById('tl-from');
+    var to=document.getElementById('tl-to');
+    var years=sliceYears();
+    if(!from||!to||years.length<2)return;
+    from.value='0';
+    to.value=String(years.length-1);
+    readSlice();
+  }
+
+  function applyTimeline(){
     var tl=document.querySelector('.tl');
     if(!tl)return;
-    tl.setAttribute('data-picked',lane===null?'':lane);
+    tl.setAttribute('data-picked',laneFilter===null?'':laneFilter);
 
-    var picked=null;
+    var picked=null,lit=0;
     [].slice.call(tl.querySelectorAll('.tl-dot')).forEach(function(dot){
-      var out=lane!==null&&dot.getAttribute('data-lane')!==lane;
+      var year=parseInt(dot.getAttribute('data-year'),10);
+      var out=(laneFilter!==null&&dot.getAttribute('data-lane')!==laneFilter)||
+              (yearFrom!==null&&(year<yearFrom||year>yearTo));
       dot.classList.toggle('muted',out);
       if(out)return;
+      lit+=1;
       if(picked===null||dot.getAttribute('data-at')>picked.getAttribute('data-at'))picked=dot;
     });
 
-    [].slice.call(document.querySelectorAll('.tl-filter')).forEach(function(chip){
-      var on=chip.getAttribute('data-tlfilter')===(lane===null?'all':lane);
-      chip.classList.toggle('selected',on);
-      chip.setAttribute('aria-pressed',on?'true':'false');
-    });
+    var count=document.getElementById('tl-slice-n');
+    if(count)count.textContent=String(lit);
 
-    var current=tl.querySelector('.tl-dot.picked');
-    if(picked&&(current===null||current.classList.contains('muted')))pickTimeline(picked);
+    var chosen=tl.querySelector('.tl-dot.picked');
+    if(picked&&(chosen===null||chosen.classList.contains('muted')))pickDot(picked);
   }
 
-  function pickTimeline(dot){
+  // A preview, not a record: one line that says where a click would land. It never
+  // floats over the dots, and focus fills it too, so the keyboard gets the same answer.
+  function peek(dot){
+    var out=document.getElementById('tl-peek');
+    if(!out)return;
+    if(!dot){out.innerHTML=out.getAttribute('data-rest')||out.innerHTML;return;}
+    if(!out.getAttribute('data-rest'))out.setAttribute('data-rest',out.innerHTML);
+
+    var chip=document.createElement('span');
+    chip.className='tl-peek-chip d'+(dot.className.match(/\\bd(\\d)\\b/)||['','0'])[1];
+    chip.textContent=dot.getAttribute('data-short');
+    var when=document.createElement('span');
+    when.className='tl-peek-when';
+    when.textContent=dot.getAttribute('data-when');
+    var text=document.createElement('span');
+    text.className='tl-peek-text';
+    text.textContent=dot.getAttribute('data-detail');
+
+    out.textContent='';
+    out.appendChild(chip);
+    out.appendChild(when);
+    out.appendChild(text);
+  }
+
+  function pickDot(dot){
     if(!dot)return;
     [].slice.call(document.querySelectorAll('.tl-dot')).forEach(function(d){d.classList.toggle('picked',d===dot);});
-
-    var chip=document.getElementById('tl-detail-chip');
-    var date=document.getElementById('tl-detail-date');
-    var text=document.getElementById('tl-detail-text');
-    var doc=document.getElementById('tl-detail-doc');
-    if(chip){chip.textContent=dot.getAttribute('data-short');chip.className='tl-chip '+laneClass(dot);}
-    if(date)date.textContent=dot.getAttribute('data-date');
-    if(text)text.textContent=dot.getAttribute('data-detail');
-    if(doc){
-      var url=dot.getAttribute('data-url');
-      doc.hidden=url==='';
-      if(url!=='')doc.setAttribute('href',url);
-    }
   }
 
-  function laneClass(el){
-    var match=/\\bd(\\d)\\b/.exec(el.className);
-    return match===null?'d0':'d'+match[1];
-  }
-
-  // Choosing an item fills the detail beside it. It never leaves the stage.
-  function pickEvidence(item){
+  // A dot has no record of its own to show: it points at the row that already holds one.
+  // Folded rows are revealed the same way the reader would, so the counter stays true.
+  function revealSignal(key){
+    var item=document.querySelector('.item[data-key="'+key+'"]');
     if(!item)return;
-    [].slice.call(document.querySelectorAll('.item')).forEach(function(i){i.classList.toggle('picked',i===item);});
+    var panel=item.closest('.panel');
+    if(!panel)return;
 
-    var chip=document.getElementById('ev-chip');
-    var date=document.getElementById('ev-date');
-    var label=document.getElementById('ev-label');
-    var text=document.getElementById('ev-text');
-    var source=document.getElementById('ev-source');
-    var doc=document.getElementById('ev-doc');
-    if(chip){chip.textContent=item.getAttribute('data-short');chip.className='ev-chip d'+item.getAttribute('data-lane-i');}
-    if(date)date.textContent=item.getAttribute('data-when');
-    if(label)label.textContent=item.getAttribute('data-label');
-    if(text)text.textContent=item.getAttribute('data-detail');
-    if(source)source.textContent=item.getAttribute('data-source');
-    if(doc){
-      var url=item.getAttribute('data-url');
-      doc.hidden=url==='';
-      if(url!=='')doc.setAttribute('href',url);
+    openPanel(panel);
+    var index=parseInt(item.getAttribute('data-i'),10)||0;
+    var guard=0;
+    while(index>=(parseInt(panel.getAttribute('data-visible'),10)||0)&&guard<12){showMore(panel);guard+=1;}
+
+    [].slice.call(document.querySelectorAll('.item')).forEach(function(i){i.classList.toggle('picked',i===item);});
+    if(!reduce){
+      item.classList.remove('spotlight');
+      void item.offsetWidth;
+      item.classList.add('spotlight');
     }
+    item.scrollIntoView({block:'center',behavior:reduce?'auto':'smooth'});
   }
 
   function pickPoint(index){
@@ -518,6 +536,26 @@ export function script(): string {
     if(date)date.textContent=picked.getAttribute('data-date');
   }
 
+  document.addEventListener('input',function(e){
+    if(!e.target||!e.target.classList||!e.target.classList.contains('tl-slice-in'))return;
+    readSlice();
+  });
+
+  ['mouseover','focusin'].forEach(function(type){
+    document.addEventListener(type,function(e){
+      if(!e.target||!e.target.closest)return;
+      var dot=e.target.closest('.tl-dot');
+      if(dot)peek(dot);
+    });
+  });
+
+  ['mouseout','focusout'].forEach(function(type){
+    document.addEventListener(type,function(e){
+      if(!e.target||!e.target.closest)return;
+      if(e.target.closest('.tl-dot'))peek(null);
+    });
+  });
+
   document.addEventListener('keydown',function(e){
     if(!e.target||!e.target.closest||!e.target.closest('.stage-tab'))return;
     var key=e.key;
@@ -531,10 +569,11 @@ export function script(): string {
     var t=e.target;
     if(!t||!t.closest)return;
 
-    var doc=t.closest('.doc');
-    if(doc){
-      var item=doc.closest('.item');
-      if(item)item.classList.add('seen');
+    // The row is the link. Following it is the act worth marking.
+    var pick=t.closest('.item-pick');
+    if(pick){
+      var row=pick.closest('.item');
+      if(row&&pick.tagName==='A')row.classList.add('seen');
       return;
     }
 
@@ -561,30 +600,25 @@ export function script(): string {
     var more=t.closest('.more');
     if(more){showMore(more.closest('.panel'));return;}
 
-    var filter=t.closest('.filter');
-    if(filter){setFilter(filter.getAttribute('data-filter'));return;}
-
-    var pick=t.closest('.item-pick');
-    if(pick){pickEvidence(pick.closest('.item'));return;}
-
     var tlDot=t.closest('.tl-dot');
-    if(tlDot){pickTimeline(tlDot);return;}
-
-    var tlFilter=t.closest('.tl-filter');
-    if(tlFilter){
-      var lane=tlFilter.getAttribute('data-tlfilter');
-      pickComposition(lane==='all'?'':lane);
-      return;
-    }
+    if(tlDot){pickDot(tlDot);revealSignal(tlDot.getAttribute('data-key'));return;}
 
     var point=t.closest('.point');
     if(point){pickPoint(parseInt(point.getAttribute('data-point'),10)||0);return;}
 
-    var row=t.closest('.rank');
-    if(row){pickComposition(row.getAttribute('data-lane'),true);return;}
+    if(t.closest('#tl-slice-all')){resetSlice();return;}
 
-    var go=t.closest('.comp-go');
-    if(go){jumpToLane(go.getAttribute('data-lane'));return;}
+    if(t.closest('.to-top')){
+      window.scrollTo({top:0,behavior:reduce?'auto':'smooth'});
+      var tab=tabOf(current);
+      if(tab)tab.focus();
+      return;
+    }
+
+    if(t.closest('#rank-clear')){pickLane('');return;}
+
+    var row=t.closest('.rank');
+    if(row){pickLane(row.getAttribute('data-lane'),true);return;}
   });
 })();
 `;

@@ -25,11 +25,12 @@ function runningHead(name: string): string {
 }
 
 function coverPage(report: CrevaReport, lanes: SourceLane[], name: string): string {
-  const kpis = summaryKpis(report)
+  const kpis = summaryKpis(report, lanes)
     .map(
       (kpi) => `<div class="p-kpi">
       <p class="p-kpi-label">${escapeHtml(kpi.label)}</p>
       <p class="p-kpi-value">${escapeHtml(kpi.value)}</p>
+      ${kpi.sub === null ? '' : `<p class="p-kpi-sub">${escapeHtml(kpi.sub)}</p>`}
       <p class="p-kpi-note">${escapeHtml(kpi.note)}</p>
     </div>`,
     )

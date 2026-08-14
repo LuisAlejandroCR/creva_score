@@ -25,7 +25,7 @@ function linkPath(index: number): string {
 
 const RING = 2 * Math.PI * 52;
 
-export function ring(lanes: SourceLane[], total: number): string {
+export function ring(lanes: SourceLane[], total: number, countId?: string): string {
   let offset = 0;
   const arcs = lanes
     .filter((lane) => lane.signals.length > 0)
@@ -38,11 +38,24 @@ export function ring(lanes: SourceLane[], total: number): string {
     })
     .join('');
 
-  return `<svg class="ring" viewBox="0 0 120 120" role="img" aria-label="Reparto de las ${total} señales entre las fuentes" xmlns="http://www.w3.org/2000/svg">
-    <circle class="ring-track" cx="60" cy="60" r="52"/>
+  const big = countId !== undefined;
+  const count = big ? ` id="${countId}" data-count="${total}"` : '';
+
+  // The landing keeps the figure large and the split thin around it: the dashed circle
+  // turns, the digits fill in. Only this one carries the gradient, so its id stays unique.
+  const halo = big
+    ? `<defs><linearGradient id="ring-fill" x1="0" y1="0" x2="0.7" y2="1">
+      <stop offset="0" stop-color="#D62E52"/><stop offset="1" stop-color="#9E1329"/>
+    </linearGradient></defs>
+    <circle class="ring-glow" cx="60" cy="60" r="45"/>
+    <circle class="ring-dash" cx="60" cy="60" r="57"/>`
+    : '';
+
+  return `<svg class="ring${big ? ' big' : ''}" viewBox="0 0 120 120" role="img" aria-label="Reparto de las ${total} señales entre las fuentes" xmlns="http://www.w3.org/2000/svg">
+    ${halo}<circle class="ring-track" cx="60" cy="60" r="52"/>
     ${arcs}
-    <text class="ring-n" x="60" y="58">${total}</text>
-    <text class="ring-l" x="60" y="74">señales</text>
+    <text class="ring-n" x="60" y="${big ? 72 : 58}"${count}>${total}</text>
+    <text class="ring-l" x="60" y="${big ? 88 : 74}">señales</text>
   </svg>`;
 }
 
@@ -54,7 +67,7 @@ export function ranked(lanes: SourceLane[], total: number): string {
       const share = total === 0 ? 0 : Math.round((lane.signals.length / total) * 100);
       const width = largest === 0 ? 0 : Math.round((lane.signals.length / largest) * 100);
 
-      return `<button class="rank a${index}" type="button" data-lane="${lane.id}" style="--i:${index}">
+      return `<button class="rank a${index}" type="button" data-lane="${lane.id}" style="--i:${index}" aria-pressed="false">
       <span class="rank-i">${index + 1}</span>
       <span class="rank-name">${escapeHtml(lane.short)}</span>
       <span class="rank-track">${lane.signals.length === 0 ? '' : `<span class="rank-bar" style="--w:${width}%"></span>`}</span>
@@ -63,6 +76,16 @@ export function ranked(lanes: SourceLane[], total: number): string {
     </button>`;
     })
     .join('');
+}
+
+// A segment per source consulted, lit for the ones that came back with something.
+function cells(meter: KpiMeter): string {
+  const list = Array.from(
+    { length: meter.total },
+    (_, index) => `<span class="cell${index < meter.lit ? ' lit' : ''}" style="--i:${index}"></span>`,
+  ).join('');
+
+  return `<div class="cells" role="img" aria-label="${meter.lit} de ${meter.total}">${list}</div>`;
 }
 
 
@@ -98,52 +121,75 @@ export function investigation(report: CrevaReport, lanes: SourceLane[], name: st
   </section>`;
 }
 
+export interface KpiMeter {
+  total: number;
+  lit: number;
+}
+
 export interface Kpi {
   label: string;
   value: string;
   note: string;
-  count: boolean;
+  sub: string | null;
+  meter: KpiMeter | null;
 }
 
 // One definition, read by the screen and by the printable, so the two cannot drift apart.
-export function summaryKpis(report: CrevaReport): Kpi[] {
+export function summaryKpis(report: CrevaReport, lanes: SourceLane[]): Kpi[] {
   const headline = report.signals.find((s) => s.category === 'reference_rate' && isPercent(s));
+  const answered = lanes.filter((lane) => lane.signals.length > 0).length;
 
   return [
-    { label: 'Señales', value: String(report.signals.length), note: 'con fuente y fecha', count: true },
-    { label: 'Fuentes', value: String(report.sources.length), note: 'registros de gobierno', count: false },
-    { label: 'Directorio', value: statusWord(report), note: 'SIEM · voluntario', count: false },
+    {
+      label: 'Fuentes',
+      value: String(report.sources.length),
+      note: 'registros de gobierno',
+      sub: `${answered} devolvieron algo`,
+      meter: { total: lanes.length, lit: answered },
+    },
+    { label: 'Directorio', value: statusWord(report), note: 'SIEM · voluntario', sub: null, meter: null },
     headline === undefined
-      ? { label: 'Referencia', value: 'sin dato', note: 'Banco de México', count: false }
+      ? { label: 'Referencia', value: 'sin dato', note: 'Banco de México', sub: null, meter: null }
       : {
           label: headline.label,
           value: headline.detail,
           note: headline.checked_at === null ? 'Banco de México' : formatDate(headline.checked_at),
-          count: false,
+          sub: null,
+          meter: null,
         },
   ];
 }
 
-// The summary is the index. It states each figure once and hands off; every chart is
-// drawn in the stage it belongs to, never previewed here as a second copy.
+// The summary is where the investigation lands: the total the intro announced arrives in
+// the centre of the ring, and everything else is a door. Each figure is stated once.
 export function hero(report: CrevaReport, lanes: SourceLane[]): string {
-  const kpis = summaryKpis(report)
+  const kpis = summaryKpis(report, lanes)
     .map(
       (kpi, index) => `<div class="kpi" style="--i:${index}">
     <p class="kpi-label">${escapeHtml(kpi.label)}</p>
-    <p class="kpi-value"${kpi.count ? ` id="kpi-count" data-count="${report.signals.length}"` : ''}>${escapeHtml(kpi.value)}</p>
+    <p class="kpi-value">${escapeHtml(kpi.value)}</p>
+    ${kpi.sub === null ? '' : `<p class="kpi-sub">${escapeHtml(kpi.sub)}</p>`}
+    ${kpi.meter === null ? '' : cells(kpi.meter)}
     <p class="kpi-note">${escapeHtml(kpi.note)}</p>
   </div>`,
     )
     .join('');
 
   return `<section class="block hero" data-enter="hero">
+  <div class="landing">
+    <div class="landing-ring">${ring(lanes, report.signals.length, 'kpi-count')}</div>
+    <div class="landing-side">
+      <p class="lead">Preguntamos a ${report.sources.length} ${plural(report.sources.length, 'registro', 'registros')} de gobierno por este negocio. Esto devolvieron, cada dato con su fuente y su fecha.</p>
+      <button class="lead-go" type="button" data-step="signals">Ver de dónde salió cada señal <span class="jump-go" aria-hidden="true">→</span></button>
+    </div>
+  </div>
+
   <div class="kpis" id="kpis">${kpis}</div>
-  <div class="jumps" id="jumps">${jumpCards(report, lanes)}</div>
+  <div class="jumps" id="jumps">${jumpCards(report)}</div>
 </section>`;
 }
 
-function jumpCards(report: CrevaReport, lanes: SourceLane[]): string {
+function jumpCards(report: CrevaReport): string {
   const rates = report.signals.filter((signal) => signal.category === 'reference_rate');
   const documented = report.signals.filter((signal) => signal.evidence_url !== null).length;
 
@@ -152,22 +198,15 @@ function jumpCards(report: CrevaReport, lanes: SourceLane[]): string {
       id: 'signals',
       num: '02',
       name: 'Señales',
-      figure: `${lanes.filter((lane) => lane.signals.length > 0).length}/${lanes.length}`,
-      note: 'fuentes devolvieron algo',
-    },
-    {
-      id: 'evidence',
-      num: '03',
-      name: 'Evidencia',
       figure: String(documented),
       note: 'con documento oficial',
     },
     ...(rates.length === 0
       ? []
-      : [{ id: 'market', num: '04', name: 'Mercado', figure: String(rates.length), note: 'referencias de Banxico' }]),
+      : [{ id: 'market', num: '03', name: 'Mercado', figure: String(rates.length), note: 'referencias de Banxico' }]),
     {
       id: 'audit',
-      num: '05',
+      num: rates.length === 0 ? '03' : '04',
       name: 'Auditoría',
       figure: String(report.disclosure.does_not_estimate.length),
       note: 'límites declarados',
@@ -186,70 +225,29 @@ function jumpCards(report: CrevaReport, lanes: SourceLane[]): string {
     .join('');
 }
 
-export function composition(report: CrevaReport, lanes: SourceLane[]): string {
+// One stage, one source selector. The ranked rows are that selector: choosing one quiets
+// the timeline and narrows the evidence below, so the reader never crosses a stage
+// boundary in the middle of the same question.
+export function signals(report: CrevaReport, lanes: SourceLane[]): string {
   const total = report.signals.length;
-  const answered = lanes.filter((lane) => lane.signals.length > 0).length;
 
   return `<section class="block composition" data-enter="rail">
-  <h2>Señales por fuente</h2>
+  <p class="lead">Cada señal viene de un registro público. Elige una fuente para seguirla hasta su documento.</p>
+  <h2>¿De qué fuente salió cada señal?</h2>
+  <p class="hint"><span class="hint-mark" aria-hidden="true">☞</span> Toca una fuente para filtrar la línea de tiempo y la evidencia de abajo.</p>
 
-  <div class="board">
-    <div class="card">
-      <p class="card-title">¿De qué fuente salió cada señal?</p>
-      <div class="ranked" id="ranked">${ranked(lanes, total)}</div>
-    </div>
-    <div class="card" id="comp-detail" aria-live="polite">
-      <p class="card-title">Reparto</p>
-      <div class="ring-wrap">${ring(lanes, total)}</div>
-      <p class="card-note" id="comp-detail-label"><strong>${answered}</strong> de ${lanes.length} fuentes devolvieron algo</p>
-      <button class="comp-go" id="comp-go" type="button" hidden>Explorar evidencia →</button>
-    </div>
+  <div class="card">
+    <div class="ranked" id="ranked" role="group" aria-label="Elegir una fuente">${ranked(lanes, total)}</div>
+    <button class="rank-clear" id="rank-clear" type="button" hidden>Ver las ${total} señales</button>
   </div>
 
   ${timeline(lanes)}
-</section>`;
-}
 
-export function evidence(lanes: SourceLane[]): string {
-  const total = lanes.reduce((sum, lane) => sum + lane.signals.length, 0);
-
-  const filters = [{ id: 'all', short: 'Todas' }, ...lanes.map((lane) => ({ id: lane.id, short: lane.short }))]
-    .map(
-      (filter, index) =>
-        `<button class="filter${index === 0 ? ' selected' : ''}" type="button" data-filter="${filter.id}" aria-pressed="${index === 0 ? 'true' : 'false'}">${escapeHtml(filter.short)}</button>`,
-    )
-    .join('');
-
-  return `<section class="block evidence" data-enter="evidence">
-  <h2>Evidencia</h2>
-
-  <div class="filters" role="group" aria-label="Filtrar evidencia por fuente">${filters}</div>
+  <h2 class="ev-head">Los documentos detrás de cada señal</h2>
   <p class="filter-result" id="filter-result" aria-live="polite">${total} ${plural(total, 'resultado', 'resultados')}</p>
 
-  <div class="ev-board">
-    <div class="panels">${lanes.map(panel).join('')}</div>
-    ${selected(lanes)}
-  </div>
+  <div class="panels">${lanes.map(panel).join('')}</div>
 </section>`;
-}
-
-// The detail is the drill-down: choosing an item fills it in place, without leaving the stage.
-function selected(lanes: SourceLane[]): string {
-  const lane = lanes.find((candidate) => candidate.signals.length > 0);
-  const signal = lane?.signals[0];
-  if (lane === undefined || signal === undefined) return '';
-
-  return `<aside class="card ev-detail" id="ev-detail" aria-live="polite">
-    <p class="card-title">Señal seleccionada</p>
-    <p class="ev-top">
-      <span class="ev-chip d${lanes.indexOf(lane)}" id="ev-chip">${escapeHtml(lane.short)}</span>
-      <span class="ev-date" id="ev-date">${signal.checked_at === null ? 'sin fecha' : escapeHtml(formatDate(signal.checked_at))}</span>
-    </p>
-    <p class="ev-label" id="ev-label">${escapeHtml(signal.label)}</p>
-    <p class="ev-text" id="ev-text">${escapeHtml(signal.detail)}</p>
-    <p class="ev-source" id="ev-source">${escapeHtml(signal.source)}</p>
-    <a class="doc" id="ev-doc" href="${signal.evidence_url === null ? '' : escapeHtml(signal.evidence_url)}" target="_blank" rel="noopener"${signal.evidence_url === null ? ' hidden' : ''}>Ver documento oficial <span class="doc-go" aria-hidden="true">→</span></a>
-  </aside>`;
 }
 
 function panel(lane: SourceLane, laneIndex: number): string {
@@ -288,6 +286,9 @@ function panel(lane: SourceLane, laneIndex: number): string {
 </article>`;
 }
 
+// A row carries what tells it apart from its neighbours — what it says and when — and is
+// itself the way to the document. The category was identical on every row of a panel and
+// the source is the panel's own heading, so neither earns a line here.
 function evidenceItem(
   signal: ReportSignal,
   index: number,
@@ -295,22 +296,19 @@ function evidenceItem(
   lane: SourceLane,
   laneIndex: number,
 ): string {
-  const link =
-    signal.evidence_url === null
-      ? ''
-      : `<a class="doc" href="${escapeHtml(signal.evidence_url)}" target="_blank" rel="noopener">Ver documento oficial <span class="doc-go" aria-hidden="true">→</span></a>`;
+  const when = signal.checked_at === null ? 'sin fecha' : formatDate(signal.checked_at);
+  const has = signal.evidence_url !== null;
+
+  const meta = `<span class="meta"><span class="meta-dot" aria-hidden="true"></span>${escapeHtml(when)}<span class="${has ? 'item-doc' : 'item-nodoc'}">${has ? 'documento oficial →' : 'sin documento'}</span><span class="item-seen">✓ consultado</span></span>`;
+  const body = `<span class="item-detail">${escapeHtml(signal.detail)}</span>${meta}`;
+
+  const inner = has
+    ? `<a class="item-pick" href="${escapeHtml(signal.evidence_url as string)}" target="_blank" rel="noopener">${body}</a>`
+    : `<div class="item-pick inert">${body}</div>`;
 
   return `<div class="item tone-${signal.tone}" data-i="${index}" data-order="${index}" data-date="${signal.checked_at === null ? '' : escapeHtml(signal.checked_at)}"
-  data-lane="${lane.id}" data-lane-i="${laneIndex}" data-short="${escapeHtml(lane.short)}"
-  data-label="${escapeHtml(signal.label)}" data-detail="${escapeHtml(signal.detail)}" data-source="${escapeHtml(signal.source)}"
-  data-when="${signal.checked_at === null ? 'sin fecha' : escapeHtml(formatDate(signal.checked_at))}"
-  data-url="${signal.evidence_url === null ? '' : escapeHtml(signal.evidence_url)}"${folded ? ' hidden' : ''}>
-  <button class="item-pick" type="button">
-    <span class="item-label">${escapeHtml(signal.label)}</span>
-    <span class="item-detail">${escapeHtml(signal.detail)}</span>
-  </button>
-  <p class="meta"><span class="meta-dot" aria-hidden="true"></span>${escapeHtml(signal.source)}${signal.checked_at === null ? '' : ` · ${escapeHtml(formatDate(signal.checked_at))}`}<span class="item-seen">✓ consultado</span></p>
-  ${link}
+  data-lane="${lane.id}" data-lane-i="${laneIndex}" data-key="${escapeHtml(signal.key)}"${folded ? ' hidden' : ''}>
+  ${inner}
 </div>`;
 }
 
@@ -363,6 +361,7 @@ export function market(report: CrevaReport): string {
   </div>`;
 
   return `<section class="block market" data-enter="market">
+  <p class="lead">Lo anterior es el negocio. Esto es el entorno: cuánto costaba el dinero el día que consultamos.</p>
   <h2>Contexto de mercado</h2>
   ${stripBlock}
   ${asideBlock}
@@ -404,6 +403,7 @@ export function audit(report: CrevaReport): string {
 
   // The disclosure never folds. Everything behind it is reference material.
   return `<section class="block audit" data-enter="audit">
+  <p class="lead">Ya viste el dato. Aquí está de dónde salió, y lo que este reporte no hace.</p>
   <h2>Sobre este análisis</h2>
   <p class="blurb">${escapeHtml(report.disclosure.describes)} Versión ${escapeHtml(report.disclosure.score_version)}.</p>
 

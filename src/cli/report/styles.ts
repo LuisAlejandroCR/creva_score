@@ -42,7 +42,9 @@ main{position:relative;z-index:1;max-width:72rem;margin:0 auto;padding:0 clamp(1
 .label.spaced{margin-top:2rem}
 .meta{margin:0;font-size:.8rem;color:var(--muted)}
 
-.investigate{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;
+/* The scene has to be the containing block of its own absolute children. Without this the
+   flash anchors to main, and .collapse's transform re-anchors it mid-animation. */
+.investigate{position:relative;min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;
 transition:opacity 560ms var(--ease),transform 560ms var(--ease),filter 560ms var(--ease)}
 .investigate.collapse{opacity:0;transform:scale(.9);filter:blur(7px)}
 .investigate .net,.investigate .ticks,.investigate .progress{transition:opacity 460ms var(--ease),transform 460ms var(--ease)}
@@ -121,6 +123,23 @@ transition:all var(--mid) var(--ease)}
 /* The name and the seal live in the bar, permanently. The summary states each figure
    once and hands off; it draws no chart that a stage below already draws. */
 .hero{margin-bottom:3rem}
+.lead{margin:0 0 1.4rem;font-size:1rem;color:var(--muted);max-width:34rem}
+.lead-go{padding:.6rem 1.15rem;border-radius:999px;border:1px solid rgba(196,30,58,.3);
+background:var(--s1);color:var(--crimson-dark);font-size:.86rem;font-weight:600;cursor:pointer;
+display:inline-flex;align-items:center;gap:.4rem;min-height:44px;
+transition:all var(--mid) var(--ease)}
+.lead-go:hover{background:var(--s2);border-color:var(--crimson)}
+.lead-go:hover .jump-go{transform:translateX(4px)}
+
+/* The total the investigation announced lands here, in the middle of the ring. */
+.landing{display:grid;grid-template-columns:minmax(0,auto) minmax(0,1fr);gap:2rem;align-items:center;
+margin:0 0 2rem}
+.landing-ring{display:flex;justify-content:center}
+.ring.big{width:min(15rem,58vw)}
+@media(max-width:720px){
+  .landing{grid-template-columns:1fr;gap:1.2rem;text-align:center;justify-items:center}
+  .lead{text-align:center}
+}
 
 .kpis{display:grid;gap:.6rem;grid-template-columns:repeat(auto-fit,minmax(10rem,1fr))}
 .kpi{background:var(--s1);border:1px solid var(--bd);border-radius:14px;padding:1rem 1.1rem;
@@ -130,7 +149,11 @@ transition:opacity var(--mid) var(--ease),transform var(--mid) var(--ease)}
 .kpi-label{margin:0;font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
 .kpi-value{margin:.3rem 0 .15rem;font-size:clamp(1.5rem,3vw,2rem);font-weight:700;letter-spacing:-.03em;line-height:1.05;
 color:var(--crimson-dark)}
+.kpi-sub{margin:0 0 .35rem;font-size:.76rem;font-weight:640;color:var(--ok)}
 .kpi-note{margin:0;font-size:.74rem;color:var(--subtle)}
+.cells{display:flex;gap:.25rem;margin:0 0 .45rem}
+.cell{flex:1;height:5px;border-radius:3px;background:rgba(26,22,19,.10)}
+.cell.lit{background:var(--ok)}
 
 .date-card{border-radius:14px;padding:.8rem .9rem;color:#fff}
 .date-card.a{background:linear-gradient(135deg,#2E6A48 0%,#1f4c33 100%)}
@@ -156,19 +179,19 @@ display:flex;justify-content:space-between;align-items:center;gap:.5rem}
 .jump:hover .jump-go{transform:translateX(4px)}
 
 
-.board{display:grid;gap:.7rem;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);margin:1.6rem 0 0}
 @media(max-width:860px){
-  .board{grid-template-columns:1fr}
   .rank{grid-template-columns:1rem minmax(3rem,auto) minmax(2rem,1fr) 1.8rem 2.2rem}
 }
 .card{background:var(--s1);border:1px solid var(--bd);border-radius:18px;padding:1.3rem 1.4rem}
 .card-title{margin:0 0 1rem;font-weight:650;font-size:.94rem}
-.card-note{margin:.9rem 0 0;font-size:.8rem;color:var(--muted);text-align:center}
-.card-note strong{color:var(--tx)}
+
+/* The rows are the only filter in the stage, so they have to say so. */
+.hint{margin:.1rem 0 1rem;font-size:.82rem;color:var(--crimson-dark);display:flex;align-items:center;gap:.45rem}
+.hint-mark{font-size:.95rem}
 
 .ranked{display:grid;gap:.5rem}
 .rank{display:grid;grid-template-columns:1rem minmax(3.2rem,auto) minmax(2.5rem,1fr) 1.9rem 2.3rem;
-gap:.5rem;align-items:center;
+gap:.5rem;align-items:center;min-height:44px;
 width:100%;padding:.3rem 0;background:none;border:0;cursor:pointer;color:inherit;text-align:left}
 .rank-i{font-size:.74rem;color:var(--subtle)}
 .rank-name{font-size:.8rem;letter-spacing:.1em;color:var(--muted)}
@@ -184,7 +207,6 @@ transition:width 620ms var(--ease) calc(var(--i) * 90ms)}
 .rank-share{font-size:.78rem;color:var(--muted);text-align:right}
 .rank:hover .rank-name,.rank:focus-visible .rank-name{color:var(--tx)}
 
-.ring-wrap{display:flex;justify-content:center}
 .ring{width:min(11rem,100%);height:auto}
 .ring-track{fill:none;stroke:rgba(26,22,19,.07);stroke-width:14}
 .ring-arc{fill:none;stroke-width:14;stroke-linecap:butt;stroke:var(--crimson);
@@ -195,20 +217,65 @@ transition:opacity var(--slow) var(--ease)}
 .ring-n{font-size:26px;font-weight:700;text-anchor:middle;fill:var(--tx)}
 .ring-l{font-size:8px;letter-spacing:.16em;text-anchor:middle;fill:var(--muted);text-transform:uppercase}
 
-.kpi-icon{margin-right:.4rem;color:var(--crimson)}
-.comp-go{margin-top:1rem;padding:.5rem 1rem;border-radius:999px;border:1px solid rgba(196,30,58,.35);
-background:none;color:var(--crimson-dark);font-size:.82rem;font-weight:600;cursor:pointer;
-transition:background var(--mid) var(--ease)}
-.comp-go:hover{background:var(--s2)}
+/* The landing figure: the digits fill in, the dashed circle turns around them, and the
+   split stays as a thin band so the number keeps the room. */
+.ring.big .ring-track,.ring.big .ring-arc{stroke-width:5}
+.ring.big .ring-n{font-size:56px;letter-spacing:-.03em;fill:url(#ring-fill)}
+.ring.big .ring-l{font-size:7px;letter-spacing:.3em}
+.ring-glow{fill:var(--s2);opacity:.5}
+.ring-dash{fill:none;stroke:var(--rosa);stroke-width:.8;stroke-dasharray:2.4 4.6;opacity:.75;
+transform-origin:60px 60px;animation:ringSpin 46s linear infinite}
+@keyframes ringSpin{to{transform:rotate(360deg)}}
+
 .ranked.picking .rank:not(.picked){opacity:.3}
+.rank.picked .rank-name{color:var(--tx);font-weight:700}
+.rank-clear{margin-top:1rem;padding:.5rem 1rem;border-radius:999px;border:1px solid rgba(196,30,58,.35);
+background:none;color:var(--crimson-dark);font-size:.82rem;font-weight:600;cursor:pointer;min-height:44px;
+transition:background var(--mid) var(--ease)}
+.rank-clear:hover{background:var(--s2)}
 
 .tl-card{margin-top:.7rem}
-.tl-filters{display:flex;gap:.3rem;flex-wrap:wrap;margin:0 0 .5rem}
-.tl-filter{padding:.3rem .75rem;border-radius:999px;border:1px solid var(--bd);background:rgba(255,255,255,.6);
-color:var(--muted);font-size:.74rem;letter-spacing:.08em;cursor:pointer;white-space:nowrap;
+
+/* Two handles on one rail. Both inputs sit on top of each other so the shaded span reads
+   as one control; only the thumbs take the pointer, or the upper input would swallow it. */
+.tl-slice{margin-top:1.4rem;padding-top:1.1rem;border-top:1px solid var(--bd)}
+.tl-slice-top{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.tl-slice-out{margin:0;font-size:.82rem;color:var(--muted)}
+.tl-slice-out strong{color:var(--tx)}
+.tl-slice-all{padding:.4rem .9rem;border-radius:999px;border:1px solid var(--bd);background:none;
+color:var(--crimson-dark);font-family:inherit;font-size:.78rem;font-weight:600;cursor:pointer;min-height:44px;
 transition:all var(--mid) var(--ease)}
-.tl-filter:hover{border-color:var(--rosa)}
-.tl-filter.selected{background:var(--crimson);border-color:var(--crimson);color:#fff;font-weight:600}
+.tl-slice-all:hover{border-color:var(--crimson);background:var(--s2)}
+.tl-slice-rails{position:relative;height:44px;margin:.4rem 0 0}
+/* The rail is decoration and must not take the pointer: ::after paints after the inputs,
+   so it sat on top of both thumbs and neither could be grabbed. */
+.tl-slice-rails::before,.tl-slice-rails::after{content:'';position:absolute;left:0;right:0;top:50%;
+height:4px;margin-top:-2px;border-radius:2px;pointer-events:none}
+.tl-slice-rails::before{background:rgba(26,22,19,.10)}
+.tl-slice-rails::after{left:var(--a);right:calc(100% - var(--b));background:var(--crimson)}
+.tl-slice-in{position:absolute;left:0;top:0;width:100%;height:44px;margin:0;padding:0;
+background:none;pointer-events:none;-webkit-appearance:none;appearance:none}
+.tl-slice-in:focus{outline:none}
+.tl-slice-in::-webkit-slider-thumb{-webkit-appearance:none;pointer-events:auto;
+width:22px;height:22px;border-radius:50%;background:var(--s1);border:3px solid var(--crimson);
+box-shadow:0 2px 8px rgba(26,22,19,.18);cursor:grab}
+.tl-slice-in::-moz-range-thumb{pointer-events:auto;
+width:22px;height:22px;border-radius:50%;background:var(--s1);border:3px solid var(--crimson);
+box-shadow:0 2px 8px rgba(26,22,19,.18);cursor:grab}
+.tl-slice-in:focus-visible::-webkit-slider-thumb{outline:2px solid var(--crimson);outline-offset:3px}
+.tl-slice-in:focus-visible::-moz-range-thumb{outline:2px solid var(--crimson);outline-offset:3px}
+.tl-slice-ends{display:flex;justify-content:space-between;margin:.1rem 0 0;font-size:.72rem;color:var(--subtle)}
+/* Reserved height: the preview appears and disappears without moving the chart above it. */
+.tl-peek{margin:.9rem 0 0;min-height:2.6rem;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;
+font-size:.84rem;padding-top:.8rem;border-top:1px solid var(--bd)}
+.tl-peek-hint{color:var(--subtle);font-size:.8rem}
+.tl-peek-chip{padding:.16rem .6rem;border-radius:999px;font-size:.68rem;font-weight:700;letter-spacing:.08em;
+color:#fff;background:var(--crimson);flex:none}
+.tl-peek-chip.d1{background:#D62E52}
+.tl-peek-chip.d2{background:#9E1329}
+.tl-peek-chip.d3{background:var(--rosa);color:#5a1020}
+.tl-peek-when{color:var(--muted);font-size:.78rem;flex:none}
+.tl-peek-text{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tl{display:grid;grid-template-columns:4.4rem minmax(0,1fr);gap:.3rem .7rem;align-items:center}
 .tl-name{font-size:.68rem;letter-spacing:.1em;text-align:right;color:var(--crimson)}
 .tl-name.d1{color:#D62E52}
@@ -231,36 +298,10 @@ transition:opacity var(--mid) var(--ease),transform var(--mid) var(--ease),box-s
 .tl-tick.s{transform:none}
 .tl-tick.e{transform:translateX(-100%)}
 .tl-ends{display:flex;justify-content:space-between;padding-left:5.1rem;font-size:.72rem;color:var(--subtle)}
-.tl-detail{margin-top:1rem;padding-top:1rem;border-top:1px solid var(--bd)}
-.tl-detail-top{display:flex;align-items:center;gap:.6rem;margin:0 0 .45rem}
-.tl-chip,.ev-chip{padding:.18rem .65rem;border-radius:999px;font-size:.7rem;font-weight:700;letter-spacing:.08em;
-color:#fff;background:var(--crimson)}
-.tl-chip.d1,.ev-chip.d1{background:#D62E52}
-.tl-chip.d2,.ev-chip.d2{background:#9E1329}
-.tl-chip.d3,.ev-chip.d3{background:var(--rosa);color:#5a1020}
-.tl-detail-date,.ev-date{font-size:.78rem;color:var(--muted)}
-.tl-detail-text{margin:0 0 .5rem;font-size:.92rem}
 
-.ev-board{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:.7rem;align-items:start}
-.ev-detail{position:sticky;top:6rem}
-.ev-top{display:flex;align-items:center;gap:.6rem;margin:0 0 .55rem}
-.ev-label{margin:0 0 .3rem;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--crimson-dark)}
-.ev-text{margin:0 0 .5rem}
-.ev-source{margin:0 0 .6rem;font-size:.8rem;color:var(--muted)}
-/* This query has to follow the rule it overrides: placed above it, the two-column
-   default won on equal specificity and the list stayed 200px wide on a phone. */
-@media(max-width:860px){
-  /* the detail leads the list here, so choosing an item never scrolls the answer off screen */
-  .ev-board{grid-template-columns:1fr}
-  .ev-detail{position:static;order:-1}
-}
+.ev-head{margin-top:3.4rem}
 
-.filters{display:flex;gap:.35rem;flex-wrap:wrap;margin:1rem 0 .6rem}
-.filter{padding:.45rem .95rem;border-radius:999px;border:1px solid var(--bd);background:rgba(255,255,255,.6);
-color:var(--muted);font-size:.78rem;letter-spacing:.1em;cursor:pointer;white-space:nowrap;
-transition:all var(--mid) var(--ease)}
-.filter:hover{border-color:var(--rosa)}
-.filter.selected{background:var(--crimson);border-color:var(--crimson);color:#fff;font-weight:600}
+
 .filter-result{margin:0 0 1.2rem;font-size:.8rem;color:var(--muted);transition:opacity 200ms var(--ease)}
 .panels{transition:opacity 180ms var(--ease)}
 .panels.swapping{opacity:0}
@@ -295,7 +336,7 @@ color:var(--muted);font-size:.76rem;cursor:pointer;transition:all var(--mid) var
 .sort-btn:hover{color:var(--tx)}
 .sort-btn.selected{border-color:var(--bd);background:var(--s2);color:var(--crimson-dark);font-weight:600}
 
-.item{position:relative;padding:1rem 1.3rem;border-top:1px solid var(--bd);
+.item{position:relative;border-top:1px solid var(--bd);
 transition:background var(--mid) var(--ease),transform var(--mid) var(--ease)}
 .item::before{content:'';position:absolute;left:0;top:-1px;bottom:0;width:0;background:var(--grad);
 transition:width var(--mid) var(--ease)}
@@ -308,21 +349,24 @@ transition:width var(--mid) var(--ease)}
 @keyframes slideIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
 .item.picked{background:rgba(255,232,238,.5)}
 .item.picked::before{width:3px}
-.item-pick{display:block;width:100%;margin:0;padding:0;border:0;background:none;text-align:left;
-color:inherit;font-size:inherit;cursor:pointer}
-.item-label{display:block;margin:0 0 .25rem;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--crimson-dark)}
-.item.tone-positive .item-label{color:var(--ok)}
-.item-detail{display:block;margin:0 0 .4rem}
-.meta-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--bd);
-margin-right:.45rem;vertical-align:middle;transition:background var(--mid) var(--ease)}
-.item:hover .meta-dot{background:var(--crimson)}
-.item.tone-positive:hover .meta-dot{background:var(--ok)}
-.item-seen{margin-left:.5rem;font-size:.74rem;color:var(--ok);opacity:0;
+/* Two lines, never four: the title and when it is from. The category was identical on
+   every row of a panel and the source is the panel's own heading. The row is the link:
+   one click from the list to the document, with no surface in between. */
+.item-pick{display:block;width:100%;margin:0;padding:.85rem 1.3rem;border:0;background:none;text-align:left;
+color:inherit;font-size:inherit;text-decoration:none;cursor:pointer;min-height:44px}
+.item-pick.inert{cursor:default}
+.item-detail{display:block;margin:0 0 .2rem;line-height:1.35}
+.item .meta{display:flex;align-items:center;gap:.45rem;font-size:.78rem}
+.meta-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--crimson);
+flex:none;transition:background var(--mid) var(--ease)}
+.item.tone-positive .meta-dot{background:var(--ok)}
+.item-doc{color:var(--crimson-dark);font-weight:600;transition:letter-spacing var(--mid) var(--ease)}
+.item-doc::before,.item-nodoc::before{content:'·';margin-right:.45rem;color:var(--bd);font-weight:400}
+.item-nodoc{color:var(--subtle)}
+a.item-pick:hover .item-detail,a.item-pick:focus-visible .item-detail{text-decoration:underline;text-underline-offset:3px}
+.item-seen{font-size:.74rem;color:var(--ok);opacity:0;
 transition:opacity var(--mid) var(--ease)}
 .item.seen .item-seen{opacity:1;animation:tickPop 420ms var(--ease)}
-.doc{display:inline-block;margin-top:.5rem;font-size:.82rem;color:var(--crimson-dark);font-weight:600}
-.doc-go{display:inline-block;transition:transform var(--mid) var(--ease)}
-.item:hover .doc-go{transform:translateX(5px)}
 .empty{padding:1rem 1.3rem;margin:0;border-top:1px solid var(--bd);color:var(--subtle)}
 .more-wrap{padding:1rem 1.3rem;border-top:1px solid var(--bd)}
 .more{padding:.55rem 1.1rem;border-radius:999px;border:1px solid var(--bd);background:none;
@@ -421,6 +465,14 @@ transition:all var(--mid) var(--ease)}
 .step.next{color:var(--crimson-dark);border-color:rgba(196,30,58,.3)}
 .step.next:hover{background:var(--s2);border-color:var(--crimson)}
 
+.to-top{display:flex;align-items:center;justify-content:center;gap:.5rem;width:100%;min-height:44px;
+margin-top:.8rem;padding:.7rem 1rem;border-radius:12px;border:1px dashed var(--bd);background:none;
+color:var(--muted);font-family:inherit;font-size:.82rem;cursor:pointer;
+transition:all var(--mid) var(--ease)}
+.to-top:hover{color:var(--crimson-dark);border-color:var(--rosa);background:rgba(255,255,255,.5)}
+.to-top-go{transition:transform var(--mid) var(--ease)}
+.to-top:hover .to-top-go{transform:translateY(-3px)}
+
 /* The side rail needs room the report itself is not using; below that it would overlap the text. */
 @media(max-width:900px){.workspace{grid-template-columns:1fr;gap:1.2rem;padding-top:4.4rem}}
 
@@ -441,22 +493,13 @@ transition:all var(--mid) var(--ease)}
 @media(max-width:640px){
   main{padding:0 1.1rem}
   .net{width:100%}
-  .figure{font-size:clamp(4rem,22vw,6.5rem)}
-  .metric{aspect-ratio:1/.86}
   .hero{padding-top:5rem;margin-bottom:4.5rem}
   .block{margin-bottom:3.6rem}
   .tl{grid-template-columns:3.4rem minmax(0,1fr)}
   .tl-ends{padding-left:4.1rem}
-  .tl-filters{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
-  .tl-filters::-webkit-scrollbar{display:none}
-  .tl-filter{flex:none;min-height:44px}
   /* the visible dot stays small; the touch target around it does not */
   .tl-dot::after{content:'';position:absolute;left:50%;top:50%;width:44px;height:44px;
   transform:translate(-50%,-50%)}
-  .filters{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:.2rem;
-  margin-left:-1.1rem;margin-right:-1.1rem;padding-left:1.1rem;padding-right:1.1rem}
-  .filters::-webkit-scrollbar{display:none}
-  .filter{flex:none;min-height:44px;display:flex;align-items:center}
   .jumps,.kpis{grid-template-columns:1fr 1fr}
   .panel-head{min-height:56px}
   .panel-cta,.panel-seen{display:none}
@@ -551,18 +594,19 @@ width:100%;padding:1mm 0;border:0;background:none;text-align:left}
 .p-kpi{flex:1;border:1px solid #d9d9d9;border-radius:2mm;padding:3mm;background:#fbfbfa}
 .p-kpi-label{margin:0;font-size:7.5pt;letter-spacing:.08em;text-transform:uppercase;color:#6a6a6a}
 .p-kpi-value{margin:1.4mm 0 .8mm;font-size:15pt;font-weight:700;line-height:1.05;color:#1A1613}
+.p-kpi-sub{margin:0 0 .8mm;font-size:7.5pt;font-weight:700;color:#1f4c33}
 .p-kpi-note{margin:0;font-size:7.5pt;color:#6a6a6a}
 .p-foot{margin:6mm 0 0;padding-top:2mm;border-top:1px solid #e2e2e2;
 font-size:8pt;color:#6a6a6a;text-align:right}
 
 @media(prefers-reduced-motion:reduce){
   html{scroll-behavior:auto}
-  .glow,.investigating::after,.net .spark.on,.morph.travel,
+  .glow,.investigating::after,.net .spark.on,.morph.travel,.ring-dash,
   .item.fresh,.tick.on .tick-mark,.net .node.on circle{animation:none}
   [data-enter],.bar,.panel-body,.panel-inner,.net .link,.net .node circle,.net .node text,
-  .investigate,.net,.tick,.flash,
-  .filter-result,.item,.item::before,.point,.point-tag,.meta-dot,.doc-go,.panel-seen,.panels,.item-seen,.step,.kpi,.jump,.rank-bar,.ring-arc,
-  .tl-dot,.tl-filter,.stage-tab,.stage-tab::before{transition:none}
+  .investigate,.net,.tick,.flash,.lead-go,.rank-clear,.to-top,.to-top-go,.tl-slice-all,
+  .filter-result,.item,.item::before,.point,.point-tag,.meta-dot,.item-doc,.panel-seen,.panels,.item-seen,.step,.kpi,.jump,.rank-bar,.ring-arc,
+  .tl-dot,.stage-tab,.stage-tab::before{transition:none}
   .pane.arriving,.pane.arriving-back{animation:none}
   .net .spark{display:none}
   .item:hover{transform:none}

@@ -2,6 +2,7 @@ import { buildReport } from '../../src/modules/creva-score/creva-report.builder'
 import { buildScoreDisclosure } from '../../src/modules/score-disclosure/score-disclosure.service';
 import { moreLabel, nextVisible, renderReportHtml } from '../../src/cli/report';
 import { summaryKpis } from '../../src/cli/report/sections';
+import { buildLanes } from '../../src/cli/report/lanes';
 import { script } from '../../src/cli/report/script';
 import ts from 'typescript';
 import { sourceOk, sourceUnavailable } from '../../src/common/types/source-result.types';
@@ -79,7 +80,9 @@ function reportWithManyRules(count: number) {
         title: `Norma ${i}`,
         published_at: `2026-08-${String((i % 28) + 1).padStart(2, '0')}`,
         agency: 'CNBV',
-        url: null,
+        // Real CNBV entries carry a document; the badge and the rates do not, which is
+        // what lets one fixture cover both the linked row and the inert one.
+        url: `https://www.cnbv.gob.mx/norma-${i}`,
       })),
       scanned_dates: ['2026-08-13'],
       failed_dates: [],
@@ -212,14 +215,16 @@ describe('renderReportHtml', () => {
     expect(renderReportHtml(report())).toContain('Verificado');
   });
 
-  it('puts a real count in the summary, never an invented figure', () => {
+  it('lands the announced total in the middle of the ring, never on a second card', () => {
     const built = report();
     const html = renderReportHtml(built);
+    const app = html.slice(0, html.indexOf('<article class="paper"'));
 
-    // The total is the first KPI now: the intro's number lands there instead of on a
-    // display figure that then said the same thing a second time.
+    // The intro's figure travels into the ring centre. A KPI card saying the same number
+    // beside it was the second "25 señales" the reader was seeing.
     expect(html).toContain(`id="kpi-count" data-count="${built.signals.length}"`);
-    expect(html).toContain('<p class="kpi-label">Señales</p>');
+    expect(app).toMatch(/<text class="ring-n" x="60" y="\d+" id="kpi-count"/);
+    expect(app).not.toContain('<p class="kpi-label">Señales</p>');
     expect(html).toContain("var figure=document.getElementById('kpi-count')");
   });
 
@@ -230,9 +235,10 @@ describe('renderReportHtml', () => {
     const summary = app.slice(app.indexOf('id="pane-summary"'), app.indexOf('id="pane-signals"'));
     const documented = built.signals.filter((signal) => signal.evidence_url !== null).length;
 
-    // The ring belongs to Señales. A copy in the summary was the same data drawn twice.
-    expect(app.match(/class="ring"/g)).toHaveLength(1);
-    expect(summary).not.toContain('class="ring"');
+    // One ring in the whole application, and it is the landing. Anchored to the <svg>:
+    // "ring" is also the prefix of ring-track, ring-arc, ring-n and ring-l.
+    expect(app.match(/<svg class="ring/g)).toHaveLength(1);
+    expect(summary).toContain('<svg class="ring big"');
     // Name and seal live in the bar permanently, so the summary must not repeat them.
     expect(summary).not.toContain('class="subject big"');
     expect(summary).not.toContain('class="status pill-');
@@ -240,6 +246,48 @@ describe('renderReportHtml', () => {
     expect(summary).toContain(`class="jump-figure">${documented}<`);
     expect(summary).toContain('con documento oficial');
     expect(summary).toContain(`class="jump-figure">${built.disclosure.does_not_estimate.length}<`);
+  });
+
+  it('gives the landing figure its turning circle, and gives it to nothing else', () => {
+    const html = renderReportHtml(report());
+    const start = html.indexOf('<article class="paper"');
+    const paper = html.slice(start, html.indexOf('</article>', start));
+
+    // One gradient definition in the document, so its id cannot collide with the
+    // printable's ring, which keeps flat colour because a printer has no animation.
+    expect(html.match(/id="ring-fill"/g)).toHaveLength(1);
+    expect(html.match(/class="ring-dash"/g)).toHaveLength(1);
+    expect(html.match(/class="ring-glow"/g)).toHaveLength(1);
+    expect(paper).not.toContain('ring-dash');
+    expect(paper).not.toContain('ring-fill');
+    // The digits fill and the circle turns: both belong to the landing only.
+    expect(html).toMatch(/\.ring\.big \.ring-n\{[^}]*fill:url\(#ring-fill\)/);
+    expect(html).toMatch(/\.ring-dash\{[^}]*animation:ringSpin/);
+    expect(html).toMatch(/@media\(prefers-reduced-motion:reduce\)\{[\s\S]*?\.ring-dash,[\s\S]*?animation:none/);
+  });
+
+  it('says the ranked rows are the filter, because nothing else says it', () => {
+    const html = renderReportHtml(report());
+    const app = html.slice(0, html.indexOf('<article class="paper"'));
+
+    // Merging the stages left one selector; without a hint its rows read as a static
+    // chart, and the evidence below looks unfilterable.
+    expect(app).toContain('class="hint"');
+    expect(app).toContain('Toca una fuente para filtrar la línea de tiempo y la evidencia de abajo.');
+    expect(app.indexOf('¿De qué fuente salió cada señal?')).toBeLessThan(app.indexOf('class="hint"'));
+    expect(app.indexOf('class="hint"')).toBeLessThan(app.indexOf('<div class="ranked"'));
+  });
+
+  it('draws the coverage of the sources instead of only naming it', () => {
+    const built = report();
+    const lanes = buildLanes(built);
+    const html = renderReportHtml(built);
+    const answered = lanes.filter((lane) => lane.signals.length > 0).length;
+    const app = html.slice(0, html.indexOf('<article class="paper"'));
+
+    expect(app.match(/class="cell"/g)?.length).toBe(lanes.length - answered);
+    expect(app.match(/class="cell lit"/g)).toHaveLength(answered);
+    expect(app).toContain(`<p class="kpi-sub">${answered} devolvieron algo</p>`);
   });
 
   it('says "sin sello" rather than implying something is wrong', () => {
@@ -295,16 +343,73 @@ describe('renderReportHtml', () => {
     expect(html).toContain('Ver evidencia');
   });
 
-  it('offers one filter per source plus the unfiltered view, all pressable', () => {
+  it('offers exactly one source selector, and it is the ranked list', () => {
     const html = renderReportHtml(report());
+    const app = html.slice(0, html.indexOf('<article class="paper"'));
+    const rows = app.match(/<button class="rank a\d"[^>]*>/g) ?? [];
 
-    for (const filter of ['all', 'siem', 'dof', 'cnbv', 'banxico']) {
-      expect(html).toContain(`data-filter="${filter}"`);
+    // Three controls used to select the same four sources: the ranked rows, the timeline
+    // chips and the evidence filters. Only the rows are left.
+    expect(rows).toHaveLength(4);
+    for (const row of rows) expect(row).toContain('aria-pressed="false"');
+    for (const lane of ['siem', 'dof', 'cnbv', 'banxico']) {
+      expect(app).toContain(`data-lane="${lane}"`);
     }
-    const buttons = html.match(/<button class="filter[^"]*"[^>]*>/g) ?? [];
+    expect(app).not.toContain('data-filter=');
+    expect(app).not.toContain('data-tlfilter=');
+    expect(app).toContain('id="rank-clear"');
+  });
 
-    expect(buttons).toHaveLength(5);
-    expect(buttons.filter((button) => button.includes('aria-pressed="true"'))).toHaveLength(1);
+  it('makes the row itself the way to the document, with nothing in between', () => {
+    const html = renderReportHtml(reportWithManyRules(18));
+    const app = html.slice(0, html.indexOf('<article class="paper"'));
+    const linked = /<div class="item [\s\S]*?<a class="item-pick"[\s\S]*?\n<\/div>/.exec(app)?.[0] ?? '';
+
+    // A modal for a hyperlink is friction: open, read, click, close, find your place.
+    // Neither the dialog nor the parked side card survives.
+    expect(app).not.toContain('<dialog');
+    expect(app).not.toContain('Señal seleccionada');
+    expect(app).not.toContain('class="ev-board"');
+    expect(app).not.toContain('id="tl-detail"');
+
+    // A row is two lines and one link: what it says, when it is from, and out.
+    expect(linked).toContain('target="_blank" rel="noopener"');
+    expect(linked).toContain('class="item-detail"');
+    expect(linked).toContain('documento oficial');
+    expect(linked).not.toContain('class="item-label"');
+    expect(app).not.toContain('aria-haspopup');
+  });
+
+  it('never dresses a signal without a document as a link', () => {
+    const html = renderReportHtml(reportWithManyRules(18));
+    const app = html.slice(0, html.indexOf('<article class="paper"'));
+    // The badge and Banxico's rates carry no document, so those rows must not look clickable.
+    const rows = [...app.matchAll(/<div class="item [\s\S]*?\n<\/div>/g)].map((match) => match[0]);
+    const inert = rows.filter((row) => row.includes('class="item-pick inert"'));
+
+    expect(rows.length).toBeGreaterThan(inert.length);
+    expect(inert.length).toBeGreaterThan(0);
+    for (const row of inert) {
+      expect(row).toContain('sin documento');
+      expect(row).not.toContain('<a class="item-pick"');
+    }
+    expect(app).toMatch(/\.item-pick\.inert\{cursor:default\}/);
+  });
+
+  it('sends a timeline dot to the row that already holds its record', () => {
+    const built = reportWithManyRules(18);
+    const html = renderReportHtml(built);
+    const app = html.slice(0, html.indexOf('<article class="paper"'));
+    const keys = [...app.matchAll(/<button class="tl-dot[^>]*data-key="([^"]+)"/g)].map((match) => match[1]);
+
+    expect(keys.length).toBeGreaterThan(1);
+    // Every dot must land on a row that exists, or clicking it would do nothing at all.
+    for (const key of keys) expect(app).toContain(`data-key="${key}"`);
+    expect(html).toContain("revealSignal(tlDot.getAttribute('data-key'))");
+    // A folded row is revealed the way the reader would, so the counter stays honest.
+    expect(html).toContain('showMore(panel);guard+=1;');
+    // The dot no longer carries a copy of the record; the row is the only place it lives.
+    expect(app).not.toMatch(/<button class="tl-dot[^>]*data-source=/);
   });
 
   it('lets a category be re-ordered, and never offers a ranking it cannot compute', () => {
@@ -384,23 +489,32 @@ describe('renderReportHtml', () => {
     const html = renderReportHtml(report());
     const stages = [...html.matchAll(/data-stage="([a-z]+)"/g)].map((match) => match[1]);
 
-    expect(stages).toEqual(['summary', 'signals', 'evidence', 'market', 'audit']);
+    // Señales and Evidencia were the same question split across a stage boundary: the
+    // same four counts, three selectors for four sources and two detail cards.
+    expect(stages).toEqual(['summary', 'signals', 'market', 'audit']);
     for (const stage of stages) {
       expect(html).toContain(`aria-controls="pane-${stage}"`);
       expect(html).toContain(`id="pane-${stage}"`);
       expect(html).toContain(`aria-labelledby="tab-${stage}"`);
     }
-    for (const name of ['Resumen', 'Señales', 'Evidencia', 'Mercado', 'Auditoría']) {
+    for (const name of ['Resumen', 'Señales', 'Mercado', 'Auditoría']) {
       expect(html).toContain(name);
     }
+    // The numbers are derived from the order, so dropping a stage cannot leave a gap.
+    expect([...html.matchAll(/<span class="stage-num">(\d+)<\/span>/g)].map((m) => m[1])).toEqual([
+      '01',
+      '02',
+      '03',
+      '04',
+    ]);
   });
 
   it('opens on the first stage and leaves the rest out of the way', () => {
     const html = renderReportHtml(report());
     const panes = html.match(/<section class="pane"[^>]*>/g) ?? [];
 
-    expect(panes).toHaveLength(5);
-    expect(panes.filter((pane) => pane.includes(' hidden'))).toHaveLength(4);
+    expect(panes).toHaveLength(4);
+    expect(panes.filter((pane) => pane.includes(' hidden'))).toHaveLength(3);
     expect(panes[0]).not.toContain(' hidden');
     expect(html.match(/aria-selected="true"/g)).toHaveLength(1);
     expect(html.match(/tabindex="0"/g)).toHaveLength(1);
@@ -420,7 +534,8 @@ describe('renderReportHtml', () => {
 
     expect(html).not.toContain('data-stage="market"');
     expect(html).toContain('data-stage="audit"');
-    expect(html.match(/<section class="pane"[^>]*>/g)).toHaveLength(4);
+    expect(html.match(/<section class="pane"[^>]*>/g)).toHaveLength(3);
+    expect([...html.matchAll(/<span class="stage-num">(\d+)<\/span>/g)].map((m) => m[1])).toEqual(['01', '02', '03']);
   });
 
   it('marks the evidence as consulted, never as verified by the act of opening it', () => {
@@ -444,6 +559,18 @@ describe('renderReportHtml', () => {
 
     const steps = [...html.matchAll(/data-step="([a-z]+)"/g)].map((match) => match[1]);
     for (const step of steps) expect(html).toContain(`id="pane-${step}"`);
+  });
+
+  it('hands off from one stage to the next in a line the reader can follow', () => {
+    const html = renderReportHtml(report());
+    const app = html.slice(0, html.indexOf('<article class="paper"'));
+    const signalsPane = app.slice(app.indexOf('id="pane-signals"'), app.indexOf('id="pane-market"'));
+
+    // B90 removed the descriptive blurbs, which restated the heading. These are the
+    // opposite: each one says what just happened and what the next stage answers.
+    expect(app.match(/class="lead"/g)).toHaveLength(4);
+    expect(signalsPane).toContain('Elige una fuente para seguirla hasta su documento');
+    expect(app).toContain('class="lead-go" type="button" data-step="signals"');
   });
 
   it('says each source once, in the ranked list, and nowhere else', () => {
@@ -501,7 +628,7 @@ describe('renderReportHtml', () => {
     const html = renderReportHtml(report());
     const jumps = [...html.matchAll(/<button class="jump"[^>]*data-step="([a-z]+)"/g)].map((match) => match[1]);
 
-    expect(jumps).toEqual(['signals', 'evidence', 'market', 'audit']);
+    expect(jumps).toEqual(['signals', 'market', 'audit']);
     for (const jump of jumps) expect(html).toContain(`id="pane-${jump}"`);
     // The insights duplicated the composition stage, so they are gone rather than restyled.
     expect(html).not.toContain('class="insight"');
@@ -510,26 +637,34 @@ describe('renderReportHtml', () => {
 
   it('splits the signals into shares that add up to what was found', () => {
     const html = renderReportHtml(reportWithManyRules(20));
-    // Bounded by the paper: the printable summary carries the same graphics again.
-    const board = html.slice(html.indexOf('class="board"'), html.indexOf('<article class="paper"'));
-    const shares = [...board.matchAll(/class="rank-share">(\d+)%/g)].map((match) => Number(match[1]));
+    // Bounded at both ends, and the far end has to exist: the printable carries the same
+    // graphics again, and slicing past it counted every bar twice.
+    const start = html.indexOf('<div class="ranked"');
+    const end = html.indexOf('<article class="paper"');
+
+    expect(end).toBeGreaterThan(start);
+    const ranked = html.slice(start, end);
+    const shares = [...ranked.matchAll(/class="rank-share">(\d+)%/g)].map((match) => Number(match[1]));
 
     expect(shares.reduce((sum, share) => sum + share, 0)).toBeGreaterThanOrEqual(99);
     expect(shares.reduce((sum, share) => sum + share, 0)).toBeLessThanOrEqual(101);
     // A lane with nothing in it gets no bar at all: a stub would draw a quantity that is not there.
-    expect(board.match(/class="rank-track">\s*<\/span>/g)?.length).toBe(1);
+    expect(ranked.match(/class="rank-track">\s*<\/span>/g)?.length).toBe(1);
   });
 
   it('draws one ring arc per source that actually returned something', () => {
     const built = reportWithManyRules(20);
     const html = renderReportHtml(built);
-    // Bounded by the paper: the printable summary carries the same graphics again.
-    const board = html.slice(html.indexOf('class="board"'), html.indexOf('<article class="paper"'));
+    const start = html.indexOf('<div class="landing-ring"');
+    const end = html.indexOf('</svg>', start);
+
+    expect(end).toBeGreaterThan(start);
+    const landing = html.slice(start, end);
 
     // SIEM, CNBV and Banxico answered; DOF did not.
-    expect(board.match(/class="ring-arc/g)).toHaveLength(3);
+    expect(landing.match(/class="ring-arc/g)).toHaveLength(3);
     // Read from the report, not typed in: the fixture's total is whatever it built.
-    expect(board).toContain(`<text class="ring-n" x="60" y="58">${built.signals.length}</text>`);
+    expect(landing).toContain(`data-count="${built.signals.length}">${built.signals.length}</text>`);
   });
 
   it('keeps the chart true without the script, and only animates on top of it', () => {
@@ -583,35 +718,120 @@ describe('renderReportHtml', () => {
 
     // Every dot is a control that names its lane, which is what the script dims and picks against.
     expect(html).toMatch(/<button class="tl-dot d\d[^"]*" data-lane="[a-z]+"/);
-    expect(html).toContain('data-tlfilter="cnbv"');
     expect(html).toContain("dot.classList.toggle('muted',out)");
+    // One selection drives all three: the rows, the timeline and the evidence list.
+    expect(html).toContain('focusTimeline(lane);');
+    expect(html).toContain('filterEvidence(lane,picked);');
   });
 
-  it('gives the timeline a row and a filter per source that actually carries dates', () => {
+  it('slices the timeline by a range of years, not by a control per year', () => {
+    const built = reportAcrossYears();
+    const html = renderReportHtml(built);
+    const app = html.slice(0, html.indexOf('<article class="paper"'));
+    const years = (/data-years="([^"]+)"/.exec(app)?.[1] ?? '').split(',').map(Number);
+
+    // Twelve years for twenty-five signals is twelve checkboxes or thirteen chips, most
+    // of them revealing one dot. Years are an axis: a reader asks for a span.
+    expect(app).toContain('id="tl-slice"');
+    expect(years.length).toBeGreaterThan(2);
+    expect([...years].sort((a, b) => a - b)).toEqual(years);
+    // Only years that hold a signal, so a handle can never land on an empty one.
+    const dated = new Set(built.signals.filter((s) => s.checked_at !== null).map((s) => Number(s.checked_at?.slice(0, 4))));
+    for (const year of years) expect(dated.has(year)).toBe(true);
+
+    // Two handles on one rail, each a native range with its year spoken aloud.
+    const handles = [...app.matchAll(/<input class="tl-slice-in"[^>]*>/g)].map((match) => match[0]);
+
+    expect(handles).toHaveLength(2);
+    expect(handles[0]).toContain('aria-label="Desde el año"');
+    expect(handles[1]).toContain('aria-label="Hasta el año"');
+    expect(handles[0]).toContain(`aria-valuetext="${years[0]}"`);
+    expect(handles[1]).toContain(`aria-valuetext="${years[years.length - 1]}"`);
+    // The static file must already show the full span selected, never an empty rail.
+    expect(app).toContain('style="--a:0%;--b:100%"');
+    expect(app).toContain(`<span>${years[0]}</span><span>${years[years.length - 1]}</span>`);
+
+    // Source and year are two dimensions of one view; muting composes, never replaces.
+    expect(html).toContain('year<yearFrom||year>yearTo');
+    expect(html).toContain("dot.getAttribute('data-lane')!==laneFilter");
+
+    // Measured by hit-testing the running page: ::after paints after the inputs, so the
+    // shaded rail sat on top of both thumbs and neither could be grabbed. Only the thumbs
+    // may take the pointer, or the upper input swallows the lower one's handle.
+    expect(html).toMatch(/\.tl-slice-rails::before,\.tl-slice-rails::after\{[^}]*pointer-events:none/);
+    expect(html).toMatch(/\.tl-slice-in\{[^}]*pointer-events:none/);
+    expect(html).toMatch(/::-webkit-slider-thumb\{[^}]*pointer-events:auto/);
+    expect(html).toMatch(/::-moz-range-thumb\{[^}]*pointer-events:auto/);
+  });
+
+  it('never lets the slice invert when the handles cross', () => {
+    const html = renderReportHtml(reportAcrossYears());
+    // Measured: dragging the far handle past the near one swaps them, it does not produce
+    // a backwards range that would quietly mute every dot.
+    expect(html).toContain('if(a>b){var swap=a;a=b;b=swap;');
+  });
+
+  it('offers no year control when there is only one year to choose', () => {
+    // "2026 … 2026" slices nothing, and an inert control is worse than none.
+    expect(renderReportHtml(reportWithManyRules(20))).not.toContain('id="tl-slice"');
+  });
+
+  it('puts a way back to the top only where the reader can get stranded', () => {
+    const html = renderReportHtml(report());
+    const app = html.slice(0, html.indexOf('<article class="paper"'));
+    const signalsPane = app.slice(app.indexOf('id="pane-signals"'), app.indexOf('id="pane-market"'));
+    const marketPane = app.slice(app.indexOf('id="pane-market"'), app.indexOf('id="pane-audit"'));
+
+    // Señales measured 2360px on a phone; the other stages are 369–619px.
+    expect(app.match(/class="to-top"/g)).toHaveLength(1);
+    expect(signalsPane).toContain('class="to-top"');
+    expect(marketPane).not.toContain('class="to-top"');
+    expect(html).toContain("t.closest('.to-top')");
+  });
+
+  it('previews a dot before the click spends the reader position', () => {
+    const html = renderReportHtml(reportAcrossYears());
+    const app = html.slice(0, html.indexOf('<article class="paper"'));
+
+    // Clicking a dot now scrolls to its row, so the reader needs to know where it goes
+    // before paying for it. Focus fills the same line, so the keyboard is not left out.
+    expect(app).toContain('id="tl-peek"');
+    expect(app).toContain('Pasa el cursor por un punto para verlo');
+    expect(html).toContain("['mouseover','focusin']");
+    expect(html).toContain("['mouseout','focusout']");
+    // A fixed line under the chart, never a floating panel over the dots it explains.
+    expect(html).toMatch(/\.tl-peek\{[^}]*min-height:2\.6rem/);
+    expect(html).not.toMatch(/\.tl-peek\{[^}]*position:(absolute|fixed)/);
+    // Its content comes from the dot, and every dot has to carry it.
+    for (const attr of ['data-short=', 'data-when=', 'data-detail=', 'data-year=']) {
+      expect(/<button class="tl-dot[\s\S]{0,460}?<\/button>/.exec(app)?.[0]).toContain(attr);
+    }
+  });
+
+  it('gives the timeline a row per source that actually carries dates', () => {
     const html = renderReportHtml(reportWithManyRules(20));
 
-    // DOF returned nothing in this fixture, so it earns neither a row nor a filter.
+    // DOF returned nothing in this fixture, so it earns no row.
     expect(html.match(/class="tl-name d\d"/g)).toEqual([
       'class="tl-name d0"',
       'class="tl-name d2"',
       'class="tl-name d3"',
     ]);
-    expect([...html.matchAll(/data-tlfilter="([a-z]+)"/g)].map((match) => match[1])).toEqual([
-      'all',
-      'siem',
-      'cnbv',
-      'banxico',
-    ]);
     expect(html.match(/class="tl-track"/g)).toHaveLength(3);
   });
 
-  it('opens the timeline already showing its most recent signal, before any script runs', () => {
-    const html = renderReportHtml(report());
+  it('marks its most recent signal before any script runs, and marks only one', () => {
+    const built = report();
+    const html = renderReportHtml(built);
+    const newest = built.signals
+      .filter((signal) => signal.checked_at !== null)
+      .reduce((top, signal) => ((signal.checked_at as string) > (top.checked_at as string) ? signal : top));
 
-    // The static file must already state the truth: the script only moves the choice.
+    // The static file must already state the truth; the script only moves the choice.
+    const picked = /<button class="tl-dot d\d picked"[^>]*data-key="([^"]+)"/.exec(html)?.[1];
+
     expect(html.match(/class="tl-dot d\d picked"/g)).toHaveLength(1);
-    expect(html).toContain('<p class="tl-detail-text" id="tl-detail-text">6.7358%</p>');
-    expect(html).toContain('id="tl-detail-chip">BANXICO</span>');
+    expect(picked).toBe(newest.key);
   });
 
   it('keeps every timeline year label inside the axis it labels', () => {
@@ -637,9 +857,10 @@ describe('renderReportHtml', () => {
   it('lets the narrow screen beat the two-column default, not the other way round', () => {
     const html = renderReportHtml(report());
     // Same specificity, so source order decides. Written above the base rule, the override
-    // lost and a 375px phone kept a 200px-wide evidence list.
-    const base = html.indexOf('.ev-board{display:grid');
-    const override = html.indexOf('.ev-board{grid-template-columns:1fr}');
+    // lost and a 375px phone kept a 200px-wide evidence list. The evidence board is gone,
+    // but the landing is the same shape of rule and inherits the same trap.
+    const base = html.indexOf('.landing{display:grid');
+    const override = html.indexOf('.landing{grid-template-columns:1fr');
 
     expect(base).toBeGreaterThan(-1);
     expect(override).toBeGreaterThan(base);
@@ -655,17 +876,17 @@ describe('renderReportHtml', () => {
     expect(html).toMatch(/\.panes\{[^}]*min-width:0/);
   });
 
-  it('drills into one signal without leaving the evidence stage', () => {
-    const html = renderReportHtml(report());
+  it('follows a document without leaving the stage behind', () => {
+    const html = renderReportHtml(reportWithManyRules(18));
 
-    expect(html).toContain('class="ev-board"');
-    expect(html).toContain('id="ev-detail"');
-    // Each item carries what the detail reads, and its own control to choose it.
-    expect(html).toContain('<button class="item-pick" type="button">');
-    expect(html).toContain('data-source="Directorio oficial de establecimientos (SIEM)"');
-    expect(html).toContain("pickEvidence(pick.closest('.item'))");
-    // Choosing is not navigating: nothing here scrolls or changes stage.
-    expect(html).not.toMatch(/pickEvidence\([^)]*\);\s*goToStage/);
+    // Following the link is the act worth marking; nothing else earns the tick.
+    expect(html).toContain("if(row&&pick.tagName==='A')row.classList.add('seen')");
+    // Choosing is not navigating: nothing here changes stage.
+    expect(html).not.toMatch(/revealSignal\([^)]*\);\s*goToStage/);
+    expect(html).not.toMatch(/pickDot\([^)]*\);\s*goToStage/);
+    // Filtering re-marks the newest dot of the lane; it must not scroll the page.
+    expect(html).toMatch(/pickDot\(picked\);/);
+    expect(html).not.toMatch(/pickDot\(picked\);revealSignal/);
   });
 
   it('announces the total only after the network has finished fading, never over it', () => {
@@ -690,11 +911,35 @@ describe('renderReportHtml', () => {
     expect(off - on).toBeGreaterThanOrEqual(2000);
   });
 
+  it('says the total in one place, and puts it away before the scene moves', () => {
+    const html = renderReportHtml(report());
+    const investigate = /\n\.investigate\{([^}]*)\}/.exec(html)?.[1] ?? '';
+
+    // Measured before the fix: the flash sat at 404px, drifted to 604px and then jumped
+    // to 128px at full opacity. .flash is absolute, .investigate was not positioned, so
+    // it anchored to main until .collapse's transform made the scene the containing
+    // block mid-animation. One line settles it; without it the line reads as a second
+    // announcement of the same number.
+    expect(investigate).toContain('position:relative');
+    expect(html).toMatch(/\.flash\{position:absolute/);
+    // The rect is read while the line is still up, and the line goes away in the same
+    // frame the collapse starts — never 700ms later, on top of a transformed scene.
+    const collapse = /var from=flash\?flash\.getBoundingClientRect\(\):null;([\s\S]{0,200}?)travelIntoFigure/.exec(
+      html,
+    )?.[1];
+
+    expect(collapse).toContain("flash.classList.remove('on')");
+    expect(collapse).toContain("investigate.classList.add('collapse')");
+    expect(html).not.toMatch(/travelIntoFigure\([\s\S]{0,120}?flash\.classList\.remove/);
+  });
+
   it('places every timeline dot inside the span it draws', () => {
     const built = reportWithManyRules(20);
     const html = renderReportHtml(built);
-    const positions = [...html.matchAll(/class="tl-dot[^"]*"[\s\S]{0,220}?style="left:([\d.]+)%/g)].map((match) =>
-      Number(match[1]),
+    // Each button is matched whole, then read: a fixed-width window silently stopped
+    // matching the moment the dot gained the attributes the preview line needs.
+    const positions = [...html.matchAll(/<button class="tl-dot[\s\S]*?<\/button>/g)].map((match) =>
+      Number(/style="left:([\d.]+)%/.exec(match[0])?.[1]),
     );
 
     // One dot per dated signal: none dropped, none invented.
@@ -724,7 +969,7 @@ describe('renderReportHtml', () => {
     expect(html).not.toMatch(/[+-]\d+(\.\d+)?%\s*(vs|respecto)/i);
   });
 
-  it('prints the same four figures the screen leads with, from one definition', () => {
+  it('prints the same figures the screen leads with, from one definition', () => {
     const built = report();
     const html = renderReportHtml(built);
     const start = html.indexOf('<article class="paper"');
@@ -732,13 +977,16 @@ describe('renderReportHtml', () => {
 
     expect(end).toBeGreaterThan(start);
     const paper = html.slice(start, end);
+    const kpis = summaryKpis(built, buildLanes(built));
 
+    expect(kpis).toHaveLength(3);
     // The paper used to compute its own KPIs and had already drifted: it said "3/4
     // respondieron" where the screen said "4 registros de gobierno".
-    for (const kpi of summaryKpis(built)) {
+    for (const kpi of kpis) {
       expect(paper).toContain(`<p class="p-kpi-label">${kpi.label}</p>`);
       expect(paper).toContain(`<p class="p-kpi-value">${kpi.value}</p>`);
       expect(html).toContain(`<p class="kpi-label">${kpi.label}</p>`);
+      if (kpi.sub !== null) expect(paper).toContain(`<p class="p-kpi-sub">${kpi.sub}</p>`);
     }
   });
 
@@ -782,7 +1030,7 @@ describe('renderReportHtml', () => {
     expect([...called].filter((name) => !known.has(name) && !defined.has(name))).toEqual([]);
     // Control: the check has teeth only if it really sees both sides.
     expect(defined.has('goToStage')).toBe(true);
-    expect(called.has('pickTimeline')).toBe(true);
+    expect(called.has('revealSignal')).toBe(true);
   });
 
   it('escapes anything that came from a source', () => {

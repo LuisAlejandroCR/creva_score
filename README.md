@@ -121,13 +121,19 @@ Genera `creva-report.html` y `creva-report.json`. El HTML es **un solo archivo**
 
 Los únicos enlaces que salen del archivo son a los documentos oficiales citados, para que cualquiera pueda comprobarlos.
 
-El reporte está dividido en cinco pasos —Resumen, Señales, Evidencia, Mercado y Auditoría— y te mueves entre ellos cuando quieras, hacia adelante o hacia atrás. Lo que ya abriste o filtraste sigue como lo dejaste al volver. A la izquierda, junto a los pasos, quedan siempre a la vista la fecha de consulta y la ventana revisada.
+El reporte está dividido en cuatro pasos —Resumen, Señales, Mercado y Auditoría— y te mueves entre ellos cuando quieras, hacia adelante o hacia atrás. Lo que ya abriste o filtraste sigue como lo dejaste al volver. A la izquierda, junto a los pasos, quedan siempre a la vista la fecha de consulta y la ventana revisada.
 
-El **Resumen** es un índice, no un resumen escrito: cuatro cifras arriba —señales, fuentes, sello del directorio y la tasa de referencia— y cuatro tarjetas que llevan a cada paso. Cada cifra se dice **una sola vez** en todo el reporte, y cada gráfico se dibuja en el paso al que pertenece: el reparto por fuente vive en Señales, no repetido en la portada.
+El **Resumen** abre con la cifra que la búsqueda acaba de encontrar, grande y al centro de un círculo que muestra de un vistazo cuánto puso cada fuente. Debajo, tres tarjetas —fuentes consultadas, sello del directorio y la tasa de referencia— y una puerta a cada paso. Cada cifra se dice **una sola vez** en todo el reporte.
 
-La evidencia viene plegada y se abre con un clic o con el teclado. De cada fuente se muestran las primeras señales, y el resto lo pides tú de a poco — nada te cae encima de golpe. Puedes filtrar por fuente, ordenar por fecha, y tocar cualquiera de los tres resúmenes de arriba te lleva directo a la evidencia que lo respalda. Al elegir una señal, su detalle —fuente, fecha y documento oficial— aparece al lado, sin sacarte de la lista.
+**Señales** responde una sola pregunta de principio a fin: de dónde salió cada señal, y cuál es el documento que la respalda. Arriba, una barra por fuente con su cuenta y su porcentaje; tocar una **filtra todo lo que sigue** —la línea de tiempo y la evidencia— y un botón te devuelve al total. Antes eran dos pasos separados que repetían las mismas cifras y ofrecían tres filtros para las mismas cuatro fuentes.
 
-En **Señales**, la línea de tiempo lleva una fila por fuente y un punto por señal, en la fecha que trae. Tocas un punto para leer esa señal, o filtras por fuente para dejar solo la suya. Cuando dos señales caen casi el mismo día, el punto se apila en vez de taparse: **el lugar horizontal siempre es la fecha real**, nunca se corre para que quepa.
+La línea de tiempo lleva una fila por fuente y un punto por señal, en la fecha que trae. Cuando dos señales caen casi el mismo día, el punto se apila en vez de taparse: **el lugar horizontal siempre es la fecha real**, nunca se corre para que quepa.
+
+La línea de tiempo trae un **cortador de años**: dos manijas sobre el mismo eje que ya estás mirando, para quedarte con "de 2019 en adelante" o con un año suelto. Solo se detiene en años que sí tienen señales, y dice cuántas quedan. Se combina con la fuente que hayas elegido, no la reemplaza. Y al pasar el cursor —o al llegar con el teclado— una línea fija debajo del gráfico te dice qué es ese punto antes de que lo toques.
+
+La evidencia viene plegada y se abre con un clic o con el teclado. De cada fuente se muestran las primeras señales, y el resto lo pides tú de a poco — nada te cae encima de golpe. Puedes ordenar por fecha.
+
+Cada renglón dice solo dos cosas: **qué es y de cuándo**, y **el renglón mismo es el enlace**: un clic y estás en el documento oficial, en otra pestaña. Sin ventanas de por medio. Si una señal no trae documento en línea, el renglón lo dice —"sin documento"— y no finge ser un enlace. Al final de esta pantalla, que es la más larga, hay una fila para **volver arriba**.
 
 Las tasas de referencia se comparan entre sí en una misma línea, con la escala escrita al lado para que no parezca grande una diferencia que es pequeña. El valor de la UDI va aparte, porque no es una tasa y compararlo contra ellas no significaría nada.
 

@@ -2,7 +2,7 @@
 
 import { CrevaReport } from '../../common/types/creva-report.types';
 import { buildLanes, escapeHtml, formatDate, statusWord } from './lanes';
-import { audit, composition, evidence, hero, investigation, market } from './sections';
+import { audit, hero, investigation, market, signals } from './sections';
 import { paper, paperTitle } from './paper';
 import { script } from './script';
 import { styles } from './styles';
@@ -11,7 +11,6 @@ export { moreLabel, nextVisible } from './lanes';
 
 interface Stage {
   id: string;
-  num: string;
   name: string;
   body: string;
 }
@@ -23,11 +22,10 @@ export function renderReportHtml(report: CrevaReport): string {
   const marketBody = market(report);
 
   const stages: Stage[] = [
-    { id: 'summary', num: '01', name: 'Resumen', body: hero(report, lanes) },
-    { id: 'signals', num: '02', name: 'Señales', body: composition(report, lanes) },
-    { id: 'evidence', num: '03', name: 'Evidencia', body: evidence(lanes) },
-    ...(marketBody === '' ? [] : [{ id: 'market', num: '04', name: 'Mercado', body: marketBody }]),
-    { id: 'audit', num: '05', name: 'Auditoría', body: audit(report) },
+    { id: 'summary', name: 'Resumen', body: hero(report, lanes) },
+    { id: 'signals', name: 'Señales', body: signals(report, lanes) },
+    ...(marketBody === '' ? [] : [{ id: 'market', name: 'Mercado', body: marketBody }]),
+    { id: 'audit', name: 'Auditoría', body: audit(report) },
   ];
 
   return `<!doctype html>
@@ -102,7 +100,7 @@ function tab(stage: Stage, index: number): string {
 
   return `<button class="stage-tab${first ? ' current' : ''}" type="button" role="tab" id="tab-${stage.id}"
     data-stage="${stage.id}" aria-controls="pane-${stage.id}" aria-selected="${first ? 'true' : 'false'}" tabindex="${first ? '0' : '-1'}">
-    <span class="stage-num">${stage.num}</span>
+    <span class="stage-num">${String(index + 1).padStart(2, '0')}</span>
     <span class="stage-name">${escapeHtml(stage.name)}</span>
     <span class="stage-mark" aria-hidden="true">${first ? '●' : '○'}</span>
   </button>`;
@@ -117,6 +115,13 @@ function pane(stage: Stage, index: number, all: Stage[]): string {
     ${next === undefined ? '<span></span>' : `<button class="step next" type="button" data-step="${next.id}">${escapeHtml(next.name)} →</button>`}
   </nav>`;
 
+  // Only Señales is long enough to strand a reader at the bottom; the other stages fit
+  // in a screen or two, where the control would be noise.
+  const top =
+    stage.id === 'signals'
+      ? `<button class="to-top" type="button">Volver arriba <span class="to-top-go" aria-hidden="true">↑</span></button>`
+      : '';
+
   return `<section class="pane" role="tabpanel" id="pane-${stage.id}" data-pane="${stage.id}"
-    aria-labelledby="tab-${stage.id}" tabindex="-1"${index === 0 ? '' : ' hidden'}>${stage.body}${steps}</section>`;
+    aria-labelledby="tab-${stage.id}" tabindex="-1"${index === 0 ? '' : ' hidden'}>${stage.body}${steps}${top}</section>`;
 }
