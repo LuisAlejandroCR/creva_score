@@ -1,10 +1,11 @@
-// paper: the printable executive summary. Three pages, screen-hidden, print-only.
+// paper: the printable executive summary. Two pages, screen-hidden, print-only.
 
 import { CrevaReport, ReportSignal } from '../../common/types/creva-report.types';
-import { SourceLane, escapeHtml, formatDate, formatDateTime, isPercent, plural, statusWord } from './lanes';
-import { ranked, ring, timeline } from './sections';
+import { SourceLane, escapeHtml, formatDate, isPercent, plural, statusWord } from './lanes';
+import { ranked, ring } from './sections';
+import { paperTimeline } from './timeline';
 
-const HIGHLIGHTS_PER_LANE = 2;
+const HIGHLIGHTS = 3;
 
 export function paperTitle(report: CrevaReport): string {
   const name = report.subject?.business_name ?? 'Revisión general';
@@ -21,26 +22,21 @@ export function paper(report: CrevaReport, lanes: SourceLane[]): string {
 }
 
 function runningHead(name: string): string {
-  return `<p class="p-head">Verificación pública · Creva | ${escapeHtml(name)}</p>`;
+  return `<p class="p-head">Creva · verificación pública | ${escapeHtml(name)}</p>`;
 }
-
-function foot(): string {
-  return '<p class="p-foot">Documento generado a partir de registros públicos, con la fecha de cada consulta.</p>';
-}
-
 
 function coverPage(report: CrevaReport, lanes: SourceLane[], name: string): string {
   const headline = report.signals.find((signal) => signal.category === 'reference_rate' && isPercent(signal));
   const kpis = [
-    { label: 'Señales públicas', value: String(report.signals.length), note: 'con fuente y fecha' },
+    { label: 'Señales', value: String(report.signals.length), note: 'con fuente y fecha' },
     {
-      label: 'Fuentes que respondieron',
+      label: 'Fuentes',
       value: `${lanes.filter((lane) => lane.signals.length > 0).length}/${lanes.length}`,
-      note: 'registros de gobierno',
+      note: 'respondieron',
     },
-    { label: 'Sello del directorio', value: statusWord(report), note: 'SIEM · voluntario' },
+    { label: 'Directorio', value: statusWord(report), note: 'SIEM · voluntario' },
     headline === undefined
-      ? { label: 'Referencia', value: 'sin dato', note: 'Banco de México' }
+      ? { label: 'Referencia', value: 'sin dato', note: 'Banxico' }
       : {
           label: headline.label,
           value: headline.detail,
@@ -56,30 +52,21 @@ function coverPage(report: CrevaReport, lanes: SourceLane[], name: string): stri
     )
     .join('');
 
-  const map = lanes
-    .map(
-      (lane, index) => `<div class="p-node n${index}">
-      <p class="p-node-name">${escapeHtml(lane.short)}</p>
-      <p class="p-node-count">${lane.signals.length}</p>
-    </div>`,
-    )
-    .join('');
-
   return `<section class="p-page">
   ${runningHead(name)}
-  <p class="p-eyebrow">Reporte de verificación pública</p>
+  <p class="p-eyebrow">Verificación pública</p>
   <h1 class="p-title">${escapeHtml(name)}</h1>
-  <p class="p-sub">${escapeHtml(statusWord(report))} · ${report.signals.length} ${plural(report.signals.length, 'señal pública', 'señales públicas')} · ${report.sources.length} ${plural(report.sources.length, 'fuente', 'fuentes')}</p>
+  <p class="p-sub">${escapeHtml(statusWord(report))} · ${report.signals.length} ${plural(report.signals.length, 'señal', 'señales')} · ${report.sources.length} ${plural(report.sources.length, 'fuente', 'fuentes')}</p>
 
   <div class="p-kpis">${kpis}</div>
 
   <div class="p-dates">
     <div class="p-date a">
-      <p class="p-date-label">Consultado el</p>
+      <p class="p-date-label">Consultado</p>
       <p class="p-date-value">${escapeHtml(formatDate(report.generated_at.slice(0, 10)))}</p>
     </div>
     <div class="p-date b">
-      <p class="p-date-label">Ventana revisada</p>
+      <p class="p-date-label">Ventana</p>
       <p class="p-date-value">${report.disclosure.window_days} días</p>
     </div>
   </div>
@@ -90,17 +77,13 @@ function coverPage(report: CrevaReport, lanes: SourceLane[], name: string): stri
       <div class="p-ring">${ring(lanes, report.signals.length)}</div>
     </div>
     <div class="p-card wide">
-      <p class="p-card-title">Señales por fuente</p>
+      <p class="p-card-title">Por fuente</p>
       <div class="p-ranked">${ranked(lanes, report.signals.length)}</div>
     </div>
   </div>
 
-  <div class="p-map">
-    <div class="p-nodes">${map}</div>
-    <div class="p-arrow" aria-hidden="true"></div>
-    <p class="p-pill">Evidencia citada, con fuente y fecha — no un veredicto</p>
-  </div>
-  ${foot()}
+  <p class="p-card-title">Cuándo se publicó cada señal</p>
+  ${paperTimeline(lanes)}
 </section>`;
 }
 
@@ -108,7 +91,10 @@ function detailPage(report: CrevaReport, lanes: SourceLane[], name: string): str
   const rates = report.signals.filter((signal) => signal.category === 'reference_rate');
 
   const highlights = lanes
-    .flatMap((lane) => lane.signals.slice(0, HIGHLIGHTS_PER_LANE).map((signal) => ({ lane, signal })))
+    .filter((lane) => lane.signals.every((signal) => signal.category !== 'reference_rate'))
+    .flatMap((lane) => lane.signals.map((signal) => ({ lane, signal })))
+    .sort((a, b) => (a.signal.checked_at ?? '').localeCompare(b.signal.checked_at ?? '') * -1)
+    .slice(0, HIGHLIGHTS)
     .map(
       ({ lane, signal }) => `<div class="p-ev">
       <p class="p-ev-top"><span class="p-chip c${lanes.indexOf(lane)}">${escapeHtml(lane.short)}</span><span class="p-ev-date">${signal.checked_at === null ? 'sin fecha' : escapeHtml(formatDate(signal.checked_at))}</span></p>
@@ -120,29 +106,30 @@ function detailPage(report: CrevaReport, lanes: SourceLane[], name: string): str
   const sources = report.sources
     .map(
       (source) =>
-        `<span class="p-src"><strong>${escapeHtml(source.provider)}</strong> ${escapeHtml(source.dataset)} · ${source.queried_at === null ? '—' : escapeHtml(formatDate(source.queried_at))}</span>`,
+        `<span class="p-src"><strong>${escapeHtml(source.provider)}</strong> ${source.queried_at === null ? '—' : escapeHtml(formatDate(source.queried_at))}</span>`,
     )
     .join('');
 
   return `<section class="p-page">
   ${runningHead(name)}
-  ${timeline(lanes).replace('card tl-card', 'p-card').replace(/"tl/g, '"p-tl')}
-
-  <h2 class="p-h2">Evidencia destacada</h2>
+  <h2 class="p-h2">Evidencia</h2>
   <div class="p-evs">${highlights}</div>
 
-  ${rates.length === 0 ? '' : `<h2 class="p-h2">Contexto de mercado</h2>
-  <div class="p-rates">${rates.map(rateCard).join('')}</div>`}
+  ${
+    rates.length === 0
+      ? ''
+      : `<h2 class="p-h2">Mercado</h2>
+  <div class="p-rates">${rates.map(rateCard).join('')}</div>`
+  }
 
-  <table class="p-callout"><tbody><tr>
-    <th scope="row">Lo que NO hace</th>
-    <td>${report.disclosure.does_not_estimate.map(escapeHtml).join(' · ')}</td>
-  </tr></tbody></table>
+  <div class="p-limits">
+    <p class="p-limits-title">Lo que NO hace</p>
+    <ul class="p-limits-list">${report.disclosure.does_not_estimate.map((claim) => `<li>${escapeHtml(claim)}</li>`).join('')}</ul>
+  </div>
 
   <p class="p-srcs-title">Fuentes consultadas</p>
   <div class="p-srcs">${sources}</div>
-  <p class="p-generated">Generado el ${escapeHtml(formatDateTime(report.generated_at))}.</p>
-  ${foot()}
+  <p class="p-foot">Registros públicos, con la fecha de cada consulta. No es un veredicto.</p>
 </section>`;
 }
 

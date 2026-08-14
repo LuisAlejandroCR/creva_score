@@ -89,6 +89,35 @@ function reportWithManyRules(count: number) {
   });
 }
 
+// The standing rules the CNBV still enforces go back well over a decade, which is what
+// gives the axis more than one year to name.
+function reportAcrossYears() {
+  const years = [2012, 2014, 2016, 2019, 2021, 2024, 2025];
+
+  return buildReport({
+    subject: { business_name: 'ACME', state_code: null },
+    verification: verified,
+    radar: sourceOk('mx.regulatory-radar', {
+      alerts: years.map((year, i) => ({
+        source: 'mx.cnbv' as const,
+        kind: 'standing_rule' as const,
+        external_id: `c${i}`,
+        title: `Norma de ${year}`,
+        published_at: `${year}-03-11`,
+        agency: 'CNBV',
+        url: null,
+      })),
+      scanned_dates: ['2026-08-13'],
+      failed_dates: [],
+      sources_available: ['mx.cnbv'],
+      sources_unavailable: [],
+    }),
+    rates,
+    disclosure,
+    now,
+  });
+}
+
 describe('parseArgs', () => {
   it('reads --reporte even though it carries no value', () => {
     expect(parseArgs(['--reporte']).report).toBe(true);
@@ -497,33 +526,126 @@ describe('renderReportHtml', () => {
     expect(html).toContain("window.open('https://wa.me/?text='");
   });
 
-  it('says it in pictures: two pages, one table, and few words', () => {
+  it('says it in pictures: two pages, no table at all, and few words', () => {
     const html = renderReportHtml(reportWithManyRules(20));
-    // Bounded at the closing tag: past it lies the inline script, which is not prose.
+    // Bounded at both ends on purpose, and the far end has to exist: slicing to the end of
+    // the file swept the inline script into the word count once already.
     const start = html.indexOf('<article class="paper"');
-    const paper = html.slice(start, html.indexOf('</article>', start));
+    const end = html.indexOf('</article>', start);
 
-    expect(paper.match(/<table/g)).toHaveLength(1);
+    expect(end).toBeGreaterThan(start);
+    const paper = html.slice(start, end);
+
+    expect(paper).not.toContain('<table');
     // Prose is what the graphics replaced, so the word count is part of the contract.
     const words = paper
       .replace(/<[^>]+>/g, ' ')
       .trim()
       .split(/\s+/).length;
-    expect(words).toBeLessThan(520);
+    expect(words).toBeLessThan(260);
 
-    for (const graphic of ['p-kpi', 'p-date', 'p-node', 'p-ring', 'p-ranked', 'p-tl-dot', 'p-ev', 'p-rate', 'p-src']) {
+    for (const graphic of ['p-kpi', 'p-date', 'p-ring', 'p-ranked', 'p-tl-dot', 'p-ev', 'p-rate', 'p-src', 'p-limits']) {
       expect(paper).toContain(`class="${graphic}`);
     }
     expect(paper.match(/class="ring-arc/g)?.length).toBeGreaterThan(0);
+    // The source map printed the same four counts the ring and the bars already carry.
+    expect(paper).not.toContain('p-node');
+    // Three cards, not two per lane: eight of them was the repetition the reader saw.
+    expect(paper.match(/class="p-ev"/g)).toHaveLength(3);
   });
 
   it('lets a chosen source quiet the rest of the timeline', () => {
     const html = renderReportHtml(reportWithManyRules(20));
 
-    // Every dot names its lane, which is what the script dims against.
-    expect(html).toMatch(/class="tl-dot d\d" data-lane="[a-z]+"/);
-    expect(html).toContain('class="tl-key-item"');
-    expect(html).toContain("dot.classList.toggle('muted'");
+    // Every dot is a control that names its lane, which is what the script dims and picks against.
+    expect(html).toMatch(/<button class="tl-dot d\d[^"]*" data-lane="[a-z]+"/);
+    expect(html).toContain('id="tl-count"');
+    expect(html).toContain("dot.classList.toggle('muted',out)");
+  });
+
+  it('gives the timeline a row and a filter per source that actually carries dates', () => {
+    const html = renderReportHtml(reportWithManyRules(20));
+
+    // DOF returned nothing in this fixture, so it earns neither a row nor a filter.
+    expect(html.match(/class="tl-name d\d"/g)).toEqual([
+      'class="tl-name d0"',
+      'class="tl-name d2"',
+      'class="tl-name d3"',
+    ]);
+    expect([...html.matchAll(/data-tlfilter="([a-z]+)"/g)].map((match) => match[1])).toEqual([
+      'all',
+      'siem',
+      'cnbv',
+      'banxico',
+    ]);
+    expect(html.match(/class="tl-track"/g)).toHaveLength(3);
+  });
+
+  it('opens the timeline already showing its most recent signal, before any script runs', () => {
+    const html = renderReportHtml(report());
+
+    // The static file must already state the truth: the script only moves the choice.
+    expect(html.match(/class="tl-dot d\d picked"/g)).toHaveLength(1);
+    expect(html).toContain('<p class="tl-detail-text" id="tl-detail-text">6.7358%</p>');
+    expect(html).toContain('id="tl-detail-chip">BANXICO</span>');
+  });
+
+  it('keeps every timeline year label inside the axis it labels', () => {
+    // The real corpus of standing rules runs from 2012, so the axis has years to name.
+    const html = renderReportHtml(reportAcrossYears());
+    const ticks = [...html.matchAll(/class="tl-tick[^"]*" style="left:([\d.]+)%"/g)].map((match) => Number(match[1]));
+
+    expect(ticks.length).toBeGreaterThan(1);
+    expect(ticks.length).toBeLessThanOrEqual(5);
+    expect(Math.min(...ticks)).toBeGreaterThanOrEqual(0);
+    expect(Math.max(...ticks)).toBeLessThanOrEqual(100);
+  });
+
+  it('names dates instead of years when everything happened inside one year', () => {
+    // "2026 … 2026" would label nothing, so the axis falls back to the two full dates.
+    const html = renderReportHtml(reportWithManyRules(20));
+
+    expect(html).not.toContain('class="tl-tick');
+    expect(html).toContain('<div class="tl-ends">');
+    expect(html).toContain('de agosto de 2026');
+  });
+
+  it('lets the narrow screen beat the two-column default, not the other way round', () => {
+    const html = renderReportHtml(report());
+    // Same specificity, so source order decides. Written above the base rule, the override
+    // lost and a 375px phone kept a 200px-wide evidence list.
+    const base = html.indexOf('.ev-board{display:grid');
+    const override = html.indexOf('.ev-board{grid-template-columns:1fr}');
+
+    expect(base).toBeGreaterThan(-1);
+    expect(override).toBeGreaterThan(base);
+  });
+
+  it('drills into one signal without leaving the evidence stage', () => {
+    const html = renderReportHtml(report());
+
+    expect(html).toContain('class="ev-board"');
+    expect(html).toContain('id="ev-detail"');
+    // Each item carries what the detail reads, and its own control to choose it.
+    expect(html).toContain('<button class="item-pick" type="button">');
+    expect(html).toContain('data-source="Directorio oficial de establecimientos (SIEM)"');
+    expect(html).toContain("pickEvidence(pick.closest('.item'))");
+    // Choosing is not navigating: nothing here scrolls or changes stage.
+    expect(html).not.toMatch(/pickEvidence\([^)]*\);\s*goToStage/);
+  });
+
+  it('announces the total only after the network has finished fading, never over it', () => {
+    const html = renderReportHtml(report());
+    const cleared = Number(
+      /investigate\.classList\.add\('cleared'\);[\s\S]*?\},settled\+(\d+)\);/.exec(html)?.[1] ?? 0,
+    );
+    const fade = Number(/\.investigate \.net,[^{]*\{transition:opacity (\d+)ms/.exec(html)?.[1] ?? 0);
+    const flash = Number(/flash\.classList\.add\('on'\);\},settled\+(\d+)\)/.exec(html)?.[1] ?? 0);
+
+    expect(cleared).toBeGreaterThan(0);
+    expect(fade).toBeGreaterThan(0);
+    // The gap is the whole point of the scene: the tree has to be gone before the number lands.
+    expect(flash).toBeGreaterThanOrEqual(cleared + fade + 200);
   });
 
   it('holds the total on screen long enough to be read', () => {

@@ -395,7 +395,9 @@ export function script(): string {
     goToStage('evidence',{focusPane:true});
 
     var first=target.querySelector('.item');
-    if(first&&!reduce){
+    if(!first)return;
+    pickEvidence(first);
+    if(!reduce){
       first.classList.remove('spotlight');
       void first.offsetWidth;
       first.classList.add('spotlight');
@@ -420,14 +422,7 @@ export function script(): string {
     });
     list.classList.toggle('picking',picked!==null);
 
-    var tl=document.querySelector('.tl');
-    if(tl){
-      var lane=picked===null?null:picked.getAttribute('data-lane');
-      tl.setAttribute('data-picked',lane===null?'':lane);
-      [].slice.call(tl.querySelectorAll('.tl-dot')).forEach(function(dot){
-        dot.classList.toggle('muted',lane!==null&&dot.getAttribute('data-lane')!==lane);
-      });
-    }
+    focusTimeline(picked===null?null:picked.getAttribute('data-lane'));
 
     if(picked===null){
       centre.textContent=centre.getAttribute('data-total')||centre.textContent;
@@ -439,6 +434,84 @@ export function script(): string {
     label.textContent=picked.querySelector('.rank-name').textContent.trim()+' · '+picked.querySelector('.rank-share').textContent+' de las señales';
     go.hidden=false;
     go.setAttribute('data-lane',picked.getAttribute('data-lane'));
+  }
+
+  // One lane focus drives the whole Signals stage: the ranked list, the ring, the
+  // timeline dots, its filter chips and its count all read from it.
+  function focusTimeline(lane){
+    var tl=document.querySelector('.tl');
+    if(!tl)return;
+    tl.setAttribute('data-picked',lane===null?'':lane);
+
+    var shown=0,picked=null;
+    [].slice.call(tl.querySelectorAll('.tl-dot')).forEach(function(dot){
+      var out=lane!==null&&dot.getAttribute('data-lane')!==lane;
+      dot.classList.toggle('muted',out);
+      if(out)return;
+      shown++;
+      if(picked===null||dot.getAttribute('data-at')>picked.getAttribute('data-at'))picked=dot;
+    });
+
+    [].slice.call(document.querySelectorAll('.tl-filter')).forEach(function(chip){
+      var on=chip.getAttribute('data-tlfilter')===(lane===null?'all':lane);
+      chip.classList.toggle('selected',on);
+      chip.setAttribute('aria-pressed',on?'true':'false');
+    });
+
+    var count=document.getElementById('tl-count');
+    if(count){
+      var word=shown===1?'señal fechada':'señales fechadas';
+      count.textContent=(lane===null?'':lane.toUpperCase()+' · ')+shown+' '+word;
+    }
+
+    var current=tl.querySelector('.tl-dot.picked');
+    if(picked&&(current===null||current.classList.contains('muted')))pickTimeline(picked);
+  }
+
+  function pickTimeline(dot){
+    if(!dot)return;
+    [].slice.call(document.querySelectorAll('.tl-dot')).forEach(function(d){d.classList.toggle('picked',d===dot);});
+
+    var chip=document.getElementById('tl-detail-chip');
+    var date=document.getElementById('tl-detail-date');
+    var text=document.getElementById('tl-detail-text');
+    var doc=document.getElementById('tl-detail-doc');
+    if(chip){chip.textContent=dot.getAttribute('data-short');chip.className='tl-chip '+laneClass(dot);}
+    if(date)date.textContent=dot.getAttribute('data-date');
+    if(text)text.textContent=dot.getAttribute('data-detail');
+    if(doc){
+      var url=dot.getAttribute('data-url');
+      doc.hidden=url==='';
+      if(url!=='')doc.setAttribute('href',url);
+    }
+  }
+
+  function laneClass(el){
+    var match=/\\bd(\\d)\\b/.exec(el.className);
+    return match===null?'d0':'d'+match[1];
+  }
+
+  // Choosing an item fills the detail beside it. It never leaves the stage.
+  function pickEvidence(item){
+    if(!item)return;
+    [].slice.call(document.querySelectorAll('.item')).forEach(function(i){i.classList.toggle('picked',i===item);});
+
+    var chip=document.getElementById('ev-chip');
+    var date=document.getElementById('ev-date');
+    var label=document.getElementById('ev-label');
+    var text=document.getElementById('ev-text');
+    var source=document.getElementById('ev-source');
+    var doc=document.getElementById('ev-doc');
+    if(chip){chip.textContent=item.getAttribute('data-short');chip.className='ev-chip d'+item.getAttribute('data-lane-i');}
+    if(date)date.textContent=item.getAttribute('data-when');
+    if(label)label.textContent=item.getAttribute('data-label');
+    if(text)text.textContent=item.getAttribute('data-detail');
+    if(source)source.textContent=item.getAttribute('data-source');
+    if(doc){
+      var url=item.getAttribute('data-url');
+      doc.hidden=url==='';
+      if(url!=='')doc.setAttribute('href',url);
+    }
   }
 
   function pickPoint(index){
@@ -500,6 +573,19 @@ export function script(): string {
 
     var filter=t.closest('.filter');
     if(filter){setFilter(filter.getAttribute('data-filter'));return;}
+
+    var pick=t.closest('.item-pick');
+    if(pick){pickEvidence(pick.closest('.item'));return;}
+
+    var tlDot=t.closest('.tl-dot');
+    if(tlDot){pickTimeline(tlDot);return;}
+
+    var tlFilter=t.closest('.tl-filter');
+    if(tlFilter){
+      var lane=tlFilter.getAttribute('data-tlfilter');
+      pickComposition(lane==='all'?'':lane);
+      return;
+    }
 
     var point=t.closest('.point');
     if(point){pickPoint(parseInt(point.getAttribute('data-point'),10)||0);return;}

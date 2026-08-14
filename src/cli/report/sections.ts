@@ -13,6 +13,7 @@ import {
   visibleFor,
 } from './lanes';
 import { buildRateStrip } from './rate-strip';
+import { timeline } from './timeline';
 
 const NODE_X = [90, 230, 370, 510];
 const ROOT = { x: 300, y: 62 };
@@ -65,39 +66,6 @@ export function ranked(lanes: SourceLane[], total: number): string {
     .join('');
 }
 
-
-export function timeline(lanes: SourceLane[]): string {
-  const dated: { index: number; lane: string; at: string }[] = lanes.flatMap((lane, index) =>
-    lane.signals
-      .filter((signal) => signal.checked_at !== null)
-      .map((signal) => ({ index, lane: lane.id, at: (signal.checked_at as string).slice(0, 10) })),
-  );
-  if (dated.length < 2) return '';
-
-  const stamps = dated.map((point) => Date.parse(point.at)).filter((value) => Number.isFinite(value));
-  const first = Math.min(...stamps);
-  const last = Math.max(...stamps);
-  const span = last - first;
-  if (span <= 0) return '';
-
-  const dots = dated
-    .map((point) => {
-      const left = ((Date.parse(point.at) - first) / span) * 100;
-      return `<span class="tl-dot d${point.index}" data-lane="${point.lane}" style="left:${left.toFixed(1)}%"></span>`;
-    })
-    .join('');
-
-  return `<div class="card tl-card">
-    <p class="card-title">Cuándo se publicó cada señal</p>
-    <div class="tl">${dots}</div>
-    <div class="tl-key">${lanes
-      .filter((lane) => lane.signals.some((signal) => signal.checked_at !== null))
-      .map((lane) => `<span class="tl-key-item"><span class="tl-dot-key d${lanes.indexOf(lane)}"></span>${escapeHtml(lane.short)}</span>`)
-      .join('')}</div>
-    <div class="tl-ends"><span>${escapeHtml(formatDate(new Date(first).toISOString().slice(0, 10)))}</span><span>${escapeHtml(formatDate(new Date(last).toISOString().slice(0, 10)))}</span></div>
-    <p class="card-note">Un punto por señal, en la fecha que trae. El color es la fuente.</p>
-  </div>`;
-}
 
 export function investigation(report: CrevaReport, lanes: SourceLane[], name: string): string {
   const links = lanes.map((_, i) => `<path class="link" data-link="${i}" d="${linkPath(i)}"/>`).join('');
@@ -303,11 +271,33 @@ export function evidence(lanes: SourceLane[]): string {
   <div class="filters" role="group" aria-label="Filtrar evidencia por fuente">${filters}</div>
   <p class="filter-result" id="filter-result" aria-live="polite">${total} ${plural(total, 'resultado', 'resultados')}</p>
 
-  <div class="panels">${lanes.map(panel).join('')}</div>
+  <div class="ev-board">
+    <div class="panels">${lanes.map(panel).join('')}</div>
+    ${selected(lanes)}
+  </div>
 </section>`;
 }
 
-function panel(lane: SourceLane): string {
+// The detail is the drill-down: choosing an item fills it in place, without leaving the stage.
+function selected(lanes: SourceLane[]): string {
+  const lane = lanes.find((candidate) => candidate.signals.length > 0);
+  const signal = lane?.signals[0];
+  if (lane === undefined || signal === undefined) return '';
+
+  return `<aside class="card ev-detail" id="ev-detail" aria-live="polite">
+    <p class="card-title">Señal seleccionada</p>
+    <p class="ev-top">
+      <span class="ev-chip d${lanes.indexOf(lane)}" id="ev-chip">${escapeHtml(lane.short)}</span>
+      <span class="ev-date" id="ev-date">${signal.checked_at === null ? 'sin fecha' : escapeHtml(formatDate(signal.checked_at))}</span>
+    </p>
+    <p class="ev-label" id="ev-label">${escapeHtml(signal.label)}</p>
+    <p class="ev-text" id="ev-text">${escapeHtml(signal.detail)}</p>
+    <p class="ev-source" id="ev-source">${escapeHtml(signal.source)}</p>
+    <a class="doc" id="ev-doc" href="${signal.evidence_url === null ? '' : escapeHtml(signal.evidence_url)}" target="_blank" rel="noopener"${signal.evidence_url === null ? ' hidden' : ''}>Ver documento oficial <span class="doc-go" aria-hidden="true">→</span></a>
+  </aside>`;
+}
+
+function panel(lane: SourceLane, laneIndex: number): string {
   const visible = visibleFor(lane.id);
   const total = lane.signals.length;
   const dated = lane.signals.filter((signal) => signal.checked_at !== null).length;
@@ -315,7 +305,7 @@ function panel(lane: SourceLane): string {
   const items =
     total === 0
       ? '<p class="empty">Sin señales de esta fuente en la revisión.</p>'
-      : lane.signals.map((signal, index) => evidenceItem(signal, index, index >= visible)).join('');
+      : lane.signals.map((signal, index) => evidenceItem(signal, index, index >= visible, lane, laneIndex)).join('');
 
   const sort =
     dated >= 2 && total >= 2
@@ -343,15 +333,27 @@ function panel(lane: SourceLane): string {
 </article>`;
 }
 
-function evidenceItem(signal: ReportSignal, index: number, folded: boolean): string {
+function evidenceItem(
+  signal: ReportSignal,
+  index: number,
+  folded: boolean,
+  lane: SourceLane,
+  laneIndex: number,
+): string {
   const link =
     signal.evidence_url === null
       ? ''
       : `<a class="doc" href="${escapeHtml(signal.evidence_url)}" target="_blank" rel="noopener">Ver documento oficial <span class="doc-go" aria-hidden="true">→</span></a>`;
 
-  return `<div class="item tone-${signal.tone}" data-i="${index}" data-order="${index}" data-date="${signal.checked_at === null ? '' : escapeHtml(signal.checked_at)}"${folded ? ' hidden' : ''}>
-  <p class="item-label">${escapeHtml(signal.label)}</p>
-  <p class="item-detail">${escapeHtml(signal.detail)}</p>
+  return `<div class="item tone-${signal.tone}" data-i="${index}" data-order="${index}" data-date="${signal.checked_at === null ? '' : escapeHtml(signal.checked_at)}"
+  data-lane="${lane.id}" data-lane-i="${laneIndex}" data-short="${escapeHtml(lane.short)}"
+  data-label="${escapeHtml(signal.label)}" data-detail="${escapeHtml(signal.detail)}" data-source="${escapeHtml(signal.source)}"
+  data-when="${signal.checked_at === null ? 'sin fecha' : escapeHtml(formatDate(signal.checked_at))}"
+  data-url="${signal.evidence_url === null ? '' : escapeHtml(signal.evidence_url)}"${folded ? ' hidden' : ''}>
+  <button class="item-pick" type="button">
+    <span class="item-label">${escapeHtml(signal.label)}</span>
+    <span class="item-detail">${escapeHtml(signal.detail)}</span>
+  </button>
   <p class="meta"><span class="meta-dot" aria-hidden="true"></span>${escapeHtml(signal.source)}${signal.checked_at === null ? '' : ` · ${escapeHtml(formatDate(signal.checked_at))}`}<span class="item-seen">✓ consultado</span></p>
   ${link}
 </div>`;

@@ -123,13 +123,15 @@ Los únicos enlaces que salen del archivo son a los documentos oficiales citados
 
 El reporte está dividido en cinco pasos —Resumen, Señales, Evidencia, Mercado y Auditoría— y te mueves entre ellos cuando quieras, hacia adelante o hacia atrás. Lo que ya abriste o filtraste sigue como lo dejaste al volver.
 
-La evidencia viene plegada y se abre con un clic o con el teclado. De cada fuente se muestran las primeras señales, y el resto lo pides tú de a poco — nada te cae encima de golpe. Puedes filtrar por fuente, ordenar por fecha, y tocar cualquiera de los tres resúmenes de arriba te lleva directo a la evidencia que lo respalda.
+La evidencia viene plegada y se abre con un clic o con el teclado. De cada fuente se muestran las primeras señales, y el resto lo pides tú de a poco — nada te cae encima de golpe. Puedes filtrar por fuente, ordenar por fecha, y tocar cualquiera de los tres resúmenes de arriba te lleva directo a la evidencia que lo respalda. Al elegir una señal, su detalle —fuente, fecha y documento oficial— aparece al lado, sin sacarte de la lista.
+
+En **Señales**, la línea de tiempo lleva una fila por fuente y un punto por señal, en la fecha que trae. Tocas un punto para leer esa señal, o filtras por fuente para dejar solo la suya. Cuando dos señales caen casi el mismo día, el punto se apila en vez de taparse: **el lugar horizontal siempre es la fecha real**, nunca se corre para que quepa.
 
 Las tasas de referencia se comparan entre sí en una misma línea, con la escala escrita al lado para que no parezca grande una diferencia que es pequeña. El valor de la UDI va aparte, porque no es una tasa y compararlo contra ellas no significaría nada.
 
 Si prefieres verlo todo de corrido —para buscar una palabra— hay un botón **"Ver todo"** arriba a la derecha que despliega los cinco pasos en una sola página.
 
-Con **"Descargar PDF"** obtienes un resumen ejecutivo de tres páginas, pensado para enviarlo a quien evalúa tu solicitud: qué se consultó, cuántas señales salieron de cada fuente, la evidencia destacada con su fecha y, al final, lo que este análisis **no** estima. Con **"Compartir"** se abre WhatsApp para que elijas tú a quién enviarlo. Desde el teléfono se manda el reporte completo como archivo; desde la computadora, el resumen escrito. En cualquier caso el mensaje lleva solo cifras públicas: **nunca tu RFC**.
+Con **"Descargar PDF"** obtienes un resumen ejecutivo de **dos páginas**, pensado para enviarlo a quien evalúa tu solicitud. Es el mismo tablero, en papel: la primera página lleva las cifras de arriba, el reparto por fuente y la línea de tiempo; la segunda, la evidencia más reciente, las tasas y lo que este análisis **no** estima. No hay tablas y casi no hay párrafos — se entiende mirándolo. Con **"Compartir"** se abre WhatsApp para que elijas tú a quién enviarlo. Desde el teléfono se manda el reporte completo como archivo; desde la computadora, el resumen escrito. En cualquier caso el mensaje lleva solo cifras públicas: **nunca tu RFC**.
 
 Al final hay una sección con lo que este análisis **no** hace, siempre a la vista. El detalle de dónde salió cada dato y la lista de fuentes se guardan detrás de un botón, para no competir con lo que importa.
 
