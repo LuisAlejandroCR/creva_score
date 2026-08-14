@@ -14,7 +14,7 @@ import { SourceResult } from '../common/types/source-result.types';
 import { CountingCacheStore } from './counting-cache';
 import { readEnvFile } from './env-file';
 import { buildReport } from '../modules/creva-score/creva-report.builder';
-import { renderReportHtml } from './report-html';
+import { renderReportHtml } from './report';
 
 export interface DemoArgs {
   businessName?: string;

@@ -1,6 +1,6 @@
 import { buildReport } from '../../src/modules/creva-score/creva-report.builder';
 import { buildScoreDisclosure } from '../../src/modules/score-disclosure/score-disclosure.service';
-import { moreLabel, nextVisible, renderReportHtml } from '../../src/cli/report-html';
+import { moreLabel, nextVisible, renderReportHtml } from '../../src/cli/report';
 import { sourceOk, sourceUnavailable } from '../../src/common/types/source-result.types';
 import { parseArgs, renderReportPaths } from '../../src/cli/demo';
 
@@ -62,6 +62,31 @@ const rates = sourceOk(
 
 function report(subject: { business_name: string; state_code: number | null } | null = { business_name: 'ESTETICA ANITA', state_code: 8 }) {
   return buildReport({ subject, verification: verified, radar, rates, disclosure, now });
+}
+
+function reportWithManyRules(count: number) {
+  return buildReport({
+    subject: { business_name: 'ACME', state_code: null },
+    verification: verified,
+    radar: sourceOk('mx.regulatory-radar', {
+      alerts: Array.from({ length: count }, (_, i) => ({
+        source: 'mx.cnbv' as const,
+        kind: 'standing_rule' as const,
+        external_id: `c${i}`,
+        title: `Norma ${i}`,
+        published_at: `2026-08-${String((i % 28) + 1).padStart(2, '0')}`,
+        agency: 'CNBV',
+        url: null,
+      })),
+      scanned_dates: ['2026-08-13'],
+      failed_dates: [],
+      sources_available: ['mx.cnbv'],
+      sources_unavailable: [],
+    }),
+    rates,
+    disclosure,
+    now,
+  });
 }
 
 describe('parseArgs', () => {
@@ -211,35 +236,33 @@ describe('renderReportHtml', () => {
     for (const filter of ['all', 'siem', 'dof', 'cnbv', 'banxico']) {
       expect(html).toContain(`data-filter="${filter}"`);
     }
-    expect(html.match(/<button class="filter[^"]*" type="button" data-filter="[a-z]+" aria-pressed="(true|false)">/g)).toHaveLength(5);
-    expect(html.match(/aria-pressed="true"/g)).toHaveLength(1);
+    const buttons = html.match(/<button class="filter[^"]*"[^>]*>/g) ?? [];
+
+    expect(buttons).toHaveLength(5);
+    expect(buttons.filter((button) => button.includes('aria-pressed="true"'))).toHaveLength(1);
+  });
+
+  it('lets a category be re-ordered, and never offers a ranking it cannot compute', () => {
+    const html = renderReportHtml(reportWithManyRules(18));
+    const cnbvPanel = html.slice(html.indexOf('id="lane-cnbv"'), html.indexOf('id="lane-banxico"'));
+    const siemPanel = html.slice(html.indexOf('id="lane-siem"'), html.indexOf('id="lane-dof"'));
+
+    expect(cnbvPanel).toContain('data-sort="recent"');
+    expect(cnbvPanel).toContain('data-sort="default"');
+    expect(cnbvPanel).not.toContain('relevante');
+    // One signal cannot be re-ordered, so SIEM gets no control at all.
+    expect(siemPanel).not.toContain('data-sort=');
+  });
+
+  it('marks the evidence as cited, never as verified by the act of opening it', () => {
+    const html = renderReportHtml(report());
+
+    expect(html).toContain('Evidencia citada');
+    expect(html).not.toContain('Fuente verificada');
   });
 
   it('folds every source past the first few without dropping a single item', () => {
-    const many = buildReport({
-      subject: { business_name: 'ACME', state_code: null },
-      verification: verified,
-      radar: sourceOk('mx.regulatory-radar', {
-        alerts: Array.from({ length: 18 }, (_, i) => ({
-          source: 'mx.cnbv' as const,
-          kind: 'standing_rule' as const,
-          external_id: `c${i}`,
-          title: `Norma ${i}`,
-          published_at: '2026-08-01',
-          agency: 'CNBV',
-          url: null,
-        })),
-        scanned_dates: ['2026-08-13'],
-        failed_dates: [],
-        sources_available: ['mx.cnbv'],
-        sources_unavailable: [],
-      }),
-      rates,
-      disclosure,
-      now,
-    });
-
-    const html = renderReportHtml(many);
+    const html = renderReportHtml(reportWithManyRules(18));
     const cnbvPanel = html.slice(html.indexOf('id="lane-cnbv"'), html.indexOf('id="lane-banxico"'));
 
     // All 18 stay in the document; 15 of them simply start folded.
