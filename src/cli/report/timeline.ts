@@ -1,14 +1,12 @@
 // timeline: the dated signals laid out on a shared axis, for the screen and for paper.
 
-import { SourceLane, escapeHtml, formatDate, plural } from './lanes';
+import { SourceLane, escapeHtml, formatDate } from './lanes';
 
 // Two dots closer than this on the same lane are drawn stacked instead of on top of each other.
 const MIN_GAP = 2.2;
 const MAX_LEVEL = 3;
 const STEP_PX = 11;
-const STEP_MM = 2.9;
 const BASE_PX = 24;
-const BASE_MM = 6.4;
 const MAX_TICKS = 5;
 
 export interface TimelinePoint {
@@ -166,12 +164,17 @@ export function timeline(lanes: SourceLane[]): string {
           .map((tick) => `<span class="tl-tick ${tick.align}" style="left:${tick.left.toFixed(1)}%">${tick.year}</span>`)
           .join('')}</span>`;
 
+  // The ends only appear when there are no year ticks; with them they say the same twice.
+  const ends =
+    data.ticks.length > 0
+      ? ''
+      : `<div class="tl-ends"><span>${escapeHtml(formatDate(data.first))}</span><span>${escapeHtml(formatDate(data.last))}</span></div>`;
+
   return `<div class="card tl-card">
     <p class="card-title">Cuándo se publicó cada señal</p>
     <div class="tl-filters" role="group" aria-label="Filtrar la línea de tiempo por fuente">${filters}</div>
-    <p class="tl-count" id="tl-count" aria-live="polite">${data.points.length} ${plural(data.points.length, 'señal fechada', 'señales fechadas')}</p>
     <div class="tl">${grid}${axis}</div>
-    <div class="tl-ends"><span>${escapeHtml(formatDate(data.first))}</span><span>${escapeHtml(formatDate(data.last))}</span></div>
+    ${ends}
     ${detail(data.points[data.newest])}
   </div>`;
 }
@@ -200,30 +203,3 @@ function detail(point: TimelinePoint | undefined): string {
   </div>`;
 }
 
-export function paperTimeline(lanes: SourceLane[]): string {
-  const data = buildTimeline(lanes);
-  if (data === null) return '';
-
-  const grid = data.rows
-    .map(
-      (row) => `<span class="p-tl-name">${escapeHtml(row.laneShort)}</span>
-      <span class="p-tl-track" style="--hm:${(BASE_MM + row.depth * STEP_MM).toFixed(1)}mm">${row.points
-        .map(
-          (point) =>
-            `<span class="p-tl-dot d${point.laneIndex}" style="left:${point.left.toFixed(1)}%;--dym:${((point.level - row.depth / 2) * STEP_MM).toFixed(2)}mm"></span>`,
-        )
-        .join('')}</span>`,
-    )
-    .join('');
-
-  const axis =
-    data.ticks.length === 0
-      ? ''
-      : `<span></span><span class="p-tl-axis">${data.ticks
-          .map(
-            (tick) => `<span class="p-tl-tick ${tick.align}" style="left:${tick.left.toFixed(1)}%">${tick.year}</span>`,
-          )
-          .join('')}</span>`;
-
-  return `<div class="p-tl">${grid}${axis}</div>`;
-}

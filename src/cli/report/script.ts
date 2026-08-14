@@ -13,7 +13,7 @@ export function script(): string {
   var sparks=[].slice.call(document.querySelectorAll('.net .spark'));
   var nodes=[].slice.call(document.querySelectorAll('.net .node'));
   var ticks=[].slice.call(document.querySelectorAll('.tick'));
-  var figure=report.querySelector('.figure');
+  var figure=document.getElementById('kpi-count');
   var progressN=document.getElementById('progress-n');
   var progressW=document.getElementById('progress-w');
   var flash=document.getElementById('flash');
@@ -63,7 +63,6 @@ export function script(): string {
     if(id==='summary')revealSummary();
     if(id==='signals')growComposition();
     if(id==='market')pickPoint(0);
-    if(id==='audit')runWhy();
   }
 
   function goToStage(id,opts){
@@ -230,7 +229,7 @@ export function script(): string {
 
   function showAll(on){
     var workspace=document.querySelector('.workspace');
-    var rail=document.getElementById('stages');
+    var rail=document.getElementById('rail');
     var button=document.getElementById('show-all');
     if(!workspace||!rail||!button)return;
 
@@ -437,18 +436,17 @@ export function script(): string {
   }
 
   // One lane focus drives the whole Signals stage: the ranked list, the ring, the
-  // timeline dots, its filter chips and its count all read from it.
+  // timeline dots and its filter chips all read from it.
   function focusTimeline(lane){
     var tl=document.querySelector('.tl');
     if(!tl)return;
     tl.setAttribute('data-picked',lane===null?'':lane);
 
-    var shown=0,picked=null;
+    var picked=null;
     [].slice.call(tl.querySelectorAll('.tl-dot')).forEach(function(dot){
       var out=lane!==null&&dot.getAttribute('data-lane')!==lane;
       dot.classList.toggle('muted',out);
       if(out)return;
-      shown++;
       if(picked===null||dot.getAttribute('data-at')>picked.getAttribute('data-at'))picked=dot;
     });
 
@@ -457,12 +455,6 @@ export function script(): string {
       chip.classList.toggle('selected',on);
       chip.setAttribute('aria-pressed',on?'true':'false');
     });
-
-    var count=document.getElementById('tl-count');
-    if(count){
-      var word=shown===1?'señal fechada':'señales fechadas';
-      count.textContent=(lane===null?'':lane.toUpperCase()+' · ')+shown+' '+word;
-    }
 
     var current=tl.querySelector('.tl-dot.picked');
     if(picked&&(current===null||current.classList.contains('muted')))pickTimeline(picked);
@@ -520,10 +512,8 @@ export function script(): string {
     if(!picked)return;
     points.forEach(function(p,i){p.classList.toggle('picked',i===index);});
 
-    var value=document.getElementById('strip-value');
     var label=document.getElementById('strip-label');
     var date=document.getElementById('strip-date');
-    if(value)value.textContent=picked.getAttribute('data-text');
     if(label)label.textContent=picked.getAttribute('data-label');
     if(date)date.textContent=picked.getAttribute('data-date');
   }

@@ -1,8 +1,8 @@
 // report: renders a report into one self-contained page. Presentation only.
 
 import { CrevaReport } from '../../common/types/creva-report.types';
-import { buildLanes, escapeHtml, statusWord } from './lanes';
-import { audit, closing, composition, evidence, hero, investigation, market, why } from './sections';
+import { buildLanes, escapeHtml, formatDate, statusWord } from './lanes';
+import { audit, composition, evidence, hero, investigation, market } from './sections';
 import { paper, paperTitle } from './paper';
 import { script } from './script';
 import { styles } from './styles';
@@ -27,7 +27,7 @@ export function renderReportHtml(report: CrevaReport): string {
     { id: 'signals', num: '02', name: 'Señales', body: composition(report, lanes) },
     { id: 'evidence', num: '03', name: 'Evidencia', body: evidence(lanes) },
     ...(marketBody === '' ? [] : [{ id: 'market', num: '04', name: 'Mercado', body: marketBody }]),
-    { id: 'audit', num: '05', name: 'Auditoría', body: `${why(report)}${audit(report)}${closing(report)}` },
+    { id: 'audit', num: '05', name: 'Auditoría', body: audit(report) },
   ];
 
   return `<!doctype html>
@@ -56,7 +56,13 @@ export function renderReportHtml(report: CrevaReport): string {
 
   <section class="stage report staging" id="stage-report">
     <div class="workspace">
-      <nav class="stages" id="stages" role="tablist" aria-label="Etapas del reporte">${stages.map(tab).join('')}</nav>
+      <div class="rail" id="rail">
+        <nav class="stages" id="stages" role="tablist" aria-label="Etapas del reporte">${stages.map(tab).join('')}</nav>
+        <div class="rail-dates">
+          <div class="date-card a"><p class="date-label">Consultado</p><p class="date-value">${escapeHtml(formatDate(report.generated_at.slice(0, 10)))}</p></div>
+          <div class="date-card b"><p class="date-label">Ventana</p><p class="date-value">${report.disclosure.window_days} días</p></div>
+        </div>
+      </div>
       <div class="panes">${stages.map((stage, index) => pane(stage, index, stages)).join('')}</div>
     </div>
   </section>

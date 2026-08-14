@@ -5,7 +5,6 @@ import {
   SourceLane,
   escapeHtml,
   formatDate,
-  formatDateTime,
   isPercent,
   moreLabel,
   plural,
@@ -99,131 +98,89 @@ export function investigation(report: CrevaReport, lanes: SourceLane[], name: st
   </section>`;
 }
 
-export function hero(report: CrevaReport, lanes: SourceLane[]): string {
-  const signals = report.signals.length;
-  const verification = report.signals.find((s) => s.category === 'business_verification');
-  const tone = verification?.tone ?? 'neutral';
+export interface Kpi {
+  label: string;
+  value: string;
+  note: string;
+  count: boolean;
+}
+
+// One definition, read by the screen and by the printable, so the two cannot drift apart.
+export function summaryKpis(report: CrevaReport): Kpi[] {
   const headline = report.signals.find((s) => s.category === 'reference_rate' && isPercent(s));
 
-  const answered = lanes.filter((lane) => lane.signals.length > 0).length;
-  const kpis = [
-    { icon: '◉', label: 'Fuentes consultadas', value: String(report.sources.length), note: 'registros de gobierno' },
-    {
-      icon: '◍',
-      label: 'Fuentes que respondieron',
-      value: `${answered}/${lanes.length}`,
-      note: 'ninguna consulta quedó muda',
-    },
-    { icon: '●', label: 'Sello del directorio', value: statusWord(report), note: 'SIEM · registro voluntario' },
+  return [
+    { label: 'Señales', value: String(report.signals.length), note: 'con fuente y fecha', count: true },
+    { label: 'Fuentes', value: String(report.sources.length), note: 'registros de gobierno', count: false },
+    { label: 'Directorio', value: statusWord(report), note: 'SIEM · voluntario', count: false },
     headline === undefined
-      ? { icon: '≈', label: 'Referencia de mercado', value: 'sin dato', note: 'Banco de México' }
+      ? { label: 'Referencia', value: 'sin dato', note: 'Banco de México', count: false }
       : {
-          icon: '≈',
           label: headline.label,
           value: headline.detail,
           note: headline.checked_at === null ? 'Banco de México' : formatDate(headline.checked_at),
+          count: false,
         },
-  ]
+  ];
+}
+
+// The summary is the index. It states each figure once and hands off; every chart is
+// drawn in the stage it belongs to, never previewed here as a second copy.
+export function hero(report: CrevaReport, lanes: SourceLane[]): string {
+  const kpis = summaryKpis(report)
     .map(
       (kpi, index) => `<div class="kpi" style="--i:${index}">
-    <p class="kpi-label"><span class="kpi-icon" aria-hidden="true">${kpi.icon}</span>${escapeHtml(kpi.label)}</p>
-    <p class="kpi-value">${escapeHtml(kpi.value)}</p>
+    <p class="kpi-label">${escapeHtml(kpi.label)}</p>
+    <p class="kpi-value"${kpi.count ? ` id="kpi-count" data-count="${report.signals.length}"` : ''}>${escapeHtml(kpi.value)}</p>
     <p class="kpi-note">${escapeHtml(kpi.note)}</p>
   </div>`,
     )
     .join('');
 
-  const jumps = jumpCards(report, lanes);
-
   return `<section class="block hero" data-enter="hero">
-  <p class="eyebrow">Perfil público del negocio</p>
-  <h1 class="subject big">${escapeHtml(report.subject?.business_name ?? 'Revisión general')}</h1>
-  <p class="status pill-${tone}">${escapeHtml(statusWord(report))}</p>
-
-  <div class="metric" id="metric">
-    <span class="halo" aria-hidden="true"></span>
-    <svg class="arc" viewBox="0 0 200 200" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><circle cx="100" cy="100" r="92"/></svg>
-    <p class="figure" data-count="${signals}">0</p>
-  </div>
-  <p class="figure-label">señales públicas encontradas</p>
-
   <div class="kpis" id="kpis">${kpis}</div>
-  <div class="dates">
-    <div class="date-card a"><p class="date-label">Consultado el</p><p class="date-value">${escapeHtml(formatDate(report.generated_at.slice(0, 10)))}</p></div>
-    <div class="date-card b"><p class="date-label">Ventana revisada</p><p class="date-value">${report.disclosure.window_days} días</p></div>
-  </div>
-  ${verification === undefined ? '' : `<p class="hero-note">${escapeHtml(verification.detail)}</p>`}
-  <div class="jumps" id="jumps">${jumps}</div>
+  <div class="jumps" id="jumps">${jumpCards(report, lanes)}</div>
 </section>`;
 }
 
 function jumpCards(report: CrevaReport, lanes: SourceLane[]): string {
   const rates = report.signals.filter((signal) => signal.category === 'reference_rate');
-  const total = report.signals.length;
+  const documented = report.signals.filter((signal) => signal.evidence_url !== null).length;
 
-  const evidence = report.signals
-    .filter((signal) => signal.category !== 'reference_rate')
-    .slice(0, 3)
-    .map((signal) => `<li>${escapeHtml(signal.label)}</li>`)
-    .join('');
-
-  const rateChips = rates
-    .slice(0, 3)
-    .map((rate) => `<span class="chip">${escapeHtml(rate.detail)}</span>`)
-    .join('');
-
-  const panels = [
+  const doors = [
     {
       id: 'signals',
       num: '02',
       name: 'Señales',
       figure: `${lanes.filter((lane) => lane.signals.length > 0).length}/${lanes.length}`,
       note: 'fuentes devolvieron algo',
-      body: `<div class="panel-ring">${ring(lanes, total)}</div>`,
     },
     {
       id: 'evidence',
       num: '03',
       name: 'Evidencia',
-      figure: String(total),
-      note: 'señales con fuente y fecha',
-      body: `<ul class="mini-list">${evidence}</ul>`,
+      figure: String(documented),
+      note: 'con documento oficial',
     },
     ...(rates.length === 0
       ? []
-      : [
-          {
-            id: 'market',
-            num: '04',
-            name: 'Mercado',
-            figure: String(rates.length),
-            note: 'referencias del Banco de México',
-            body: `<div class="chips">${rateChips}</div>`,
-          },
-        ]),
+      : [{ id: 'market', num: '04', name: 'Mercado', figure: String(rates.length), note: 'referencias de Banxico' }]),
     {
       id: 'audit',
       num: '05',
       name: 'Auditoría',
-      figure: '—',
-      note: 'qué no estima este análisis',
-      body: `<ul class="mini-list">${report.disclosure.does_not_estimate
-        .slice(0, 2)
-        .map((claim) => `<li>${escapeHtml(claim)}</li>`)
-        .join('')}</ul>`,
+      figure: String(report.disclosure.does_not_estimate.length),
+      note: 'límites declarados',
     },
   ];
 
-  return panels
+  return doors
     .map(
-      (panel, index) => `<button class="jump" type="button" data-step="${panel.id}" style="--i:${index}">
-    <span class="jump-head">
-      <span class="jump-num">${panel.num}</span>
-      <span class="jump-name">${escapeHtml(panel.name)}</span>
-      <span class="jump-figure">${escapeHtml(panel.figure)}</span>
-    </span>
-    <span class="jump-body">${panel.body}</span>
-    <span class="jump-note">${escapeHtml(panel.note)} <span class="jump-go" aria-hidden="true">→</span></span>
+      (door, index) => `<button class="jump" type="button" data-step="${door.id}" style="--i:${index}">
+    <span class="jump-num">${door.num}</span>
+    <span class="jump-figure">${escapeHtml(door.figure)}</span>
+    <span class="jump-name">${escapeHtml(door.name)}</span>
+    <span class="jump-note">${escapeHtml(door.note)}<span class="jump-go" aria-hidden="true">→</span></span>
   </button>`,
     )
     .join('');
@@ -234,8 +191,7 @@ export function composition(report: CrevaReport, lanes: SourceLane[]): string {
   const answered = lanes.filter((lane) => lane.signals.length > 0).length;
 
   return `<section class="block composition" data-enter="rail">
-  <h2>Composición de las señales</h2>
-  <p class="blurb">Cuánto aportó cada registro. Toca una fuente para aislarla.</p>
+  <h2>Señales por fuente</h2>
 
   <div class="board">
     <div class="card">
@@ -266,7 +222,6 @@ export function evidence(lanes: SourceLane[]): string {
 
   return `<section class="block evidence" data-enter="evidence">
   <h2>Evidencia</h2>
-  <p class="blurb">Cada señal con su fuente y su fecha. Se muestran las primeras; el resto se pide.</p>
 
   <div class="filters" role="group" aria-label="Filtrar evidencia por fuente">${filters}</div>
   <p class="filter-result" id="filter-result" aria-live="polite">${total} ${plural(total, 'resultado', 'resultados')}</p>
@@ -378,29 +333,29 @@ export function market(report: CrevaReport): string {
           )
           .join('');
 
+  // Each point already prints its own value, so the detail names what the point cannot:
+  // which rate it is and the day it was observed.
   const stripBlock =
     strip === null
       ? ''
       : `<div class="strip">
     <div class="strip-line">${points}</div>
     <p class="strip-scale">Escala de ${strip.domain_low.toFixed(2)}% a ${strip.domain_high.toFixed(2)}%</p>
-    <div class="strip-detail" id="strip-detail" aria-live="polite">
-      <p class="strip-value" id="strip-value">${escapeHtml(strip.points[0]?.text ?? '')}</p>
-      <p class="strip-label" id="strip-label">${escapeHtml(strip.points[0]?.label ?? '')}</p>
-      <p class="meta" id="strip-date">${strip.points[0]?.checked_at === null || strip.points[0] === undefined ? 'sin fecha' : escapeHtml(formatDate(strip.points[0].checked_at as string))}</p>
-    </div>
+    <p class="strip-detail" id="strip-detail" aria-live="polite">
+      <span class="strip-label" id="strip-label">${escapeHtml(strip.points[0]?.label ?? '')}</span>
+      <span class="strip-date" id="strip-date">${strip.points[0]?.checked_at === null || strip.points[0] === undefined ? 'sin fecha' : escapeHtml(formatDate(strip.points[0].checked_at as string))}</span>
+    </p>
   </div>`;
 
   const asideBlock =
     others.length === 0
       ? ''
       : `<div class="aside-rates">
-    <p class="label">No es una tasa, y por eso va aparte</p>
     ${others
       .map(
         (rate) => `<div class="aside-rate">
       <p class="rate-value">${escapeHtml(rate.detail)}</p>
-      <p class="rate-label">${escapeHtml(rate.label)}</p>
+      <p class="rate-label">${escapeHtml(rate.label)} · no es una tasa, por eso va aparte</p>
       <p class="meta">${rate.checked_at === null ? 'sin fecha' : escapeHtml(formatDate(rate.checked_at))}</p>
     </div>`,
       )
@@ -409,41 +364,8 @@ export function market(report: CrevaReport): string {
 
   return `<section class="block market" data-enter="market">
   <h2>Contexto de mercado</h2>
-  <p class="blurb">Publicado por el Banco de México. Cada cifra trae su propia fecha, porque no se publican el mismo día.</p>
   ${stripBlock}
   ${asideBlock}
-  <div class="pulse" aria-hidden="true"></div>
-</section>`;
-}
-
-export function why(report: CrevaReport): string {
-  const verified = report.signals.some((s) => s.category === 'business_verification' && s.tone === 'positive');
-
-  const steps = [
-    {
-      head: verified ? 'Negocio verificado' : 'Negocio consultado',
-      blurb: 'Contra el directorio oficial, con la fecha de la consulta.',
-    },
-    { head: 'Contexto normativo', blurb: 'Lo que se publicó y lo que ya estaba vigente.' },
-    { head: 'Contexto financiero', blurb: 'La referencia contra la que se mide una oferta de crédito.' },
-  ]
-    .map(
-      (step, index) => `<li class="why-step" data-step="${index}">
-    <span class="why-rail" aria-hidden="true">
-      <span class="why-n"><span class="why-num">${String(index + 1).padStart(2, '0')}</span><span class="why-check">✓</span></span>
-      <span class="why-line"></span>
-    </span>
-    <span class="why-body">
-      <span class="why-head">${escapeHtml(step.head)}</span>
-      <span class="blurb">${escapeHtml(step.blurb)}</span>
-    </span>
-  </li>`,
-    )
-    .join('');
-
-  return `<section class="block why" data-enter="market">
-  <h2>Por qué importa</h2>
-  <ol class="why-steps">${steps}</ol>
 </section>`;
 }
 
@@ -483,7 +405,7 @@ export function audit(report: CrevaReport): string {
   // The disclosure never folds. Everything behind it is reference material.
   return `<section class="block audit" data-enter="audit">
   <h2>Sobre este análisis</h2>
-  <p class="blurb">${escapeHtml(report.disclosure.describes)} Ventana de ${report.disclosure.window_days} días · versión ${escapeHtml(report.disclosure.score_version)}.</p>
+  <p class="blurb">${escapeHtml(report.disclosure.describes)} Versión ${escapeHtml(report.disclosure.score_version)}.</p>
 
   <div class="audit-card wide">
     <p class="label">Lo que NO hace</p>
@@ -503,9 +425,3 @@ function fold(title: string, body: string): string {
   </details>`;
 }
 
-export function closing(report: CrevaReport): string {
-  return `<section class="block closing" data-enter="audit">
-  <p class="closing-arc">Información pública → Evidencia estructurada → Contexto para decidir</p>
-  <p class="closing-tally">${report.signals.length} señales · ${report.sources.length} fuentes · ${escapeHtml(formatDateTime(report.generated_at))}</p>
-</section>`;
-}

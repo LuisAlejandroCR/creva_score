@@ -2,8 +2,7 @@
 
 import { CrevaReport, ReportSignal } from '../../common/types/creva-report.types';
 import { SourceLane, escapeHtml, formatDate, isPercent, plural, statusWord } from './lanes';
-import { ranked, ring } from './sections';
-import { paperTimeline } from './timeline';
+import { ranked, ring, summaryKpis } from './sections';
 
 const HIGHLIGHTS = 3;
 
@@ -26,23 +25,7 @@ function runningHead(name: string): string {
 }
 
 function coverPage(report: CrevaReport, lanes: SourceLane[], name: string): string {
-  const headline = report.signals.find((signal) => signal.category === 'reference_rate' && isPercent(signal));
-  const kpis = [
-    { label: 'Señales', value: String(report.signals.length), note: 'con fuente y fecha' },
-    {
-      label: 'Fuentes',
-      value: `${lanes.filter((lane) => lane.signals.length > 0).length}/${lanes.length}`,
-      note: 'respondieron',
-    },
-    { label: 'Directorio', value: statusWord(report), note: 'SIEM · voluntario' },
-    headline === undefined
-      ? { label: 'Referencia', value: 'sin dato', note: 'Banxico' }
-      : {
-          label: headline.label,
-          value: headline.detail,
-          note: headline.checked_at === null ? 'Banxico' : formatDate(headline.checked_at),
-        },
-  ]
+  const kpis = summaryKpis(report)
     .map(
       (kpi) => `<div class="p-kpi">
       <p class="p-kpi-label">${escapeHtml(kpi.label)}</p>
@@ -77,23 +60,21 @@ function coverPage(report: CrevaReport, lanes: SourceLane[], name: string): stri
       <div class="p-ring">${ring(lanes, report.signals.length)}</div>
     </div>
     <div class="p-card wide">
-      <p class="p-card-title">Por fuente</p>
+      <p class="p-card-title">Señales por fuente</p>
       <div class="p-ranked">${ranked(lanes, report.signals.length)}</div>
     </div>
   </div>
 
-  <p class="p-card-title">Cuándo se publicó cada señal</p>
-  ${paperTimeline(lanes)}
+  <h2 class="p-h2">Evidencia más reciente</h2>
+  <div class="p-evs">${highlights(report, lanes)}</div>
 </section>`;
 }
 
-function detailPage(report: CrevaReport, lanes: SourceLane[], name: string): string {
-  const rates = report.signals.filter((signal) => signal.category === 'reference_rate');
-
-  const highlights = lanes
+function highlights(report: CrevaReport, lanes: SourceLane[]): string {
+  return lanes
     .filter((lane) => lane.signals.every((signal) => signal.category !== 'reference_rate'))
     .flatMap((lane) => lane.signals.map((signal) => ({ lane, signal })))
-    .sort((a, b) => (a.signal.checked_at ?? '').localeCompare(b.signal.checked_at ?? '') * -1)
+    .sort((a, b) => (b.signal.checked_at ?? '').localeCompare(a.signal.checked_at ?? ''))
     .slice(0, HIGHLIGHTS)
     .map(
       ({ lane, signal }) => `<div class="p-ev">
@@ -102,6 +83,10 @@ function detailPage(report: CrevaReport, lanes: SourceLane[], name: string): str
     </div>`,
     )
     .join('');
+}
+
+function detailPage(report: CrevaReport, lanes: SourceLane[], name: string): string {
+  const rates = report.signals.filter((signal) => signal.category === 'reference_rate');
 
   const sources = report.sources
     .map(
@@ -112,13 +97,10 @@ function detailPage(report: CrevaReport, lanes: SourceLane[], name: string): str
 
   return `<section class="p-page">
   ${runningHead(name)}
-  <h2 class="p-h2">Evidencia</h2>
-  <div class="p-evs">${highlights}</div>
-
   ${
     rates.length === 0
       ? ''
-      : `<h2 class="p-h2">Mercado</h2>
+      : `<h2 class="p-h2">Contexto de mercado</h2>
   <div class="p-rates">${rates.map(rateCard).join('')}</div>`
   }
 

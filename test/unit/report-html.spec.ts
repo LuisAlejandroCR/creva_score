@@ -1,6 +1,9 @@
 import { buildReport } from '../../src/modules/creva-score/creva-report.builder';
 import { buildScoreDisclosure } from '../../src/modules/score-disclosure/score-disclosure.service';
 import { moreLabel, nextVisible, renderReportHtml } from '../../src/cli/report';
+import { summaryKpis } from '../../src/cli/report/sections';
+import { script } from '../../src/cli/report/script';
+import ts from 'typescript';
 import { sourceOk, sourceUnavailable } from '../../src/common/types/source-result.types';
 import { parseArgs, renderReportPaths } from '../../src/cli/demo';
 
@@ -209,12 +212,34 @@ describe('renderReportHtml', () => {
     expect(renderReportHtml(report())).toContain('Verificado');
   });
 
-  it('puts a real count in the hero, never an invented figure', () => {
+  it('puts a real count in the summary, never an invented figure', () => {
     const built = report();
     const html = renderReportHtml(built);
 
-    expect(html).toContain(`data-count="${built.signals.length}"`);
-    expect(html).toContain('señales públicas encontradas');
+    // The total is the first KPI now: the intro's number lands there instead of on a
+    // display figure that then said the same thing a second time.
+    expect(html).toContain(`id="kpi-count" data-count="${built.signals.length}"`);
+    expect(html).toContain('<p class="kpi-label">Señales</p>');
+    expect(html).toContain("var figure=document.getElementById('kpi-count')");
+  });
+
+  it('states each summary figure once, and draws no chart a stage already draws', () => {
+    const built = report();
+    const html = renderReportHtml(built);
+    const app = html.slice(0, html.indexOf('<article class="paper"'));
+    const summary = app.slice(app.indexOf('id="pane-summary"'), app.indexOf('id="pane-signals"'));
+    const documented = built.signals.filter((signal) => signal.evidence_url !== null).length;
+
+    // The ring belongs to Señales. A copy in the summary was the same data drawn twice.
+    expect(app.match(/class="ring"/g)).toHaveLength(1);
+    expect(summary).not.toContain('class="ring"');
+    // Name and seal live in the bar permanently, so the summary must not repeat them.
+    expect(summary).not.toContain('class="subject big"');
+    expect(summary).not.toContain('class="status pill-');
+    // The doors carry figures the KPI strip does not: documented evidence, declared limits.
+    expect(summary).toContain(`class="jump-figure">${documented}<`);
+    expect(summary).toContain('con documento oficial');
+    expect(summary).toContain(`class="jump-figure">${built.disclosure.does_not_estimate.length}<`);
   });
 
   it('says "sin sello" rather than implying something is wrong', () => {
@@ -294,19 +319,17 @@ describe('renderReportHtml', () => {
     expect(siemPanel).not.toContain('data-sort=');
   });
 
-  it('numbers the three reasons so they read as a sequence', () => {
+  it('drops the narration that restated the stages, and calls nothing that is gone with it', () => {
     const html = renderReportHtml(report());
 
-    expect(html.match(/class="why-step" data-step="\d"/g)).toHaveLength(3);
-    for (const number of ['01', '02', '03']) expect(html).toContain(`<span class="why-num">${number}</span>`);
-    // The steps must not be dimmed by the stylesheet alone: only the script may stage them,
-    // because only the script can undo it. The qualified rule is the one allowed to dim.
-    expect(html).toContain('.why-steps.staged .why-step{opacity:.32}');
-
-    const unqualified = html.match(/^\.why-step\{[^}]*\}/m)?.[0] ?? '';
-
-    expect(unqualified).toContain('display:grid');
-    expect(unqualified).not.toContain('opacity:.32');
+    // "Por qué importa" retold what the lanes already show, and the closing block
+    // repeated the hero tally. Both are gone, markup and stylesheet together.
+    expect(html).not.toContain('Por qué importa');
+    expect(html).not.toContain('why-step');
+    expect(html).not.toContain('closing-tally');
+    // The handler for that block was called but never defined: opening Auditoría threw
+    // ReferenceError, which left the stage marks stale and the read indicator unset.
+    expect(html).not.toContain('runWhy');
   });
 
   it('folds the reference material but never the disclosure itself', () => {
@@ -436,13 +459,14 @@ describe('renderReportHtml', () => {
     expect(app).toContain('<table class="sources">');
   });
 
-  it('draws the same timeline in the app and on paper', () => {
+  it('keeps the timeline on screen and off the printable', () => {
     const html = renderReportHtml(reportWithManyRules(20));
 
     expect(html).toContain('class="tl"');
-    expect(html).toContain('class="p-tl"');
     expect(html.match(/class="tl-dot/g)?.length).toBeGreaterThan(1);
-    expect(html.match(/class="p-tl-dot/g)?.length).toBeGreaterThan(1);
+    // Twenty-five dots over fourteen years is an instrument to explore, not a figure to
+    // read once on paper. The printable is an executive summary; it does not carry it.
+    expect(html).not.toContain('p-tl');
   });
 
   it('folds every source past the first few without dropping a single item', () => {
@@ -542,9 +566,9 @@ describe('renderReportHtml', () => {
       .replace(/<[^>]+>/g, ' ')
       .trim()
       .split(/\s+/).length;
-    expect(words).toBeLessThan(260);
+    expect(words).toBeLessThan(240);
 
-    for (const graphic of ['p-kpi', 'p-date', 'p-ring', 'p-ranked', 'p-tl-dot', 'p-ev', 'p-rate', 'p-src', 'p-limits']) {
+    for (const graphic of ['p-kpi', 'p-date', 'p-ring', 'p-ranked', 'p-ev', 'p-rate', 'p-src', 'p-limits']) {
       expect(paper).toContain(`class="${graphic}`);
     }
     expect(paper.match(/class="ring-arc/g)?.length).toBeGreaterThan(0);
@@ -559,7 +583,7 @@ describe('renderReportHtml', () => {
 
     // Every dot is a control that names its lane, which is what the script dims and picks against.
     expect(html).toMatch(/<button class="tl-dot d\d[^"]*" data-lane="[a-z]+"/);
-    expect(html).toContain('id="tl-count"');
+    expect(html).toContain('data-tlfilter="cnbv"');
     expect(html).toContain("dot.classList.toggle('muted',out)");
   });
 
@@ -621,6 +645,16 @@ describe('renderReportHtml', () => {
     expect(override).toBeGreaterThan(base);
   });
 
+  it('lets the rail shrink, so it cannot widen the page on a phone', () => {
+    const html = renderReportHtml(report());
+    // A grid item defaults to min-width:auto and refuses to go below its content width.
+    // Without this the rail pushed the document 43px past a 375px screen.
+    const rail = /\.rail\{([^}]*)\}/.exec(html)?.[1] ?? '';
+
+    expect(rail).toContain('min-width:0');
+    expect(html).toMatch(/\.panes\{[^}]*min-width:0/);
+  });
+
   it('drills into one signal without leaving the evidence stage', () => {
     const html = renderReportHtml(report());
 
@@ -656,31 +690,56 @@ describe('renderReportHtml', () => {
     expect(off - on).toBeGreaterThanOrEqual(2000);
   });
 
-  it('places every timeline dot inside the span it prints', () => {
-    const paper = renderReportHtml(reportWithManyRules(20)).match(/<div class="p-tl">[\s\S]*?<\/div>/)?.[0] ?? '';
-    const positions = [...paper.matchAll(/left:([\d.]+)%/g)].map((match) => Number(match[1]));
+  it('places every timeline dot inside the span it draws', () => {
+    const built = reportWithManyRules(20);
+    const html = renderReportHtml(built);
+    const positions = [...html.matchAll(/class="tl-dot[^"]*"[\s\S]{0,220}?style="left:([\d.]+)%/g)].map((match) =>
+      Number(match[1]),
+    );
 
-    expect(positions.length).toBeGreaterThan(1);
+    // One dot per dated signal: none dropped, none invented.
+    expect(positions).toHaveLength(built.signals.filter((signal) => signal.checked_at !== null).length);
     expect(Math.min(...positions)).toBeGreaterThanOrEqual(0);
     expect(Math.max(...positions)).toBeLessThanOrEqual(100);
   });
 
-  it('shows when the report was taken and how far back it looked', () => {
+  it('shows when the report was taken and how far back it looked, out of the reading column', () => {
     const html = renderReportHtml(report());
+    const rail = html.slice(html.indexOf('class="rail"'), html.indexOf('class="panes"'));
 
-    expect(html).toContain('Consultado el');
-    expect(html).toContain('Ventana revisada');
-    expect(html).toContain('13 de agosto de 2026');
+    // The two dates sit in the rail beside the stages, not stacked in the summary.
+    expect(rail).toContain('Consultado');
+    expect(rail).toContain('Ventana');
+    expect(rail).toContain('13 de agosto de 2026');
+    expect(rail).toContain('30 días');
   });
 
   it('leads the summary with figures that carry their own source', () => {
     const html = renderReportHtml(report());
 
-    expect(html).toContain('Fuentes consultadas');
-    expect(html).toContain('Sello del directorio');
+    expect(html).toContain('<p class="kpi-label">Fuentes</p>');
+    expect(html).toContain('<p class="kpi-label">Directorio</p>');
     expect(html).toContain('TIIE a 28 días');
     // No trend, no delta: the report holds one observation per figure, not a series.
     expect(html).not.toMatch(/[+-]\d+(\.\d+)?%\s*(vs|respecto)/i);
+  });
+
+  it('prints the same four figures the screen leads with, from one definition', () => {
+    const built = report();
+    const html = renderReportHtml(built);
+    const start = html.indexOf('<article class="paper"');
+    const end = html.indexOf('</article>', start);
+
+    expect(end).toBeGreaterThan(start);
+    const paper = html.slice(start, end);
+
+    // The paper used to compute its own KPIs and had already drifted: it said "3/4
+    // respondieron" where the screen said "4 registros de gobierno".
+    for (const kpi of summaryKpis(built)) {
+      expect(paper).toContain(`<p class="p-kpi-label">${kpi.label}</p>`);
+      expect(paper).toContain(`<p class="p-kpi-value">${kpi.value}</p>`);
+      expect(html).toContain(`<p class="kpi-label">${kpi.label}</p>`);
+    }
   });
 
   it('counts the investigation out loud without inventing a source', () => {
@@ -690,6 +749,40 @@ describe('renderReportHtml', () => {
     expect(html.match(/class="tick"/g)).toHaveLength(4);
     expect(html).toContain('fuentes conectadas');
     expect(html).toContain(`<strong>${built.signals.length}</strong> señales encontradas`);
+  });
+
+  it('never calls a function the inlined script does not define', () => {
+    // The browser script ships as a template string, so the compiler cannot see it.
+    // `runWhy()` survived a rename that way: it threw ReferenceError the first time a
+    // reader opened Auditoría, which left the stage marks stale and the read bar unset.
+    // Parsed, not pattern-matched. Regex kept mistaking a comment apostrophe, a regex
+    // literal and CSS inside a string for code, which is how this check first passed
+    // while the defect was still there.
+    const source = ts.createSourceFile('report.js', script(), ts.ScriptTarget.ES5, true, ts.ScriptKind.JS);
+
+    expect(renderReportHtml(report())).toContain(script());
+
+    const known = new Set([
+      'setTimeout', 'setInterval', 'clearInterval', 'requestAnimationFrame', 'parseInt', 'parseFloat',
+      'String', 'Number', 'Boolean', 'File', 'Date', 'Math', 'JSON', 'encodeURIComponent', 'isNaN',
+    ]);
+    const defined = new Set<string>();
+    const called = new Set<string>();
+
+    const walk = (node: ts.Node): void => {
+      if (ts.isFunctionDeclaration(node) && node.name !== undefined) defined.add(node.name.text);
+      // A parameter is a definition too: travelIntoFigure(done) calls its own argument.
+      if (ts.isParameter(node) && ts.isIdentifier(node.name)) defined.add(node.name.text);
+      if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name)) defined.add(node.name.text);
+      if (ts.isCallExpression(node) && ts.isIdentifier(node.expression)) called.add(node.expression.text);
+      ts.forEachChild(node, walk);
+    };
+    walk(source);
+
+    expect([...called].filter((name) => !known.has(name) && !defined.has(name))).toEqual([]);
+    // Control: the check has teeth only if it really sees both sides.
+    expect(defined.has('goToStage')).toBe(true);
+    expect(called.has('pickTimeline')).toBe(true);
   });
 
   it('escapes anything that came from a source', () => {
