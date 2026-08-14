@@ -107,12 +107,12 @@ export function composition(report: CrevaReport, lanes: SourceLane[]): string {
   <p class="blurb">Toca una fuente para aislarla.</p>
 
   <div class="comp">
-    <div class="comp-rows" id="comp-rows">${rows}</div>
     <div class="comp-detail" id="comp-detail" aria-live="polite">
       <p class="comp-detail-n"><span id="comp-detail-n" data-count="${report.signals.length}" data-total-count="${report.signals.length}">0</span></p>
       <p class="comp-detail-label" id="comp-detail-label">señales en total</p>
       <button class="comp-go" id="comp-go" type="button" hidden>Explorar evidencia →</button>
     </div>
+    <div class="comp-rows" id="comp-rows">${rows}</div>
   </div>
 </section>`;
 }
@@ -165,7 +165,7 @@ function panel(lane: SourceLane): string {
   <button class="panel-head" type="button" aria-expanded="false" aria-controls="body-${lane.id}">
     <span class="stop-mark">${lane.mark}</span>
     <span class="panel-title"><span class="panel-name">${escapeHtml(lane.name)}</span><span class="blurb">${escapeHtml(lane.blurb)}</span></span>
-    <span class="panel-seen">✓ Evidencia citada</span>
+    <span class="panel-seen">✓ Evidencia consultada</span>
     <span class="panel-count">${total}</span>
     <span class="panel-cta">Ver evidencia</span>
     <span class="panel-toggle" aria-hidden="true">+</span>
@@ -183,7 +183,7 @@ function evidenceItem(signal: ReportSignal, index: number, folded: boolean): str
   return `<div class="item tone-${signal.tone}" data-i="${index}" data-order="${index}" data-date="${signal.checked_at === null ? '' : escapeHtml(signal.checked_at)}"${folded ? ' hidden' : ''}>
   <p class="item-label">${escapeHtml(signal.label)}</p>
   <p class="item-detail">${escapeHtml(signal.detail)}</p>
-  <p class="meta"><span class="meta-dot" aria-hidden="true"></span>${escapeHtml(signal.source)}${signal.checked_at === null ? '' : ` · ${escapeHtml(formatDate(signal.checked_at))}`}</p>
+  <p class="meta"><span class="meta-dot" aria-hidden="true"></span>${escapeHtml(signal.source)}${signal.checked_at === null ? '' : ` · ${escapeHtml(formatDate(signal.checked_at))}`}<span class="item-seen">✓ consultado</span></p>
   ${link}
 </div>`;
 }

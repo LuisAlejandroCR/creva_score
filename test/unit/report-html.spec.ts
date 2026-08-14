@@ -324,11 +324,34 @@ describe('renderReportHtml', () => {
     expect(html.match(/<section class="pane"[^>]*>/g)).toHaveLength(4);
   });
 
-  it('marks the evidence as cited, never as verified by the act of opening it', () => {
+  it('marks the evidence as consulted, never as verified by the act of opening it', () => {
     const html = renderReportHtml(report());
 
-    expect(html).toContain('Evidencia citada');
+    expect(html).toContain('Evidencia consultada');
+    expect(html).toContain('✓ consultado');
     expect(html).not.toContain('Fuente verificada');
+    expect(html).not.toContain('verificada por');
+  });
+
+  it('offers a way forward and back from every stage, and none off the ends', () => {
+    const html = renderReportHtml(report());
+    const summaryPane = html.slice(html.indexOf('id="pane-summary"'), html.indexOf('id="pane-signals"'));
+    const auditPane = html.slice(html.indexOf('id="pane-audit"'));
+
+    expect(summaryPane).toContain('data-step="signals"');
+    expect(summaryPane).not.toContain('class="step back"');
+    expect(auditPane).toContain('data-step="market"');
+    expect(auditPane).not.toContain('class="step next"');
+
+    const steps = [...html.matchAll(/data-step="([a-z]+)"/g)].map((match) => match[1]);
+    for (const step of steps) expect(html).toContain(`id="pane-${step}"`);
+  });
+
+  it('leads the signals stage with the total, not with the rows', () => {
+    const html = renderReportHtml(report());
+    const comp = html.slice(html.indexOf('class="comp"'), html.indexOf('</section>', html.indexOf('class="comp"')));
+
+    expect(comp.indexOf('comp-detail')).toBeLessThan(comp.indexOf('comp-rows'));
   });
 
   it('folds every source past the first few without dropping a single item', () => {
@@ -345,8 +368,18 @@ describe('renderReportHtml', () => {
   it('promises only what one press reveals, and says how many are left', () => {
     expect(moreLabel(3, 18)).toBe('Mostrar 3 más → quedan 12');
     expect(moreLabel(6, 18)).toBe('Mostrar 4 más → quedan 8');
-    expect(moreLabel(10, 18)).toBe('Mostrar 8 más →');
+    expect(moreLabel(10, 18)).toBe('Mostrar todo · 8 más');
     expect(nextVisible(3, 4)).toBe(4);
+  });
+
+  it('keeps the rendered label and the one the page rebuilds in step', () => {
+    // The script rebuilds this label in the browser from its own copy of the rule.
+    // Testing moreLabel alone let the two drift: the page still said "Mostrar 10 más".
+    const html = renderReportHtml(reportWithManyRules(18));
+
+    expect(html).toContain(moreLabel(3, 18));
+    expect(html).toContain("'Mostrar todo · '+step+' más'");
+    expect(html).toContain("'Mostrar '+step+' más → quedan '+left");
   });
 
   it('turns each summary insight into a jump to the evidence it names', () => {

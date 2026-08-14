@@ -129,7 +129,7 @@ export function moreLabel(visible: number, total: number): string {
   const step = next - visible;
   const left = total - next;
 
-  return left === 0 ? `Mostrar ${step} más →` : `Mostrar ${step} más → quedan ${left}`;
+  return left === 0 ? `Mostrar todo · ${step} más` : `Mostrar ${step} más → quedan ${left}`;
 }
 
 export function plural(count: number, one: string, many: string): string {

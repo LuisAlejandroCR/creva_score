@@ -53,7 +53,7 @@ export function renderReportHtml(report: CrevaReport): string {
   <section class="stage report staging" id="stage-report">
     <div class="workspace">
       <nav class="stages" id="stages" role="tablist" aria-label="Etapas del reporte">${stages.map(tab).join('')}</nav>
-      <div class="panes">${stages.map(pane).join('')}</div>
+      <div class="panes">${stages.map((stage, index) => pane(stage, index, stages)).join('')}</div>
     </div>
   </section>
 </main>
@@ -74,7 +74,15 @@ function tab(stage: Stage, index: number): string {
   </button>`;
 }
 
-function pane(stage: Stage, index: number): string {
+function pane(stage: Stage, index: number, all: Stage[]): string {
+  const previous = all[index - 1];
+  const next = all[index + 1];
+
+  const steps = `<nav class="steps" aria-label="Moverse entre etapas">
+    ${previous === undefined ? '<span></span>' : `<button class="step back" type="button" data-step="${previous.id}">← ${escapeHtml(previous.name)}</button>`}
+    ${next === undefined ? '<span></span>' : `<button class="step next" type="button" data-step="${next.id}">${escapeHtml(next.name)} →</button>`}
+  </nav>`;
+
   return `<section class="pane" role="tabpanel" id="pane-${stage.id}" data-pane="${stage.id}"
-    aria-labelledby="tab-${stage.id}" tabindex="-1"${index === 0 ? '' : ' hidden'}>${stage.body}</section>`;
+    aria-labelledby="tab-${stage.id}" tabindex="-1"${index === 0 ? '' : ' hidden'}>${stage.body}${steps}</section>`;
 }
