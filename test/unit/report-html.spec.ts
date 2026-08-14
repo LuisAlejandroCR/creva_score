@@ -311,7 +311,7 @@ describe('renderReportHtml', () => {
 
     expect(html).toContain('@media print');
     expect(html).toContain('body > *:not(.paper){display:none!important}');
-    expect(html.match(/<section class="p-page">/g)).toHaveLength(3);
+    expect(html.match(/<section class="p-page">/g)).toHaveLength(2);
     expect(html).toContain('id="to-pdf"');
   });
 
@@ -394,11 +394,26 @@ describe('renderReportHtml', () => {
     for (const step of steps) expect(html).toContain(`id="pane-${step}"`);
   });
 
-  it('leads the signals stage with the total, not with the rows', () => {
-    const html = renderReportHtml(report());
-    const comp = html.slice(html.indexOf('class="comp"'), html.indexOf('</section>', html.indexOf('class="comp"')));
+  it('says each source once, in the ranked list, and nowhere else', () => {
+    const html = renderReportHtml(reportWithManyRules(20));
+    const app = html.slice(0, html.indexOf('<article class="paper"'));
 
-    expect(comp.indexOf('comp-detail')).toBeLessThan(comp.indexOf('comp-rows'));
+    // The dot rows repeated the very numbers the ranked list already carries.
+    expect(app).not.toContain('comp-rows');
+    expect(app).not.toContain('class="comp-dots"');
+    expect(app.match(/class="rank a\d"/g)).toHaveLength(4);
+    // One table left in the whole application: the one thing that is genuinely tabular.
+    expect(app.match(/<table/g)).toHaveLength(1);
+    expect(app).toContain('<table class="sources">');
+  });
+
+  it('draws the same timeline in the app and on paper', () => {
+    const html = renderReportHtml(reportWithManyRules(20));
+
+    expect(html).toContain('class="tl"');
+    expect(html).toContain('class="p-tl"');
+    expect(html.match(/class="tl-dot/g)?.length).toBeGreaterThan(1);
+    expect(html.match(/class="p-tl-dot/g)?.length).toBeGreaterThan(1);
   });
 
   it('folds every source past the first few without dropping a single item', () => {
@@ -442,7 +457,8 @@ describe('renderReportHtml', () => {
 
   it('splits the signals into shares that add up to what was found', () => {
     const html = renderReportHtml(reportWithManyRules(20));
-    const board = html.slice(html.indexOf('class="board"'), html.indexOf('class="comp"'));
+    // Bounded by the paper: the printable summary carries the same graphics again.
+    const board = html.slice(html.indexOf('class="board"'), html.indexOf('<article class="paper"'));
     const shares = [...board.matchAll(/class="rank-share">(\d+)%/g)].map((match) => Number(match[1]));
 
     expect(shares.reduce((sum, share) => sum + share, 0)).toBeGreaterThanOrEqual(99);
@@ -454,7 +470,8 @@ describe('renderReportHtml', () => {
   it('draws one ring arc per source that actually returned something', () => {
     const built = reportWithManyRules(20);
     const html = renderReportHtml(built);
-    const board = html.slice(html.indexOf('class="board"'), html.indexOf('class="comp"'));
+    // Bounded by the paper: the printable summary carries the same graphics again.
+    const board = html.slice(html.indexOf('class="board"'), html.indexOf('<article class="paper"'));
 
     // SIEM, CNBV and Banxico answered; DOF did not.
     expect(board.match(/class="ring-arc/g)).toHaveLength(3);
@@ -480,13 +497,58 @@ describe('renderReportHtml', () => {
     expect(html).toContain("window.open('https://wa.me/?text='");
   });
 
-  it('puts the same two graphics on paper', () => {
-    const html = renderReportHtml(report());
-    const paper = html.slice(html.indexOf('<article class="paper"'));
+  it('says it in pictures: two pages, one table, and few words', () => {
+    const html = renderReportHtml(reportWithManyRules(20));
+    // Bounded at the closing tag: past it lies the inline script, which is not prose.
+    const start = html.indexOf('<article class="paper"');
+    const paper = html.slice(start, html.indexOf('</article>', start));
 
-    expect(paper).toContain('class="p-ring"');
-    expect(paper).toContain('class="p-ranked"');
+    expect(paper.match(/<table/g)).toHaveLength(1);
+    // Prose is what the graphics replaced, so the word count is part of the contract.
+    const words = paper
+      .replace(/<[^>]+>/g, ' ')
+      .trim()
+      .split(/\s+/).length;
+    expect(words).toBeLessThan(520);
+
+    for (const graphic of ['p-kpi', 'p-date', 'p-node', 'p-ring', 'p-ranked', 'p-tl-dot', 'p-ev', 'p-rate', 'p-src']) {
+      expect(paper).toContain(`class="${graphic}`);
+    }
     expect(paper.match(/class="ring-arc/g)?.length).toBeGreaterThan(0);
+  });
+
+  it('lets a chosen source quiet the rest of the timeline', () => {
+    const html = renderReportHtml(reportWithManyRules(20));
+
+    // Every dot names its lane, which is what the script dims against.
+    expect(html).toMatch(/class="tl-dot d\d" data-lane="[a-z]+"/);
+    expect(html).toContain('class="tl-key-item"');
+    expect(html).toContain("dot.classList.toggle('muted'");
+  });
+
+  it('holds the total on screen long enough to be read', () => {
+    const html = renderReportHtml(report());
+    const on = Number(/flash\.classList\.add\('on'\);\},settled\+(\d+)\)/.exec(html)?.[1] ?? 0);
+    const off = Number(/investigate\.classList\.add\('collapse'\);[\s\S]*?\},settled\+(\d+)\);/.exec(html)?.[1] ?? 0);
+
+    expect(off - on).toBeGreaterThanOrEqual(2000);
+  });
+
+  it('places every timeline dot inside the span it prints', () => {
+    const paper = renderReportHtml(reportWithManyRules(20)).match(/<div class="p-tl">[\s\S]*?<\/div>/)?.[0] ?? '';
+    const positions = [...paper.matchAll(/left:([\d.]+)%/g)].map((match) => Number(match[1]));
+
+    expect(positions.length).toBeGreaterThan(1);
+    expect(Math.min(...positions)).toBeGreaterThanOrEqual(0);
+    expect(Math.max(...positions)).toBeLessThanOrEqual(100);
+  });
+
+  it('shows when the report was taken and how far back it looked', () => {
+    const html = renderReportHtml(report());
+
+    expect(html).toContain('Consultado el');
+    expect(html).toContain('Ventana revisada');
+    expect(html).toContain('13 de agosto de 2026');
   });
 
   it('leads the summary with figures that carry their own source', () => {

@@ -2,7 +2,7 @@
 
 import { CrevaReport, ReportSignal } from '../../common/types/creva-report.types';
 import { SourceLane, escapeHtml, formatDate, formatDateTime, isPercent, plural, statusWord } from './lanes';
-import { ranked, ring } from './sections';
+import { ranked, ring, timeline } from './sections';
 
 const HIGHLIGHTS_PER_LANE = 2;
 
@@ -16,8 +16,7 @@ export function paper(report: CrevaReport, lanes: SourceLane[]): string {
 
   return `<article class="paper" id="paper" aria-hidden="true">
   ${coverPage(report, lanes, name)}
-  ${signalsPage(report, lanes, name)}
-  ${auditPage(report, name)}
+  ${detailPage(report, lanes, name)}
 </article>`;
 }
 
@@ -29,53 +28,23 @@ function foot(): string {
   return '<p class="p-foot">Documento generado a partir de registros públicos, con la fecha de cada consulta.</p>';
 }
 
+
 function coverPage(report: CrevaReport, lanes: SourceLane[], name: string): string {
-  const frame = [
-    {
-      key: 'Para',
-      value:
-        'La dueña del negocio y quien evalúe una solicitud de crédito: banca, fintech, fondeador o programa público.',
-    },
-    {
-      key: 'Qué es',
-      value: `${report.disclosure.describes} Ventana de ${report.disclosure.window_days} días · versión ${report.disclosure.score_version}.`,
-    },
-    {
-      key: 'Cómo leerlo',
-      value:
-        'Cada señal trae la fuente que la emitió y la fecha en que se consultó. Nada aquí es una opinión sobre el negocio.',
-    },
-    {
-      key: 'Qué NO decide',
-      value: report.disclosure.does_not_estimate.join(' · '),
-    },
-  ]
-    .map(
-      (row) => `<tr><th scope="row">${escapeHtml(row.key)}</th><td>${escapeHtml(row.value)}</td></tr>`,
-    )
-    .join('');
-
-  const map = lanes
-    .map(
-      (lane, index) => `<div class="p-node n${index}">
-      <p class="p-node-name">${escapeHtml(lane.short)}</p>
-      <p class="p-node-blurb">${escapeHtml(lane.blurb)}</p>
-      <p class="p-node-count">${lane.signals.length} ${plural(lane.signals.length, 'señal', 'señales')}</p>
-    </div>`,
-    )
-    .join('');
-
   const headline = report.signals.find((signal) => signal.category === 'reference_rate' && isPercent(signal));
   const kpis = [
     { label: 'Señales públicas', value: String(report.signals.length), note: 'con fuente y fecha' },
-    { label: 'Fuentes consultadas', value: String(report.sources.length), note: 'registros de gobierno' },
-    { label: 'Sello del directorio', value: statusWord(report), note: 'SIEM · registro voluntario' },
+    {
+      label: 'Fuentes que respondieron',
+      value: `${lanes.filter((lane) => lane.signals.length > 0).length}/${lanes.length}`,
+      note: 'registros de gobierno',
+    },
+    { label: 'Sello del directorio', value: statusWord(report), note: 'SIEM · voluntario' },
     headline === undefined
       ? { label: 'Referencia', value: 'sin dato', note: 'Banco de México' }
       : {
           label: headline.label,
           value: headline.detail,
-          note: headline.checked_at === null ? 'Banco de México' : formatDate(headline.checked_at),
+          note: headline.checked_at === null ? 'Banxico' : formatDate(headline.checked_at),
         },
   ]
     .map(
@@ -87,151 +56,100 @@ function coverPage(report: CrevaReport, lanes: SourceLane[], name: string): stri
     )
     .join('');
 
+  const map = lanes
+    .map(
+      (lane, index) => `<div class="p-node n${index}">
+      <p class="p-node-name">${escapeHtml(lane.short)}</p>
+      <p class="p-node-count">${lane.signals.length}</p>
+    </div>`,
+    )
+    .join('');
+
   return `<section class="p-page">
   ${runningHead(name)}
   <p class="p-eyebrow">Reporte de verificación pública</p>
   <h1 class="p-title">${escapeHtml(name)}</h1>
-  <p class="p-sub">${escapeHtml(statusWord(report))} · ${report.signals.length} ${plural(report.signals.length, 'señal pública', 'señales públicas')} · ${report.sources.length} ${plural(report.sources.length, 'fuente consultada', 'fuentes consultadas')}</p>
+  <p class="p-sub">${escapeHtml(statusWord(report))} · ${report.signals.length} ${plural(report.signals.length, 'señal pública', 'señales públicas')} · ${report.sources.length} ${plural(report.sources.length, 'fuente', 'fuentes')}</p>
 
   <div class="p-kpis">${kpis}</div>
 
-  <table class="p-frame"><tbody>${frame}</tbody></table>
-
-  <div class="p-map">
-    <p class="p-map-title">De dónde sale cada señal</p>
-    <p class="p-map-sub">Cuatro registros públicos, consultados el mismo día</p>
-    <div class="p-nodes">${map}</div>
-    <div class="p-arrow" aria-hidden="true"></div>
-    <p class="p-pill">Evidencia citada, con fuente y fecha — no un veredicto sobre el negocio</p>
-    <p class="p-map-foot">No aparecer en un registro voluntario no dice nada sobre un negocio.</p>
+  <div class="p-dates">
+    <div class="p-date a">
+      <p class="p-date-label">Consultado el</p>
+      <p class="p-date-value">${escapeHtml(formatDate(report.generated_at.slice(0, 10)))}</p>
+    </div>
+    <div class="p-date b">
+      <p class="p-date-label">Ventana revisada</p>
+      <p class="p-date-value">${report.disclosure.window_days} días</p>
+    </div>
   </div>
 
-  <table class="p-callout"><tbody><tr>
-    <th scope="row">Para qué sirve</th>
-    <td>Demostrar con datos de gobierno que el negocio existe y opera, cuando todavía no hay historial crediticio que enseñar.</td>
-  </tr></tbody></table>
+  <div class="p-board">
+    <div class="p-card">
+      <p class="p-card-title">Reparto</p>
+      <div class="p-ring">${ring(lanes, report.signals.length)}</div>
+    </div>
+    <div class="p-card wide">
+      <p class="p-card-title">Señales por fuente</p>
+      <div class="p-ranked">${ranked(lanes, report.signals.length)}</div>
+    </div>
+  </div>
+
+  <div class="p-map">
+    <div class="p-nodes">${map}</div>
+    <div class="p-arrow" aria-hidden="true"></div>
+    <p class="p-pill">Evidencia citada, con fuente y fecha — no un veredicto</p>
+  </div>
   ${foot()}
 </section>`;
 }
 
-function signalsPage(report: CrevaReport, lanes: SourceLane[], name: string): string {
-  // The bar is the count, scaled to the largest lane. Nothing is inferred.
-  const largest = lanes.reduce((top, lane) => Math.max(top, lane.signals.length), 0);
-  const rows = lanes
-    .map(
-      (lane) => `<tr>
-      <th scope="row">${escapeHtml(lane.short)}</th>
-      <td>${escapeHtml(lane.blurb)}</td>
-      <td class="p-bar-cell">${lane.signals.length === 0 ? '' : `<span class="p-bar" style="width:${Math.round((lane.signals.length / largest) * 100)}%"></span>`}</td>
-      <td class="p-num">${lane.signals.length}</td>
-    </tr>`,
-    )
-    .join('');
+function detailPage(report: CrevaReport, lanes: SourceLane[], name: string): string {
+  const rates = report.signals.filter((signal) => signal.category === 'reference_rate');
 
   const highlights = lanes
     .flatMap((lane) => lane.signals.slice(0, HIGHLIGHTS_PER_LANE).map((signal) => ({ lane, signal })))
     .map(
-      ({ lane, signal }) => `<tr>
-      <th scope="row">${escapeHtml(lane.short)}</th>
-      <td>${escapeHtml(signal.detail)}</td>
-      <td>${signal.checked_at === null ? '—' : escapeHtml(formatDate(signal.checked_at))}</td>
-    </tr>`,
-    )
-    .join('');
-
-  return `<section class="p-page">
-  ${runningHead(name)}
-  <h2 class="p-h2">1. Señales por fuente</h2>
-  <div class="p-board">
-    <div class="p-card">
-      <p class="p-card-title">Reparto de las señales</p>
-      <div class="p-ring">${ring(lanes, report.signals.length)}</div>
-    </div>
-    <div class="p-card wide">
-      <p class="p-card-title">¿De qué fuente salió cada una?</p>
-      <div class="p-ranked">${ranked(lanes, report.signals.length)}</div>
-    </div>
-  </div>
-  <table class="p-table">
-    <thead><tr><th>Fuente</th><th>Qué aporta</th><th>Peso relativo</th><th class="p-num">Señales</th></tr></thead>
-    <tbody>${rows}</tbody>
-  </table>
-
-  <h2 class="p-h2">2. Evidencia destacada</h2>
-  <p class="p-note">Las primeras de cada fuente. El reporte interactivo las trae todas, con su enlace al documento oficial.</p>
-  <table class="p-table">
-    <thead><tr><th>Fuente</th><th>Señal</th><th>Fecha</th></tr></thead>
-    <tbody>${highlights}</tbody>
-  </table>
-  ${foot()}
-</section>`;
-}
-
-function auditPage(report: CrevaReport, name: string): string {
-  const rates = report.signals.filter((signal) => signal.category === 'reference_rate');
-  const market =
-    rates.length === 0
-      ? ''
-      : `<h2 class="p-h2">3. Contexto de mercado</h2>
-  <p class="p-note">Publicado por el Banco de México. Cada cifra trae su propia fecha porque no se publican el mismo día.${
-    rates.some((rate) => !isPercent(rate))
-      ? ' El valor de la UDI no es una tasa y no se compara contra ellas.'
-      : ''
-  }</p>
-  <table class="p-table">
-    <thead><tr><th>Referencia</th><th class="p-num">Valor</th><th>Fecha</th></tr></thead>
-    <tbody>${rates.map(rateRow).join('')}</tbody>
-  </table>`;
-
-  const provenance = report.disclosure.provenance_levels
-    .map(
-      (level) => `<tr><th scope="row">${escapeHtml(level.label)}</th><td>${escapeHtml(level.meaning)}</td></tr>`,
+      ({ lane, signal }) => `<div class="p-ev">
+      <p class="p-ev-top"><span class="p-chip c${lanes.indexOf(lane)}">${escapeHtml(lane.short)}</span><span class="p-ev-date">${signal.checked_at === null ? 'sin fecha' : escapeHtml(formatDate(signal.checked_at))}</span></p>
+      <p class="p-ev-text">${escapeHtml(signal.detail)}</p>
+    </div>`,
     )
     .join('');
 
   const sources = report.sources
     .map(
       (source) =>
-        `<tr><th scope="row">${escapeHtml(source.provider)}</th><td>${escapeHtml(source.dataset)}</td><td>${source.queried_at === null ? '—' : escapeHtml(formatDate(source.queried_at))}</td></tr>`,
+        `<span class="p-src"><strong>${escapeHtml(source.provider)}</strong> ${escapeHtml(source.dataset)} · ${source.queried_at === null ? '—' : escapeHtml(formatDate(source.queried_at))}</span>`,
     )
     .join('');
 
-  const notes =
-    report.notes.length === 0
-      ? ''
-      : `<table class="p-callout warn"><tbody><tr>
-    <th scope="row">Lo que no pudimos ver</th>
-    <td>${report.notes.map(escapeHtml).join(' · ')}</td>
-  </tr></tbody></table>`;
-
   return `<section class="p-page">
   ${runningHead(name)}
-  ${market}
+  ${timeline(lanes).replace('card tl-card', 'p-card').replace(/"tl/g, '"p-tl')}
 
-  <h2 class="p-h2">${rates.length === 0 ? '3' : '4'}. Sobre este análisis</h2>
+  <h2 class="p-h2">Evidencia destacada</h2>
+  <div class="p-evs">${highlights}</div>
+
+  ${rates.length === 0 ? '' : `<h2 class="p-h2">Contexto de mercado</h2>
+  <div class="p-rates">${rates.map(rateCard).join('')}</div>`}
+
   <table class="p-callout"><tbody><tr>
     <th scope="row">Lo que NO hace</th>
     <td>${report.disclosure.does_not_estimate.map(escapeHtml).join(' · ')}</td>
   </tr></tbody></table>
 
-  <table class="p-table"><tbody>${provenance}</tbody></table>
-
-  <h2 class="p-h2">${rates.length === 0 ? '4' : '5'}. Fuentes consultadas</h2>
-  <table class="p-table">
-    <thead><tr><th>Proveedor</th><th>Conjunto de datos</th><th>Consultado</th></tr></thead>
-    <tbody>${sources}</tbody>
-  </table>
-  ${notes}
-
+  <p class="p-srcs-title">Fuentes consultadas</p>
+  <div class="p-srcs">${sources}</div>
   <p class="p-generated">Generado el ${escapeHtml(formatDateTime(report.generated_at))}.</p>
   ${foot()}
 </section>`;
 }
 
-function rateRow(rate: ReportSignal): string {
-  return `<tr>
-    <th scope="row">${escapeHtml(rate.label)}</th>
-    <td class="p-num">${escapeHtml(rate.detail)}</td>
-    <td>${rate.checked_at === null ? '—' : escapeHtml(formatDate(rate.checked_at))}</td>
-  </tr>`;
+function rateCard(rate: ReportSignal): string {
+  return `<div class="p-rate${isPercent(rate) ? '' : ' apart'}">
+    <p class="p-rate-value">${escapeHtml(rate.detail)}</p>
+    <p class="p-rate-label">${escapeHtml(rate.label)}</p>
+    <p class="p-rate-date">${rate.checked_at === null ? 'sin fecha' : escapeHtml(formatDate(rate.checked_at))}</p>
+  </div>`;
 }

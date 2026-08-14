@@ -65,6 +65,40 @@ export function ranked(lanes: SourceLane[], total: number): string {
     .join('');
 }
 
+
+export function timeline(lanes: SourceLane[]): string {
+  const dated: { index: number; lane: string; at: string }[] = lanes.flatMap((lane, index) =>
+    lane.signals
+      .filter((signal) => signal.checked_at !== null)
+      .map((signal) => ({ index, lane: lane.id, at: (signal.checked_at as string).slice(0, 10) })),
+  );
+  if (dated.length < 2) return '';
+
+  const stamps = dated.map((point) => Date.parse(point.at)).filter((value) => Number.isFinite(value));
+  const first = Math.min(...stamps);
+  const last = Math.max(...stamps);
+  const span = last - first;
+  if (span <= 0) return '';
+
+  const dots = dated
+    .map((point) => {
+      const left = ((Date.parse(point.at) - first) / span) * 100;
+      return `<span class="tl-dot d${point.index}" data-lane="${point.lane}" style="left:${left.toFixed(1)}%"></span>`;
+    })
+    .join('');
+
+  return `<div class="card tl-card">
+    <p class="card-title">Cuándo se publicó cada señal</p>
+    <div class="tl">${dots}</div>
+    <div class="tl-key">${lanes
+      .filter((lane) => lane.signals.some((signal) => signal.checked_at !== null))
+      .map((lane) => `<span class="tl-key-item"><span class="tl-dot-key d${lanes.indexOf(lane)}"></span>${escapeHtml(lane.short)}</span>`)
+      .join('')}</div>
+    <div class="tl-ends"><span>${escapeHtml(formatDate(new Date(first).toISOString().slice(0, 10)))}</span><span>${escapeHtml(formatDate(new Date(last).toISOString().slice(0, 10)))}</span></div>
+    <p class="card-note">Un punto por señal, en la fecha que trae. El color es la fuente.</p>
+  </div>`;
+}
+
 export function investigation(report: CrevaReport, lanes: SourceLane[], name: string): string {
   const links = lanes.map((_, i) => `<path class="link" data-link="${i}" d="${linkPath(i)}"/>`).join('');
   const sparks = lanes
@@ -146,35 +180,82 @@ export function hero(report: CrevaReport, lanes: SourceLane[]): string {
   <p class="figure-label">señales públicas encontradas</p>
 
   <div class="kpis" id="kpis">${kpis}</div>
+  <div class="dates">
+    <div class="date-card a"><p class="date-label">Consultado el</p><p class="date-value">${escapeHtml(formatDate(report.generated_at.slice(0, 10)))}</p></div>
+    <div class="date-card b"><p class="date-label">Ventana revisada</p><p class="date-value">${report.disclosure.window_days} días</p></div>
+  </div>
   ${verification === undefined ? '' : `<p class="hero-note">${escapeHtml(verification.detail)}</p>`}
   <div class="jumps" id="jumps">${jumps}</div>
 </section>`;
 }
 
 function jumpCards(report: CrevaReport, lanes: SourceLane[]): string {
-  const rates = report.signals.filter((signal) => signal.category === 'reference_rate').length;
-  const cards = [
-    { id: 'signals', num: '02', name: 'Señales', figure: String(lanes.length), note: 'fuentes, y qué aportó cada una' },
+  const rates = report.signals.filter((signal) => signal.category === 'reference_rate');
+  const total = report.signals.length;
+
+  const evidence = report.signals
+    .filter((signal) => signal.category !== 'reference_rate')
+    .slice(0, 3)
+    .map((signal) => `<li>${escapeHtml(signal.label)}</li>`)
+    .join('');
+
+  const rateChips = rates
+    .slice(0, 3)
+    .map((rate) => `<span class="chip">${escapeHtml(rate.detail)}</span>`)
+    .join('');
+
+  const panels = [
+    {
+      id: 'signals',
+      num: '02',
+      name: 'Señales',
+      figure: `${lanes.filter((lane) => lane.signals.length > 0).length}/${lanes.length}`,
+      note: 'fuentes devolvieron algo',
+      body: `<div class="panel-ring">${ring(lanes, total)}</div>`,
+    },
     {
       id: 'evidence',
       num: '03',
       name: 'Evidencia',
-      figure: String(report.signals.length),
-      note: 'señales con su fuente y su fecha',
+      figure: String(total),
+      note: 'señales con fuente y fecha',
+      body: `<ul class="mini-list">${evidence}</ul>`,
     },
-    ...(rates === 0
+    ...(rates.length === 0
       ? []
-      : [{ id: 'market', num: '04', name: 'Mercado', figure: String(rates), note: 'referencias del Banco de México' }]),
-    { id: 'audit', num: '05', name: 'Auditoría', figure: '—', note: 'lo que este análisis no estima' },
+      : [
+          {
+            id: 'market',
+            num: '04',
+            name: 'Mercado',
+            figure: String(rates.length),
+            note: 'referencias del Banco de México',
+            body: `<div class="chips">${rateChips}</div>`,
+          },
+        ]),
+    {
+      id: 'audit',
+      num: '05',
+      name: 'Auditoría',
+      figure: '—',
+      note: 'qué no estima este análisis',
+      body: `<ul class="mini-list">${report.disclosure.does_not_estimate
+        .slice(0, 2)
+        .map((claim) => `<li>${escapeHtml(claim)}</li>`)
+        .join('')}</ul>`,
+    },
   ];
 
-  return cards
+  return panels
     .map(
-      (card, index) => `<button class="jump" type="button" data-step="${card.id}" style="--i:${index}">
-    <span class="jump-num">${card.num}</span>
-    <span class="jump-name">${escapeHtml(card.name)}</span>
-    <span class="jump-figure">${escapeHtml(card.figure)}</span>
-    <span class="jump-note">${escapeHtml(card.note)}</span>
+      (panel, index) => `<button class="jump" type="button" data-step="${panel.id}" style="--i:${index}">
+    <span class="jump-head">
+      <span class="jump-num">${panel.num}</span>
+      <span class="jump-name">${escapeHtml(panel.name)}</span>
+      <span class="jump-figure">${escapeHtml(panel.figure)}</span>
+    </span>
+    <span class="jump-body">${panel.body}</span>
+    <span class="jump-note">${escapeHtml(panel.note)} <span class="jump-go" aria-hidden="true">→</span></span>
   </button>`,
     )
     .join('');
@@ -183,18 +264,6 @@ function jumpCards(report: CrevaReport, lanes: SourceLane[]): string {
 export function composition(report: CrevaReport, lanes: SourceLane[]): string {
   const total = report.signals.length;
   const answered = lanes.filter((lane) => lane.signals.length > 0).length;
-
-  const rows = lanes
-    .map((lane, index) => {
-      const dots = lane.signals.map((_, i) => `<span class="dot" style="--d:${i}"></span>`).join('');
-
-      return `<button class="comp-row" type="button" data-lane="${lane.id}" style="--i:${index}" aria-controls="comp-detail">
-    <span class="comp-name">${escapeHtml(lane.short)}</span>
-    <span class="comp-dots">${dots}</span>
-    <span class="comp-n" data-count="${lane.signals.length}">0</span>
-  </button>`;
-    })
-    .join('');
 
   return `<section class="block composition" data-enter="rail">
   <h2>Composición de las señales</h2>
@@ -205,21 +274,15 @@ export function composition(report: CrevaReport, lanes: SourceLane[]): string {
       <p class="card-title">¿De qué fuente salió cada señal?</p>
       <div class="ranked" id="ranked">${ranked(lanes, total)}</div>
     </div>
-    <div class="card">
+    <div class="card" id="comp-detail" aria-live="polite">
       <p class="card-title">Reparto</p>
       <div class="ring-wrap">${ring(lanes, total)}</div>
-      <p class="card-note"><strong>${answered}</strong> de ${lanes.length} fuentes devolvieron algo</p>
+      <p class="card-note" id="comp-detail-label"><strong>${answered}</strong> de ${lanes.length} fuentes devolvieron algo</p>
+      <button class="comp-go" id="comp-go" type="button" hidden>Explorar evidencia →</button>
     </div>
   </div>
 
-  <div class="comp">
-    <div class="comp-detail" id="comp-detail" aria-live="polite">
-      <p class="comp-detail-n"><span id="comp-detail-n" data-count="${total}" data-total-count="${total}">0</span></p>
-      <p class="comp-detail-label" id="comp-detail-label">señales en total</p>
-      <button class="comp-go" id="comp-go" type="button" hidden>Explorar evidencia →</button>
-    </div>
-    <div class="comp-rows" id="comp-rows">${rows}</div>
-  </div>
+  ${timeline(lanes)}
 </section>`;
 }
 

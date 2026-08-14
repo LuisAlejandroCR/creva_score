@@ -143,14 +143,11 @@ export function script(): string {
 
   function growComposition(){
     if(!reduce)playGraphics();
-    [].slice.call(document.querySelectorAll('.comp-row')).forEach(function(row,i){
-      setTimeout(function(){
-        row.classList.add('grown');
-        countUp(row.querySelector('.comp-n'),700);
-      },reduce?0:i*160);
-    });
-    var total=document.getElementById('comp-detail-n');
-    if(total)setTimeout(function(){countUp(total,900);},reduce?0:420);
+    // Remember what the untouched state says, so deselecting can restore it exactly.
+    var centre=document.querySelector('.board .ring-n');
+    var label=document.getElementById('comp-detail-label');
+    if(centre&&!centre.getAttribute('data-total'))centre.setAttribute('data-total',centre.textContent);
+    if(label&&!label.getAttribute('data-total-label'))label.setAttribute('data-total-label',label.innerHTML);
   }
 
   function settle(){
@@ -221,7 +218,7 @@ export function script(): string {
         investigate.classList.add('hidden');
         settle();
       });
-    },settled+2440);
+    },settled+3440);
   }
 
   // Staged panes hide their own text from find-in-page and from the printer.
@@ -406,57 +403,42 @@ export function script(): string {
   }
 
   function pickComposition(id,allowToggle){
-    var rows=document.getElementById('comp-rows');
-    if(!rows)return;
-    var n=document.getElementById('comp-detail-n');
+    var list=document.getElementById('ranked');
     var label=document.getElementById('comp-detail-label');
     var go=document.getElementById('comp-go');
-    if(!n||!label||!go)return;
+    var centre=document.querySelector('.board .ring-n');
+    if(!list||!label||!go||!centre)return;
 
-    var current=rows.querySelector('.comp-row.picked');
+    var current=list.querySelector('.rank.picked');
     var same=allowToggle===true&&current!==null&&current.getAttribute('data-lane')===id;
     var picked=null;
 
-    [].slice.call(rows.querySelectorAll('.comp-row')).forEach(function(r){
-      var on=!same&&r.getAttribute('data-lane')===id;
-      r.classList.toggle('picked',on);
-      if(on)picked=r;
+    [].slice.call(list.querySelectorAll('.rank')).forEach(function(row){
+      var on=!same&&row.getAttribute('data-lane')===id;
+      row.classList.toggle('picked',on);
+      if(on)picked=row;
     });
-    rows.classList.toggle('picking',picked!==null);
+    list.classList.toggle('picking',picked!==null);
+
+    var tl=document.querySelector('.tl');
+    if(tl){
+      var lane=picked===null?null:picked.getAttribute('data-lane');
+      tl.setAttribute('data-picked',lane===null?'':lane);
+      [].slice.call(tl.querySelectorAll('.tl-dot')).forEach(function(dot){
+        dot.classList.toggle('muted',lane!==null&&dot.getAttribute('data-lane')!==lane);
+      });
+    }
 
     if(picked===null){
-      n.setAttribute('data-count',n.getAttribute('data-total-count'));
-      countUp(n,520);
-      label.textContent='señales en total';
+      centre.textContent=centre.getAttribute('data-total')||centre.textContent;
+      label.innerHTML=label.getAttribute('data-total-label')||label.innerHTML;
       go.hidden=true;
       return;
     }
-    n.setAttribute('data-count',picked.querySelector('.comp-n').getAttribute('data-count'));
-    countUp(n,520);
-    label.textContent=picked.getAttribute('data-lane').toUpperCase();
+    centre.textContent=picked.querySelector('.rank-n').textContent;
+    label.textContent=picked.querySelector('.rank-name').textContent.trim()+' · '+picked.querySelector('.rank-share').textContent+' de las señales';
     go.hidden=false;
     go.setAttribute('data-lane',picked.getAttribute('data-lane'));
-  }
-
-  // Each step completes the one before it, so the reader sees a sequence resolve.
-  function runWhy(){
-    var list=document.querySelector('.why-steps');
-    var steps=[].slice.call(document.querySelectorAll('.why-step'));
-    if(!list||steps.length===0)return;
-
-    if(reduce){
-      steps.forEach(function(s){s.classList.add('on','done');});
-      return;
-    }
-
-    list.classList.add('staged');
-    steps.forEach(function(step,i){
-      setTimeout(function(){
-        for(var j=0;j<i;j++)steps[j].classList.add('done');
-        step.classList.add('on');
-      },i*700);
-    });
-    setTimeout(function(){steps[steps.length-1].classList.add('done');},steps.length*700+200);
   }
 
   function pickPoint(index){
@@ -522,7 +504,7 @@ export function script(): string {
     var point=t.closest('.point');
     if(point){pickPoint(parseInt(point.getAttribute('data-point'),10)||0);return;}
 
-    var row=t.closest('.comp-row')||t.closest('.rank');
+    var row=t.closest('.rank');
     if(row){pickComposition(row.getAttribute('data-lane'),true);return;}
 
     var go=t.closest('.comp-go');
