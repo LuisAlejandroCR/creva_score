@@ -210,6 +210,30 @@ export function script(): string {
     },settled+2440);
   }
 
+  // Staged panes hide their own text from find-in-page and from the printer.
+  // This is the way back out to a single flat document.
+  function openEverything(){
+    [].slice.call(document.querySelectorAll('details.fold')).forEach(function(d){d.open=true;});
+    panes.forEach(function(p){p.hidden=false;});
+  }
+
+  function showAll(on){
+    var workspace=document.querySelector('.workspace');
+    var rail=document.getElementById('stages');
+    var button=document.getElementById('show-all');
+    if(!workspace||!rail||!button)return;
+
+    workspace.classList.toggle('all',on);
+    rail.hidden=on;
+    button.setAttribute('aria-pressed',on?'true':'false');
+    button.textContent=on?'Ver por etapas':'Ver todo';
+
+    if(on){openEverything();return;}
+    panes.forEach(function(p){p.hidden=p.getAttribute('data-pane')!==current;});
+  }
+
+  window.addEventListener('beforeprint',openEverything);
+
   function panels(){return [].slice.call(document.querySelectorAll('.panel'));}
 
   function setFilter(id){
@@ -401,17 +425,6 @@ export function script(): string {
     setTimeout(function(){steps[steps.length-1].classList.add('done');},steps.length*700+200);
   }
 
-  function toggleAudit(){
-    var button=document.getElementById('audit-toggle');
-    var body=document.getElementById('audit-more');
-    if(!button||!body)return;
-    var open=body.hidden;
-    body.hidden=!open;
-    button.setAttribute('aria-expanded',open?'true':'false');
-    var mark=button.querySelector('.audit-toggle-mark');
-    if(mark)mark.textContent=open?'−':'+';
-  }
-
   function pickPoint(index){
     var points=[].slice.call(document.querySelectorAll('.point'));
     var picked=points[index];
@@ -449,7 +462,10 @@ export function script(): string {
     var head=t.closest('.panel-head');
     if(head){togglePanel(head.parentNode);return;}
 
-    if(t.closest('#audit-toggle')){toggleAudit();return;}
+    if(t.closest('#show-all')){
+      showAll(document.getElementById('show-all').getAttribute('aria-pressed')!=='true');
+      return;
+    }
 
     var stageTab=t.closest('.stage-tab');
     if(stageTab){goToStage(stageTab.getAttribute('data-stage'));return;}

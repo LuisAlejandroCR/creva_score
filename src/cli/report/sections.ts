@@ -277,14 +277,6 @@ export function why(report: CrevaReport): string {
 }
 
 export function audit(report: CrevaReport): string {
-  const notes =
-    report.notes.length === 0
-      ? ''
-      : `<div class="audit-card">
-  <p class="label">Lo que no pudimos ver</p>
-  <ul class="notes">${report.notes.map((note) => `<li>${escapeHtml(note)}</li>`).join('')}</ul>
-</div>`;
-
   const levels = report.disclosure.provenance_levels
     .map(
       (level) => `<div class="audit-card">
@@ -301,7 +293,23 @@ export function audit(report: CrevaReport): string {
     )
     .join('');
 
-  // The disclosure stays open. Only the reference material behind it folds away.
+  const notes =
+    report.notes.length === 0
+      ? ''
+      : fold(
+          'Lo que no pudimos ver',
+          `<ul class="notes">${report.notes.map((note) => `<li>${escapeHtml(note)}</li>`).join('')}</ul>`,
+        );
+
+  const sources =
+    rows === ''
+      ? ''
+      : fold(
+          'Fuentes consultadas y sus fechas',
+          `<table class="sources"><thead><tr><th>Proveedor</th><th>Conjunto de datos</th><th>Consultado</th></tr></thead><tbody>${rows}</tbody></table>`,
+        );
+
+  // The disclosure never folds. Everything behind it is reference material.
   return `<section class="block audit" data-enter="audit">
   <h2>Sobre este análisis</h2>
   <p class="blurb">${escapeHtml(report.disclosure.describes)} Ventana de ${report.disclosure.window_days} días · versión ${escapeHtml(report.disclosure.score_version)}.</p>
@@ -311,23 +319,17 @@ export function audit(report: CrevaReport): string {
     <ul class="notes">${report.disclosure.does_not_estimate.map((claim) => `<li>${escapeHtml(claim)}</li>`).join('')}</ul>
   </div>
 
-  <button class="audit-toggle" id="audit-toggle" type="button" aria-expanded="false" aria-controls="audit-more">
-    Ver la procedencia y las fuentes <span class="audit-toggle-mark" aria-hidden="true">+</span>
-  </button>
-
-  <div class="audit-more" id="audit-more" hidden>
-    <p class="label spaced">De dónde sale cada dato</p>
-    <div class="audit-grid">${levels}</div>
-    ${notes}
-
-    ${
-      rows === ''
-        ? ''
-        : `<p class="label spaced">Fuentes consultadas</p>
-    <table class="sources"><thead><tr><th>Proveedor</th><th>Conjunto de datos</th><th>Consultado</th></tr></thead><tbody>${rows}</tbody></table>`
-    }
-  </div>
+  ${fold('De dónde sale cada dato', `<div class="audit-grid">${levels}</div>`)}
+  ${notes}
+  ${sources}
 </section>`;
+}
+
+function fold(title: string, body: string): string {
+  return `<details class="fold">
+    <summary>${escapeHtml(title)}</summary>
+    <div class="fold-body">${body}</div>
+  </details>`;
 }
 
 export function closing(report: CrevaReport): string {

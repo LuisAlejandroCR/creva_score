@@ -271,14 +271,25 @@ describe('renderReportHtml', () => {
 
   it('folds the reference material but never the disclosure itself', () => {
     const html = renderReportHtml(report());
-    const foldedFrom = html.indexOf('<div class="audit-more"');
+    const foldedFrom = html.indexOf('<details class="fold">');
 
-    expect(html).toContain('aria-controls="audit-more"');
-    expect(html).toContain('id="audit-more" hidden');
-    // The claims the score refuses to make sit above the fold, always open.
+    // Native folds bring their own keyboard handling and find-in-page behaviour.
+    expect(html.match(/<details class="fold">/g)?.length).toBeGreaterThanOrEqual(2);
+    expect(html).not.toContain('<details class="fold" open');
+    // The claims the score refuses to make sit above the first fold, always open.
     expect(html.indexOf('Lo que NO hace')).toBeLessThan(foldedFrom);
     expect(html.indexOf('dejes de pagar')).toBeLessThan(foldedFrom);
     expect(html.indexOf('Fuentes consultadas')).toBeGreaterThan(foldedFrom);
+  });
+
+  it('keeps a way out of the staged view, for find-in-page and for paper', () => {
+    const html = renderReportHtml(report());
+
+    expect(html).toContain('id="show-all"');
+    expect(html).toContain('aria-pressed="false"');
+    expect(html).toContain('@media print');
+    expect(html).toContain('.pane[hidden]{display:block!important}');
+    expect(html).toContain("window.addEventListener('beforeprint',openEverything)");
   });
 
   it('names every stage and wires each tab to the pane it controls', () => {

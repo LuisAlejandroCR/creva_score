@@ -45,6 +45,7 @@ export function renderReportHtml(report: CrevaReport): string {
   <span class="bar-brand">CREVA</span>
   <span class="bar-name">${escapeHtml(name)}</span>
   <span class="bar-status">${escapeHtml(statusWord(report))}</span>
+  <button class="bar-all" id="show-all" type="button" aria-pressed="false">Ver todo</button>
 </header>
 
 <main>

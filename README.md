@@ -127,6 +127,8 @@ La evidencia viene plegada y se abre con un clic o con el teclado. De cada fuent
 
 Las tasas de referencia se comparan entre sí en una misma línea, con la escala escrita al lado para que no parezca grande una diferencia que es pequeña. El valor de la UDI va aparte, porque no es una tasa y compararlo contra ellas no significaría nada.
 
+Si prefieres verlo todo de corrido —para buscar una palabra o para imprimirlo— hay un botón **"Ver todo"** arriba a la derecha que despliega los cinco pasos en una sola página.
+
 Al final hay una sección con lo que este análisis **no** hace, siempre a la vista. El detalle de dónde salió cada dato y la lista de fuentes se guardan detrás de un botón, para no competir con lo que importa.
 
 Se lee igual de bien en el teléfono. Y si tu sistema está configurado para reducir el movimiento, la página aparece completa y quieta, sin animaciones.
