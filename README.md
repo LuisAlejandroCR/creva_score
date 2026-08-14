@@ -129,7 +129,9 @@ El **Resumen** abre con la cifra que la búsqueda acaba de encontrar, grande y a
 
 La línea de tiempo lleva una fila por fuente y un punto por señal, en la fecha que trae. Cuando dos señales caen casi el mismo día, el punto se apila en vez de taparse: **el lugar horizontal siempre es la fecha real**, nunca se corre para que quepa.
 
-La línea de tiempo trae un **cortador de años**: dos manijas sobre el mismo eje que ya estás mirando, para quedarte con "de 2019 en adelante" o con un año suelto. Solo se detiene en años que sí tienen señales, y dice cuántas quedan. Se combina con la fuente que hayas elegido, no la reemplaza. Y al pasar el cursor —o al llegar con el teclado— una línea fija debajo del gráfico te dice qué es ese punto antes de que lo toques.
+Arriba de todo hay un **rango de años** que recorta la pantalla entera: las barras, la línea de tiempo y la evidencia se mueven juntas, así que nunca verás una barra que diga una cantidad y una lista que muestre otra. Puedes arrastrar las dos manijas o **escribir los años**; si escribes uno que no tiene señales, se ajusta al más cercano que sí las tenga en vez de rechazarlo. Se combina con la fuente que hayas elegido, no la reemplaza. Y si una fuente se queda sin señales en esos años, te lo dice con esas palabras — que no es lo mismo que no haber encontrado nada en toda la revisión.
+
+En la línea de tiempo, al pasar el cursor —o al llegar con el teclado— una línea fija debajo del gráfico te dice qué es ese punto antes de que lo toques.
 
 La evidencia viene plegada y se abre con un clic o con el teclado. De cada fuente se muestran las primeras señales, y el resto lo pides tú de a poco — nada te cae encima de golpe. Puedes ordenar por fecha.
 

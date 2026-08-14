@@ -600,9 +600,13 @@ describe('renderReportHtml', () => {
     const html = renderReportHtml(reportWithManyRules(18));
     const cnbvPanel = html.slice(html.indexOf('id="lane-cnbv"'), html.indexOf('id="lane-banxico"'));
 
-    // All 18 stay in the document; 15 of them simply start folded.
+    // All 18 stay in the document; 15 of them simply start folded. Counting bare
+    // " hidden>" measured a wider region than the rule: the year-slice empty message is
+    // also hidden at rest, and it is not an item.
+    const folded = [...cnbvPanel.matchAll(/<div class="item [^>]*>/g)].filter((match) => match[0].endsWith(' hidden>'));
+
     expect(cnbvPanel.match(/class="item /g)).toHaveLength(18);
-    expect(cnbvPanel.match(/ hidden>/g)).toHaveLength(15);
+    expect(folded).toHaveLength(15);
     expect(cnbvPanel).toContain('data-visible="3"');
     for (let i = 0; i < 18; i++) expect(cnbvPanel).toContain(`Norma ${i}`);
   });
@@ -764,11 +768,62 @@ describe('renderReportHtml', () => {
     expect(html).toMatch(/::-moz-range-thumb\{[^}]*pointer-events:auto/);
   });
 
+  it('lets the year slice govern the whole stage, not only the chart', () => {
+    const html = renderReportHtml(reportAcrossYears());
+    const app = html.slice(0, html.indexOf('<article class="paper"'));
+
+    // It sits with the source selector, above the bars, because it narrows everything
+    // below it. Inside the timeline card it read as a control for the chart alone.
+    expect(app.indexOf('class="hint"')).toBeLessThan(app.indexOf('id="tl-slice"'));
+    expect(app.indexOf('id="tl-slice"')).toBeLessThan(app.indexOf('<div class="ranked"'));
+    expect(app.indexOf('id="tl-slice"')).toBeLessThan(app.indexOf('class="card tl-card"'));
+    expect(app).toContain('El rango de años recorta esta pantalla entera.');
+
+    // The bars, the evidence and the fold arithmetic all read the sliced list, or the
+    // chart would state a quantity the list below no longer shows.
+    expect(html).toContain('function inSlice(item)');
+    expect(html).toContain(".filter(inSlice)");
+    expect(html).toContain('function rerank()');
+    expect(html).toContain('rerank();');
+    // A lane emptied by the years is a different sentence from a lane that gave nothing.
+    expect(app).toContain('Ninguna señal de esta fuente en los años elegidos.');
+    expect(app.match(/class="empty sliced" hidden/g)?.length).toBe(4);
+  });
+
   it('never lets the slice invert when the handles cross', () => {
     const html = renderReportHtml(reportAcrossYears());
     // Measured: dragging the far handle past the near one swaps them, it does not produce
     // a backwards range that would quietly mute every dot.
     expect(html).toContain('if(a>b){var swap=a;a=b;b=swap;');
+  });
+
+  it('lets the years be typed as well as dragged', () => {
+    const html = renderReportHtml(reportAcrossYears());
+    const app = html.slice(0, html.indexOf('<article class="paper"'));
+    const fields = [...app.matchAll(/<input class="tl-year-in"[^>]*>/g)].map((match) => match[0]);
+    const years = (/data-years="([^"]+)"/.exec(app)?.[1] ?? '').split(',').map(Number);
+
+    expect(fields).toHaveLength(2);
+    for (const field of fields) {
+      expect(field).toContain('type="number"');
+      expect(field).toContain('inputmode="numeric"');
+      expect(field).toContain(`min="${years[0]}"`);
+      expect(field).toContain(`max="${years[years.length - 1]}"`);
+    }
+    // The static file already states the full span, before any script runs.
+    expect(fields[0]).toContain(`value="${years[0]}"`);
+    expect(fields[1]).toContain(`value="${years[years.length - 1]}"`);
+    // Each field is labelled for a screen reader without printing the label twice.
+    expect(app.match(/<span class="sr-only">Desde el año<\/span>/g)).toHaveLength(1);
+    expect(app.match(/<span class="sr-only">Hasta el año<\/span>/g)).toHaveLength(1);
+
+    // A year the corpus does not hold still has a meaning: snap outward, never refuse.
+    expect(html).toContain('function typedSlice()');
+    expect(html).toContain('if(years[k]>=a)');
+    expect(html).toContain('if(years[k]<=b)');
+    // change, not input: a number field fires per keystroke and would snap on "2".
+    expect(html).toMatch(/document\.addEventListener\('change',function\(e\)\{[\s\S]{0,140}?tl-year-in/);
+    expect(html).not.toMatch(/document\.addEventListener\('input',function\(e\)\{[\s\S]{0,140}?tl-year-in/);
   });
 
   it('offers no year control when there is only one year to choose', () => {

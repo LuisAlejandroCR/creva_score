@@ -238,10 +238,19 @@ transition:background var(--mid) var(--ease)}
 
 /* Two handles on one rail. Both inputs sit on top of each other so the shaded span reads
    as one control; only the thumbs take the pointer, or the upper input would swallow it. */
-.tl-slice{margin-top:1.4rem;padding-top:1.1rem;border-top:1px solid var(--bd)}
+.tl-slice{background:var(--s1);border:1px solid var(--bd);border-radius:18px;
+padding:1.1rem 1.4rem 1rem;margin:0 0 .7rem}
 .tl-slice-top{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
-.tl-slice-out{margin:0;font-size:.82rem;color:var(--muted)}
-.tl-slice-out strong{color:var(--tx)}
+.tl-slice-out{margin:0;font-size:.82rem;color:var(--muted);display:flex;align-items:center;gap:.4rem;flex-wrap:wrap}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.tl-typed{display:inline-flex}
+.tl-year-in{width:5.2rem;min-height:44px;padding:.3rem .5rem;border-radius:10px;border:1px solid var(--bd);
+background:var(--bg);color:var(--tx);font-family:inherit;font-size:1rem;font-weight:700;text-align:center;
+transition:border-color var(--mid) var(--ease)}
+.tl-year-in:hover{border-color:var(--rosa)}
+.tl-year-in:focus-visible{border-color:var(--crimson)}
+.tl-typed-dash{color:var(--subtle)}
+.tl-slice-count{margin-left:.2rem}
 .tl-slice-all{padding:.4rem .9rem;border-radius:999px;border:1px solid var(--bd);background:none;
 color:var(--crimson-dark);font-family:inherit;font-size:.78rem;font-weight:600;cursor:pointer;min-height:44px;
 transition:all var(--mid) var(--ease)}

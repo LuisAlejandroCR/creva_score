@@ -12,7 +12,7 @@ import {
   visibleFor,
 } from './lanes';
 import { buildRateStrip } from './rate-strip';
-import { timeline } from './timeline';
+import { timeline, yearSlicer } from './timeline';
 
 const NODE_X = [90, 230, 370, 510];
 const ROOT = { x: 300, y: 62 };
@@ -67,7 +67,7 @@ export function ranked(lanes: SourceLane[], total: number): string {
       const share = total === 0 ? 0 : Math.round((lane.signals.length / total) * 100);
       const width = largest === 0 ? 0 : Math.round((lane.signals.length / largest) * 100);
 
-      return `<button class="rank a${index}" type="button" data-lane="${lane.id}" style="--i:${index}" aria-pressed="false">
+      return `<button class="rank a${index}" type="button" data-lane="${lane.id}" data-total="${lane.signals.length}" style="--i:${index}" aria-pressed="false">
       <span class="rank-i">${index + 1}</span>
       <span class="rank-name">${escapeHtml(lane.short)}</span>
       <span class="rank-track">${lane.signals.length === 0 ? '' : `<span class="rank-bar" style="--w:${width}%"></span>`}</span>
@@ -234,7 +234,9 @@ export function signals(report: CrevaReport, lanes: SourceLane[]): string {
   return `<section class="block composition" data-enter="rail">
   <p class="lead">Cada señal viene de un registro público. Elige una fuente para seguirla hasta su documento.</p>
   <h2>¿De qué fuente salió cada señal?</h2>
-  <p class="hint"><span class="hint-mark" aria-hidden="true">☞</span> Toca una fuente para filtrar la línea de tiempo y la evidencia de abajo.</p>
+  <p class="hint"><span class="hint-mark" aria-hidden="true">☞</span> Toca una fuente para filtrar la línea de tiempo y la evidencia de abajo. El rango de años recorta esta pantalla entera.</p>
+
+  ${yearSlicer(lanes)}
 
   <div class="card">
     <div class="ranked" id="ranked" role="group" aria-label="Elegir una fuente">${ranked(lanes, total)}</div>
@@ -268,6 +270,10 @@ function panel(lane: SourceLane, laneIndex: number): string {
   </div>`
       : '';
 
+  // Always emitted, always hidden at rest: the year slice can empty a lane the report
+  // does hold signals for, and that is a different sentence from "this source gave none".
+  const sliced = `<p class="empty sliced" hidden>Ninguna señal de esta fuente en los años elegidos.</p>`;
+
   const more =
     total > visible
       ? `<div class="more-wrap"><button class="more" type="button" data-lane="${lane.id}" aria-controls="body-${lane.id}">${moreLabel(visible, total)}</button></div>`
@@ -282,7 +288,7 @@ function panel(lane: SourceLane, laneIndex: number): string {
     <span class="panel-cta">Ver evidencia</span>
     <span class="panel-toggle" aria-hidden="true">+</span>
   </button>
-  <div class="panel-body" id="body-${lane.id}"><div class="panel-inner">${sort}${items}${more}</div></div>
+  <div class="panel-body" id="body-${lane.id}"><div class="panel-inner">${sort}${items}${sliced}${more}</div></div>
 </article>`;
 }
 
@@ -307,6 +313,7 @@ function evidenceItem(
     : `<div class="item-pick inert">${body}</div>`;
 
   return `<div class="item tone-${signal.tone}" data-i="${index}" data-order="${index}" data-date="${signal.checked_at === null ? '' : escapeHtml(signal.checked_at)}"
+  data-year="${signal.checked_at === null ? '' : escapeHtml(signal.checked_at.slice(0, 4))}"
   data-lane="${lane.id}" data-lane-i="${laneIndex}" data-key="${escapeHtml(signal.key)}"${folded ? ' hidden' : ''}>
   ${inner}
 </div>`;

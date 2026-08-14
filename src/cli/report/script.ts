@@ -135,6 +135,9 @@ export function script(): string {
 
   function growComposition(){
     rewind([].slice.call(document.querySelectorAll('#ranked .rank-bar')),'width','0');
+    // The slice may already be narrowed when the stage is first opened, so the panels
+    // have to be brought in line before they are ever seen.
+    panels().forEach(applyVisibility);
   }
 
   function settle(){
@@ -263,16 +266,47 @@ export function script(): string {
 
   function items(panel){return [].slice.call(panel.querySelectorAll('.item'));}
 
+  // The year slice governs the whole stage, so "the items of this panel" always means the
+  // ones inside the chosen years. Everything downstream — the count, the fold, the
+  // "show more" arithmetic — reads from here, or the counter would promise rows that
+  // the slice has already taken away.
+  function inSlice(item){
+    if(yearFrom===null)return true;
+    var year=parseInt(item.getAttribute('data-year'),10);
+    if(!year)return false;
+    return year>=yearFrom&&year<=yearTo;
+  }
+
+  function items(panel){return [].slice.call(panel.querySelectorAll('.item')).filter(inSlice);}
+
+  function allItems(panel){return [].slice.call(panel.querySelectorAll('.item'));}
+
   function applyVisibility(panel){
     var visible=parseInt(panel.getAttribute('data-visible'),10)||0;
-    items(panel).forEach(function(item,i){item.hidden=i>=visible;});
+    var list=items(panel);
+    allItems(panel).forEach(function(item){item.hidden=true;});
+    list.forEach(function(item,i){item.hidden=i>=visible;});
+
+    var total=list.length;
+    var count=panel.querySelector('.panel-count');
+    if(count)count.textContent=String(total);
+    var empty=panel.querySelector('.empty.sliced');
+    if(empty)empty.hidden=total>0||parseInt(panel.getAttribute('data-total'),10)===0;
+
+    var wrap=panel.querySelector('.more-wrap');
+    if(!wrap)return;
+    wrap.hidden=total<=visible;
+    var button=wrap.querySelector('.more');
+    if(!button||total<=visible)return;
+    var step=nextVisible(visible,total)-visible;
+    var left=total-nextVisible(visible,total);
+    button.textContent=left===0?'Mostrar todo · '+step+' más':'Mostrar '+step+' más → quedan '+left;
   }
 
   function showMore(panel){
     var visible=parseInt(panel.getAttribute('data-visible'),10)||0;
-    var total=parseInt(panel.getAttribute('data-total'),10)||0;
-    var next=nextVisible(visible,total);
     var list=items(panel);
+    var next=nextVisible(visible,list.length);
 
     for(var i=visible;i<next;i++){
       if(!list[i])continue;
@@ -283,17 +317,7 @@ export function script(): string {
       }
     }
     panel.setAttribute('data-visible',String(next));
-
-    var button=panel.querySelector('.more');
-    if(!button)return;
-    if(next>=total){
-      var wrap=button.parentNode;
-      if(wrap&&wrap.parentNode)wrap.parentNode.removeChild(wrap);
-      return;
-    }
-    var step=nextVisible(next,total)-next;
-    var left=total-nextVisible(next,total);
-    button.textContent=left===0?'Mostrar todo · '+step+' más':'Mostrar '+step+' más → quedan '+left;
+    applyVisibility(panel);
   }
 
   function sortPanel(panel,mode){
@@ -372,17 +396,18 @@ export function script(): string {
     filterEvidence(lane,picked);
   }
 
-  function filterEvidence(lane,picked){
+  function filterEvidence(lane,picked,quiet){
     var shown=0;
     panels().forEach(function(p){
       var id=p.getAttribute('data-panel');
       var on=lane===null||id===lane;
       p.hidden=!on;
-      if(on)shown+=parseInt(p.getAttribute('data-total'),10)||0;
+      applyVisibility(p);
+      if(on)shown+=items(p).length;
     });
 
     var wrap=document.querySelector('.panels');
-    if(wrap&&!reduce){
+    if(wrap&&!reduce&&quiet!==true){
       wrap.classList.add('swapping');
       setTimeout(function(){wrap.classList.remove('swapping');},180);
     }
@@ -390,10 +415,37 @@ export function script(): string {
     var out=document.getElementById('filter-result');
     if(!out)return;
     var word=shown===1?'resultado':'resultados';
-    var name=picked===null?'':picked.querySelector('.rank-name').textContent.trim();
-    var label=picked===null?shown+' '+word:name+' · '+shown+' '+word;
+    var parts=[];
+    if(picked!==null)parts.push(picked.querySelector('.rank-name').textContent.trim());
+    if(yearFrom!==null&&!wholeSlice())parts.push(yearFrom===yearTo?String(yearFrom):yearFrom+'–'+yearTo);
+    parts.push(shown+' '+word);
+    var label=parts.join(' · ');
     out.classList.add('blip');
     setTimeout(function(){out.textContent=label;out.classList.remove('blip');},reduce?0:120);
+  }
+
+  // The bars are a count of what is in view, so a slice has to move them too — otherwise
+  // the chart states a quantity the list below no longer shows.
+  function rerank(){
+    var list=document.getElementById('ranked');
+    if(!list)return;
+    var rows=[].slice.call(list.querySelectorAll('.rank'));
+    var counts=rows.map(function(row){
+      var panel=document.querySelector('.panel[data-panel="'+row.getAttribute('data-lane')+'"]');
+      return panel===null?0:items(panel).length;
+    });
+    var sum=counts.reduce(function(a,b){return a+b;},0);
+    var largest=counts.reduce(function(a,b){return Math.max(a,b);},0);
+
+    rows.forEach(function(row,i){
+      row.querySelector('.rank-n').textContent=String(counts[i]);
+      row.querySelector('.rank-share').textContent=(sum===0?0:Math.round(counts[i]/sum*100))+'%';
+      var track=row.querySelector('.rank-track');
+      var bar=track.querySelector('.rank-bar');
+      if(counts[i]===0){if(bar)track.removeChild(bar);return;}
+      if(!bar){bar=document.createElement('span');bar.className='rank-bar';track.appendChild(bar);}
+      bar.style.setProperty('--w',(largest===0?0:Math.round(counts[i]/largest*100))+'%');
+    });
   }
 
   // Source and year are two dimensions of the same view, so one function applies both.
@@ -411,6 +463,11 @@ export function script(): string {
     var slice=document.getElementById('tl-slice');
     if(!slice)return [];
     return (slice.getAttribute('data-years')||'').split(',').map(Number);
+  }
+
+  function wholeSlice(){
+    var years=sliceYears();
+    return years.length<2||(yearFrom===years[0]&&yearTo===years[years.length-1]);
   }
 
   // Two handles over the years that exist, so a drag can never land on an empty one.
@@ -433,11 +490,44 @@ export function script(): string {
     rails.style.setProperty('--a',(a/last*100)+'%');
     rails.style.setProperty('--b',(b/last*100)+'%');
 
-    var range=document.getElementById('tl-slice-range');
-    if(range)range.textContent=yearFrom===yearTo?String(yearFrom):yearFrom+' – '+yearTo;
+    var typedFrom=document.getElementById('tl-year-from');
+    var typedTo=document.getElementById('tl-year-to');
+    if(typedFrom)typedFrom.value=String(yearFrom);
+    if(typedTo)typedTo.value=String(yearTo);
     var all=document.getElementById('tl-slice-all');
     if(all)all.hidden=a===0&&b===last;
     applyTimeline();
+    // The slice governs the stage, not just the chart: the bars and the evidence below
+    // read from the same range, so the three never state different quantities.
+    rerank();
+    filterEvidence(laneFilter,document.querySelector('#ranked .rank.picked'),true);
+  }
+
+  // A typed year the corpus does not hold still has an unambiguous meaning: "from 2017"
+  // is the first year on or after it, "to 2017" the last on or before. Snapping that way
+  // keeps the reader's intent instead of refusing the entry.
+  function typedSlice(){
+    var years=sliceYears();
+    var from=document.getElementById('tl-from');
+    var to=document.getElementById('tl-to');
+    var typedFrom=document.getElementById('tl-year-from');
+    var typedTo=document.getElementById('tl-year-to');
+    if(years.length<2||!from||!to||!typedFrom||!typedTo)return;
+
+    var a=parseInt(typedFrom.value,10);
+    var b=parseInt(typedTo.value,10);
+    if(isNaN(a))a=years[0];
+    if(isNaN(b))b=years[years.length-1];
+    if(a>b){var swap=a;a=b;b=swap;}
+
+    var i=0,j=years.length-1,k;
+    for(k=0;k<years.length;k++){if(years[k]>=a){i=k;break;}if(k===years.length-1)i=k;}
+    for(k=years.length-1;k>=0;k--){if(years[k]<=b){j=k;break;}if(k===0)j=0;}
+    if(i>j)j=i;
+
+    from.value=String(i);
+    to.value=String(j);
+    readSlice();
   }
 
   function resetSlice(){
@@ -539,6 +629,19 @@ export function script(): string {
   document.addEventListener('input',function(e){
     if(!e.target||!e.target.classList||!e.target.classList.contains('tl-slice-in'))return;
     readSlice();
+  });
+
+  // change, not input: a number field fires per keystroke, so "2" would snap before the
+  // reader has finished typing the year.
+  document.addEventListener('change',function(e){
+    if(!e.target||!e.target.classList||!e.target.classList.contains('tl-year-in'))return;
+    typedSlice();
+  });
+
+  document.addEventListener('keydown',function(e){
+    if(e.key!=='Enter'||!e.target||!e.target.classList||!e.target.classList.contains('tl-year-in'))return;
+    e.preventDefault();
+    typedSlice();
   });
 
   ['mouseover','focusin'].forEach(function(type){

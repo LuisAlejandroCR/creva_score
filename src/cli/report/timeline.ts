@@ -190,9 +190,15 @@ export function timeline(lanes: SourceLane[]): string {
     <p class="card-title">Cuándo se publicó cada señal</p>
     <div class="tl">${grid}${axis}</div>
     ${ends}
-    ${slicer(data)}
     <p class="tl-peek" id="tl-peek" aria-hidden="true"><span class="tl-peek-hint">Pasa el cursor por un punto para verlo; toca para ir a su documento.</span></p>
   </div>`;
+}
+
+// It sits with the source selector, not inside the timeline card, because it narrows the
+// whole stage: the bars, the dots and the evidence all read from it.
+export function yearSlicer(lanes: SourceLane[]): string {
+  const data = buildTimeline(lanes);
+  return data === null ? '' : slicer(data);
 }
 
 // Years are an axis, not a set of tags: a reader asks for "the last five", not for 2014
@@ -208,7 +214,12 @@ function slicer(data: TimelineData): string {
 
   return `<div class="tl-slice" id="tl-slice" data-years="${years.map((entry) => entry.year).join(',')}">
     <div class="tl-slice-top">
-      <p class="tl-slice-out" id="tl-slice-out"><strong id="tl-slice-range">${from.year} – ${to.year}</strong> · <span id="tl-slice-n">${data.points.length}</span> de ${data.points.length} señales</p>
+      <p class="tl-slice-out" id="tl-slice-out">
+        <label class="tl-typed"><span class="sr-only">Desde el año</span><input class="tl-year-in" id="tl-year-from" type="number" inputmode="numeric" min="${from.year}" max="${to.year}" step="1" value="${from.year}"></label>
+        <span class="tl-typed-dash" aria-hidden="true">–</span>
+        <label class="tl-typed"><span class="sr-only">Hasta el año</span><input class="tl-year-in" id="tl-year-to" type="number" inputmode="numeric" min="${from.year}" max="${to.year}" step="1" value="${to.year}"></label>
+        <span class="tl-slice-count">· <span id="tl-slice-n">${data.points.length}</span> de ${data.points.length} señales</span>
+      </p>
       <button class="tl-slice-all" id="tl-slice-all" type="button" hidden>Todos los años</button>
     </div>
     <div class="tl-slice-rails" style="--a:0%;--b:100%">
