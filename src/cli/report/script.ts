@@ -118,14 +118,10 @@ export function script(): string {
   }
 
   function revealSummary(){
-    var cards=[].slice.call(document.querySelectorAll('.insight'));
-    var done=document.getElementById('summary-done');
-    var cue=document.getElementById('explore-cue');
-    cards.forEach(function(c,i){setTimeout(function(){c.classList.add('on');},reduce?0:i*260);});
-    setTimeout(function(){
-      if(done)done.classList.add('on');
-      if(cue)cue.classList.add('on');
-    },reduce?0:cards.length*260+240);
+    var cards=[].slice.call(document.querySelectorAll('.kpi'));
+    var jumps=[].slice.call(document.querySelectorAll('.jump'));
+    cards.forEach(function(c,i){setTimeout(function(){c.classList.add('on');},reduce?0:i*160);});
+    jumps.forEach(function(j,i){setTimeout(function(){j.classList.add('on');},reduce?0:cards.length*160+i*110);});
   }
 
   function growComposition(){
@@ -232,7 +228,12 @@ export function script(): string {
     panes.forEach(function(p){p.hidden=p.getAttribute('data-pane')!==current;});
   }
 
-  window.addEventListener('beforeprint',openEverything);
+  // No number in the link: WhatsApp opens its own contact picker so the sender chooses.
+  function shareOnWhatsApp(){
+    var share=window.CREVA_SHARE||{};
+    var text=(share.title||'Creva')+String.fromCharCode(10)+(share.summary||'');
+    window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank','noopener');
+  }
 
   function panels(){return [].slice.call(document.querySelectorAll('.panel'));}
 
@@ -467,10 +468,13 @@ export function script(): string {
       return;
     }
 
+    if(t.closest('#to-pdf')){window.print();return;}
+    if(t.closest('#to-whatsapp')){shareOnWhatsApp();return;}
+
     var stageTab=t.closest('.stage-tab');
     if(stageTab){goToStage(stageTab.getAttribute('data-stage'));return;}
 
-    var step=t.closest('.step');
+    var step=t.closest('[data-step]');
     if(step){goToStage(step.getAttribute('data-step'),{focusPane:true});return;}
 
     var sort=t.closest('.sort-btn');
@@ -481,9 +485,6 @@ export function script(): string {
 
     var filter=t.closest('.filter');
     if(filter){setFilter(filter.getAttribute('data-filter'));return;}
-
-    var insight=t.closest('.insight');
-    if(insight){jumpToLane(insight.getAttribute('data-target'));return;}
 
     var point=t.closest('.point');
     if(point){pickPoint(parseInt(point.getAttribute('data-point'),10)||0);return;}

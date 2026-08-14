@@ -134,13 +134,24 @@ describe('buildReport', () => {
 });
 
 describe('renderReportHtml', () => {
-  it('produces one self-contained page with no external requests', () => {
+  it('produces one self-contained page that loads nothing from the network', () => {
     const html = renderReportHtml(report());
 
     expect(html.startsWith('<!doctype html>')).toBe(true);
     expect(html).not.toMatch(/<script[^>]+src=/i);
     expect(html).not.toMatch(/<link[^>]+stylesheet/i);
-    expect(html).not.toMatch(/https?:\/\/(?!www\.w3\.org)/);
+    expect(html).not.toMatch(/<(img|iframe|video|audio|source|embed|object)\b/i);
+    expect(html).not.toMatch(/@import|url\(\s*['"]?https?:/i);
+  });
+
+  it('reaches the network only where a person chose to, and only to known hosts', () => {
+    // A link the reader clicks is not a load. The allowlist is what keeps that honest:
+    // w3.org is the SVG namespace, wa.me is the share the reader triggers.
+    const hosts = new Set(
+      [...renderReportHtml(report()).matchAll(/https?:\/\/([^/"'\s)]+)/g)].map((match) => match[1]),
+    );
+
+    expect([...hosts].sort()).toEqual(['wa.me', 'www.w3.org']);
   });
 
   it('carries every signal with its source and date', () => {
@@ -271,25 +282,50 @@ describe('renderReportHtml', () => {
 
   it('folds the reference material but never the disclosure itself', () => {
     const html = renderReportHtml(report());
-    const foldedFrom = html.indexOf('<details class="fold">');
+    // Scoped to the audit block on purpose: "Fuentes consultadas" is also a KPI label
+    // up in the summary, and searching the whole document finds that one first.
+    const auditFrom = html.indexOf('<section class="block audit"');
+    const audit = html.slice(auditFrom, html.indexOf('</section>', html.indexOf('</details>', auditFrom)));
+    const foldedFrom = audit.indexOf('<details class="fold">');
 
     // Native folds bring their own keyboard handling and find-in-page behaviour.
-    expect(html.match(/<details class="fold">/g)?.length).toBeGreaterThanOrEqual(2);
-    expect(html).not.toContain('<details class="fold" open');
+    expect(audit.match(/<details class="fold">/g)?.length).toBeGreaterThanOrEqual(2);
+    expect(audit).not.toContain('<details class="fold" open');
     // The claims the score refuses to make sit above the first fold, always open.
-    expect(html.indexOf('Lo que NO hace')).toBeLessThan(foldedFrom);
-    expect(html.indexOf('dejes de pagar')).toBeLessThan(foldedFrom);
-    expect(html.indexOf('Fuentes consultadas')).toBeGreaterThan(foldedFrom);
+    expect(audit.indexOf('Lo que NO hace')).toBeLessThan(foldedFrom);
+    expect(audit.indexOf('dejes de pagar')).toBeLessThan(foldedFrom);
+    expect(audit.indexOf('Fuentes consultadas y sus fechas')).toBeGreaterThan(foldedFrom);
   });
 
-  it('keeps a way out of the staged view, for find-in-page and for paper', () => {
+  it('keeps a way out of the staged view for find-in-page', () => {
     const html = renderReportHtml(report());
 
     expect(html).toContain('id="show-all"');
     expect(html).toContain('aria-pressed="false"');
+    // Any class that sets display would otherwise beat the browser's own [hidden].
+    expect(html).toContain('[hidden]{display:none!important}');
+  });
+
+  it('prints the executive summary, not the app', () => {
+    const html = renderReportHtml(report());
+
     expect(html).toContain('@media print');
-    expect(html).toContain('.pane[hidden]{display:block!important}');
-    expect(html).toContain("window.addEventListener('beforeprint',openEverything)");
+    expect(html).toContain('body > *:not(.paper){display:none!important}');
+    expect(html.match(/<section class="p-page">/g)).toHaveLength(3);
+    expect(html).toContain('id="to-pdf"');
+  });
+
+  it('shares public figures and never an identifier', () => {
+    const html = renderReportHtml(report());
+    const share = /window\.CREVA_SHARE=(\{.*?\});window\.CREVA_REPORT/.exec(html)?.[1] ?? '';
+
+    expect(share).toContain('ESTETICA ANITA');
+    expect(share).toContain('señales públicas');
+    // wa.me carries no number, so WhatsApp asks the sender to pick a contact.
+    expect(html).toContain("window.open('https://wa.me/?text='");
+    for (const forbidden of ['rfc', 'RFC', 'curp', 'establishment_id']) {
+      expect(share).not.toContain(forbidden);
+    }
   });
 
   it('names every stage and wires each tab to the pane it controls', () => {
@@ -393,15 +429,25 @@ describe('renderReportHtml', () => {
     expect(html).toContain("'Mostrar '+step+' más → quedan '+left");
   });
 
-  it('turns each summary insight into a jump to the evidence it names', () => {
+  it('makes the summary an index, with one card per stage it can reach', () => {
+    const html = renderReportHtml(report());
+    const jumps = [...html.matchAll(/<button class="jump"[^>]*data-step="([a-z]+)"/g)].map((match) => match[1]);
+
+    expect(jumps).toEqual(['signals', 'evidence', 'market', 'audit']);
+    for (const jump of jumps) expect(html).toContain(`id="pane-${jump}"`);
+    // The insights duplicated the composition stage, so they are gone rather than restyled.
+    expect(html).not.toContain('class="insight"');
+    expect(html).not.toContain('Explorar evidencia ↓');
+  });
+
+  it('leads the summary with figures that carry their own source', () => {
     const html = renderReportHtml(report());
 
-    for (const lane of ['siem', 'dof', 'cnbv']) {
-      expect(html).toContain(`data-target="${lane}"`);
-      expect(html).toContain(`id="lane-${lane}"`);
-    }
-    expect(html).toContain('Negocio encontrado en SIEM');
-    expect(html).toContain('Explorar evidencia');
+    expect(html).toContain('Fuentes consultadas');
+    expect(html).toContain('Sello del directorio');
+    expect(html).toContain('TIIE a 28 días');
+    // No trend, no delta: the report holds one observation per figure, not a series.
+    expect(html).not.toMatch(/[+-]\d+(\.\d+)?%\s*(vs|respecto)/i);
   });
 
   it('counts the investigation out loud without inventing a source', () => {

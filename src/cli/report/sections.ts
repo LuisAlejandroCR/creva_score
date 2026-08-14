@@ -3,7 +3,6 @@
 import { CrevaReport, ReportSignal } from '../../common/types/creva-report.types';
 import {
   SourceLane,
-  buildInsights,
   escapeHtml,
   formatDate,
   formatDateTime,
@@ -59,15 +58,29 @@ export function hero(report: CrevaReport, lanes: SourceLane[]): string {
   const signals = report.signals.length;
   const verification = report.signals.find((s) => s.category === 'business_verification');
   const tone = verification?.tone ?? 'neutral';
-  const cards = buildInsights(lanes)
+  const headline = report.signals.find((s) => s.category === 'reference_rate' && isPercent(s));
+
+  const kpis = [
+    { label: 'Fuentes consultadas', value: String(report.sources.length), note: 'registros de gobierno' },
+    { label: 'Sello del directorio', value: statusWord(report), note: 'SIEM · registro voluntario' },
+    headline === undefined
+      ? { label: 'Referencia de mercado', value: 'sin dato', note: 'Banco de México' }
+      : {
+          label: headline.label,
+          value: headline.detail,
+          note: headline.checked_at === null ? 'Banco de México' : formatDate(headline.checked_at),
+        },
+  ]
     .map(
-      (insight, index) => `<button class="insight" type="button" data-target="${insight.lane}" style="--i:${index}">
-    <span class="insight-mark">${insight.mark}</span>
-    <span class="insight-text">${escapeHtml(insight.text)}</span>
-    <span class="insight-go" aria-hidden="true">→</span>
-  </button>`,
+      (kpi, index) => `<div class="kpi" style="--i:${index}">
+    <p class="kpi-label">${escapeHtml(kpi.label)}</p>
+    <p class="kpi-value">${escapeHtml(kpi.value)}</p>
+    <p class="kpi-note">${escapeHtml(kpi.note)}</p>
+  </div>`,
     )
     .join('');
+
+  const jumps = jumpCards(report, lanes);
 
   return `<section class="block hero" data-enter="hero">
   <p class="eyebrow">Perfil público del negocio</p>
@@ -80,13 +93,40 @@ export function hero(report: CrevaReport, lanes: SourceLane[]): string {
     <p class="figure" data-count="${signals}">0</p>
   </div>
   <p class="figure-label">señales públicas encontradas</p>
-  <p class="tally"><strong>${report.sources.length}</strong> fuentes consultadas</p>
 
-  <div class="insights" id="insights">${cards}</div>
-  <p class="summary-done" id="summary-done" aria-hidden="true">Perfil público listo</p>
+  <div class="kpis" id="kpis">${kpis}</div>
   ${verification === undefined ? '' : `<p class="hero-note">${escapeHtml(verification.detail)}</p>`}
-  <p class="explore-cue" id="explore-cue">Explorar evidencia ↓</p>
+  <div class="jumps" id="jumps">${jumps}</div>
 </section>`;
+}
+
+function jumpCards(report: CrevaReport, lanes: SourceLane[]): string {
+  const rates = report.signals.filter((signal) => signal.category === 'reference_rate').length;
+  const cards = [
+    { id: 'signals', num: '02', name: 'Señales', figure: String(lanes.length), note: 'fuentes, y qué aportó cada una' },
+    {
+      id: 'evidence',
+      num: '03',
+      name: 'Evidencia',
+      figure: String(report.signals.length),
+      note: 'señales con su fuente y su fecha',
+    },
+    ...(rates === 0
+      ? []
+      : [{ id: 'market', num: '04', name: 'Mercado', figure: String(rates), note: 'referencias del Banco de México' }]),
+    { id: 'audit', num: '05', name: 'Auditoría', figure: '—', note: 'lo que este análisis no estima' },
+  ];
+
+  return cards
+    .map(
+      (card, index) => `<button class="jump" type="button" data-step="${card.id}" style="--i:${index}">
+    <span class="jump-num">${card.num}</span>
+    <span class="jump-name">${escapeHtml(card.name)}</span>
+    <span class="jump-figure">${escapeHtml(card.figure)}</span>
+    <span class="jump-note">${escapeHtml(card.note)}</span>
+  </button>`,
+    )
+    .join('');
 }
 
 export function composition(report: CrevaReport, lanes: SourceLane[]): string {

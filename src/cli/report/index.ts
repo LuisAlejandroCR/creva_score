@@ -3,6 +3,7 @@
 import { CrevaReport } from '../../common/types/creva-report.types';
 import { buildLanes, escapeHtml, statusWord } from './lanes';
 import { audit, closing, composition, evidence, hero, investigation, market, why } from './sections';
+import { paper, paperTitle } from './paper';
 import { script } from './script';
 import { styles } from './styles';
 
@@ -46,6 +47,8 @@ export function renderReportHtml(report: CrevaReport): string {
   <span class="bar-name">${escapeHtml(name)}</span>
   <span class="bar-status">${escapeHtml(statusWord(report))}</span>
   <button class="bar-all" id="show-all" type="button" aria-pressed="false">Ver todo</button>
+  <button class="bar-all" id="to-pdf" type="button">Descargar PDF</button>
+  <button class="bar-all share" id="to-whatsapp" type="button">Compartir</button>
 </header>
 
 <main>
@@ -59,9 +62,21 @@ export function renderReportHtml(report: CrevaReport): string {
   </section>
 </main>
 
-<script>window.CREVA_REPORT=${data};${script()}</script>
+${paper(report, lanes)}
+
+<script>window.CREVA_SHARE=${JSON.stringify({ title: paperTitle(report), summary: shareSummary(report) }).replace(/</g, '\\u003c')};window.CREVA_REPORT=${data};${script()}</script>
 </body>
 </html>`;
+}
+
+// What travels in a share message: public figures and the source. Never an RFC,
+// never anything that identifies a person — a URL is not a private channel.
+function shareSummary(report: CrevaReport): string {
+  const signals = report.signals.length;
+  const sources = report.sources.length;
+  const word = statusWord(report);
+
+  return `${signals} ${signals === 1 ? 'señal pública' : 'señales públicas'} de ${sources} ${sources === 1 ? 'fuente de gobierno' : 'fuentes de gobierno'}, cada una con su fuente y su fecha. Directorio oficial: ${word}.`;
 }
 
 function tab(stage: Stage, index: number): string {

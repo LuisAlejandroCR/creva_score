@@ -11,12 +11,6 @@ export interface SourceLane {
   signals: ReportSignal[];
 }
 
-export interface Insight {
-  lane: string;
-  mark: string;
-  text: string;
-}
-
 const STATUS_WORD: Record<string, string> = {
   positive: 'Verificado',
   neutral: 'Sin sello',
@@ -64,47 +58,6 @@ export function buildLanes(report: CrevaReport): SourceLane[] {
       signals: of((s) => s.category === 'reference_rate'),
     },
   ];
-}
-
-export function buildInsights(lanes: SourceLane[]): Insight[] {
-  const list: Insight[] = [];
-
-  for (const lane of lanes) {
-    if (lane.id === 'banxico') continue;
-    const count = lane.signals.length;
-
-    if (lane.id === 'siem') {
-      const tone = lane.signals[0]?.tone;
-      if (tone === 'positive') list.push({ lane: lane.id, mark: '✓', text: 'Negocio encontrado en SIEM' });
-      else if (tone === 'unavailable') list.push({ lane: lane.id, mark: '·', text: 'Directorio SIEM no disponible' });
-      else if (tone === undefined) list.push({ lane: lane.id, mark: '·', text: 'Sin consulta al directorio SIEM' });
-      else list.push({ lane: lane.id, mark: '·', text: 'Sin sello en SIEM' });
-      continue;
-    }
-
-    if (lane.id === 'dof') {
-      list.push({
-        lane: lane.id,
-        mark: count > 0 ? '✓' : '·',
-        text:
-          count > 0
-            ? `${count} ${plural(count, 'novedad reciente', 'novedades recientes')} en DOF`
-            : 'Sin novedades en DOF',
-      });
-      continue;
-    }
-
-    list.push({
-      lane: lane.id,
-      mark: count > 0 ? '✓' : '·',
-      text:
-        count > 0
-          ? `${count} ${plural(count, 'referencia vigente', 'referencias vigentes')} en CNBV`
-          : 'Sin referencias de CNBV',
-    });
-  }
-
-  return list;
 }
 
 export function statusWord(report: CrevaReport): string {
