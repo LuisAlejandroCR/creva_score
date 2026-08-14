@@ -17,3 +17,7 @@ coverage/
 
 creva-report.html
 creva-report.json
+
+# Skills vendored by `npx skills add`; skills-lock.json is what pins them.
+.agents/
+.claude/

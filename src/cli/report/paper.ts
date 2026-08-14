@@ -3,6 +3,7 @@
 import { CrevaReport, ReportSignal } from '../../common/types/creva-report.types';
 import { SourceLane, escapeHtml, formatDate, isPercent, plural, statusWord } from './lanes';
 import { ranked, ring, summaryKpis } from './sections';
+import { formatFolio, reportFolio } from '../../common/integrity/report-digest';
 
 const HIGHLIGHTS = 3;
 
@@ -112,6 +113,13 @@ function detailPage(report: CrevaReport, lanes: SourceLane[], name: string): str
 
   <p class="p-srcs-title">Fuentes consultadas</p>
   <div class="p-srcs">${sources}</div>
+
+  <div class="p-seal">
+    <p class="p-seal-label">Folio de verificación</p>
+    <p class="p-seal-code">${escapeHtml(formatFolio(reportFolio(report)))}</p>
+    <p class="p-seal-help">Para confirmar que este documento es auténtico y no fue modificado, pide este folio a quien te lo entregó y contrástalo.</p>
+  </div>
+
   <p class="p-foot">Registros públicos, con la fecha de cada consulta. No es un veredicto.</p>
 </section>`;
 }

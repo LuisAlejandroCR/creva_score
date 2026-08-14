@@ -36,7 +36,7 @@ Empezamos en México porque ahí están nuestras usuarias. La misma idea funcion
 
 ## Estado
 
-🚧 **En construcción.** Las dos piezas funcionan de principio a fin contra los registros oficiales reales y su resultado se puede ver en pantalla. Todavía no hay una app que puedas abrir.
+🚧 **En construcción.** Las tres piezas funcionan de principio a fin contra los registros oficiales reales y su resultado se puede ver en pantalla. Todavía no hay una app que puedas abrir.
 
 **1. El sello de tu negocio.** Busca tu negocio en el directorio oficial de establecimientos y, si está, emite un sello con su fuente y su fecha.
 
@@ -50,6 +50,12 @@ Empezamos en México porque ahí están nuestras usuarias. La misma idea funcion
 - **Distingue una novedad de una regla que ya existía.**
 - **Cada aviso trae su fuente, su fecha y el documento oficial detrás.**
 - Si una fuente no responde ese día, lo dice.
+
+**3. Un reporte que no se puede falsificar.** Cuando generas tu reporte, se guarda junto a él la huella digital de cada archivo.
+
+- **Si alguien le cambia un solo byte, se nota.** Una cifra movida, una fecha cambiada, un "Sin sello" convertido en "Verificado": la huella deja de coincidir.
+- **El banco lo comprueba sin pedirte nada** — y sin tener que confiar en nosotros.
+- **Tu reporte lleva un folio a la vista**, para que tu banco pueda pedírtelo y contrastarlo.
 
 **Lo que guardamos.** Los resultados se guardan un rato para no repetir la misma consulta. Se archivan bajo una huella ilegible, no bajo el nombre de tu negocio, y se pueden borrar de verdad.
 
@@ -99,11 +105,32 @@ El estado es opcional pero casi siempre necesario: buscar por nombre sin acotar 
 node dist/cli/demo.js --negocio "ABARROTES ERENDIRA" --estado 8 --reporte
 ```
 
-Genera `creva-report.html` y `creva-report.json`. El HTML es **un solo archivo**: no carga nada de internet, no necesita servidor y se abre con doble clic. Los únicos enlaces que salen son a los documentos oficiales citados.
+Deja los archivos en **tu carpeta de Descargas**, dentro de una carpeta por reporte: `Creva_Score_<negocio>_<fecha y hora>`. Así dos corridas nunca se pisan y siempre se sabe de cuándo es cada una — la hora del nombre es la misma que el reporte lleva dentro. El HTML es **un solo archivo**: no carga nada de internet, no necesita servidor y se abre con doble clic. Los únicos enlaces que salen son a los documentos oficiales citados.
 
 Cuatro etapas —Resumen, Señales, Mercado y Auditoría— con navegación hacia adelante y atrás; lo que abriste o filtraste sigue igual al volver. En **Señales**, elegir una fuente o mover el rango de años filtra a la vez las barras, la línea de tiempo y la evidencia, así que nunca hay dos cifras que se contradigan. **"Ver todo"** despliega las cuatro en una página para buscar con `Ctrl+F`; **"Descargar PDF"** da un resumen ejecutivo de dos páginas; **"Compartir"** abre WhatsApp con cifras públicas, nunca el RFC.
 
 Accesible por teclado y con `prefers-reduced-motion` respetado.
+
+### Que nadie pueda alterar tu reporte
+
+Cada reporte lleva un **folio de verificación** impreso dentro —en la sección de auditoría y en el PDF— que identifica su contenido:
+
+```
+Folio de verificación
+684B8DA1-A106E655-335AC2CB-C92CBD2E
+```
+
+Y junto a los archivos se guarda `creva-sello.json` con la huella digital de cada uno. Si alguien cambia **un solo byte** —una cifra, una fecha, un "Sin sello" convertido en "Verificado"— la huella deja de coincidir y se nota.
+
+Quien reciba el reporte puede comprobarlo sin pedirte nada:
+
+```bash
+node dist/cli/verify-report.js "<carpeta del reporte>"
+```
+
+Responde archivo por archivo: **sin cambios**, **alterado** o **no está**. Y termina con código de salida distinto de cero cuando algo no cuadra, para que se pueda revisar de forma automática.
+
+⚠️ **Lo que el sello sí prueba, y lo que no.** Prueba **integridad**: que el archivo es idéntico al que se generó, o exactamente cuál dejó de serlo. **No prueba autoría por sí solo** — es un archivo que acompaña al reporte, así que quien rehiciera el documento podría volver a sellarlo. Acreditar que un reporte viene de Creva exige un mecanismo de firma adicional; está identificado como pendiente, y el propio sello lo dice en su campo `does_not_prove` en vez de dejarlo implícito.
 
 ### Usarlo desde un agente (MCP)
 
@@ -111,10 +138,11 @@ Expone sus composiciones como herramientas MCP por stdio:
 
 | Herramienta | Qué devuelve |
 |---|---|
-| `creva_report` | El reporte completo: todas las señales con su fuente y su fecha, más la ficha de qué **no** estima. Con `document: true` además imprime el resumen ejecutivo en PDF y devuelve dónde quedó |
+| `creva_report` | El reporte completo: todas las señales con su fuente y su fecha, más la ficha de qué **no** estima. Guarda **los dos archivos** —la página interactiva y el PDF— en Descargas y devuelve dónde quedaron. Con `document: false` responde solo con los datos |
 | `creva_verify_business` | Solo el sello del directorio |
 | `creva_regulatory_radar` | Solo las reglas y novedades |
 | `creva_score_disclosure` | Solo la ficha de declaración |
+| `creva_verify_document` | Comprueba que los archivos de una carpeta de reporte no fueron alterados |
 
 ```bash
 npm run mcp
@@ -134,13 +162,13 @@ node dist/cli/mcp-probe.js --tool creva_regulatory_radar --args (ConvertTo-Json 
 
 Para conectarlo a un cliente MCP basta la ruta absoluta al servidor; **no hace falta `cwd` ni copiar credenciales**, porque el servidor busca el `.env` del proyecto junto a su propio build:
 
-**Pedir el documento**, no solo los datos:
+**Pedir el reporte** — los archivos vienen por defecto, no hay que pedirlos aparte:
 
 ```bash
-node dist/cli/mcp-probe.js --tool creva_report --args (ConvertTo-Json @{ business_name = 'ABARROTES ERENDIRA'; state_code = 8; document = $true } -Compress)
+node dist/cli/mcp-probe.js --tool creva_report --args (ConvertTo-Json @{ business_name = 'ABARROTES ERENDIRA'; state_code = 8 } -Compress)
 ```
 
-Imprime el PDF de dos páginas con el Chromium que ya esté instalado —Edge o Chrome, sin dependencias nuevas— y devuelve su ruta y un `resource_link`. **Si no hay navegador, entrega el reporte interactivo en su lugar** y lo dice. Con `embed: true` adjunta además el binario en la respuesta; pesa mucho, así que va apagado por defecto.
+Escribe la página interactiva y el PDF de dos páginas en `Descargas/Creva_Score_<negocio>_<fecha y hora>`, y devuelve la carpeta más un `resource_link` por archivo. Imprime con el Chromium que ya esté instalado —Edge o Chrome, sin dependencias nuevas—; **si no hay navegador, entrega el reporte interactivo solo** y lo dice. Con `document: false` responde únicamente con los datos, y con `embed: true` adjunta además el binario en la respuesta; eso último pesa mucho, así que va apagado por defecto.
 
 ```json
 {

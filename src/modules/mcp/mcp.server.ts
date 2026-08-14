@@ -12,6 +12,7 @@ import {
   buildRegulatoryRadarTool,
   buildReportTool,
   buildScoreDisclosureTool,
+  buildVerifyDocumentTool,
   buildVerifyBusinessTool,
 } from './mcp.tools';
 
@@ -45,6 +46,9 @@ export function createMcpServer(): McpServer {
 
   const report = buildReportTool(setup);
   server.registerTool(report.name, report.config, report.handler);
+
+  const verifyDocument = buildVerifyDocumentTool();
+  server.registerTool(verifyDocument.name, verifyDocument.config, verifyDocument.handler);
 
   return server;
 }

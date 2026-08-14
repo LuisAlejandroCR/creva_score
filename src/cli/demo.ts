@@ -1,7 +1,10 @@
 // demo: command-line entry point that runs both surfaces and prints them for the user.
 
 import { writeFileSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { join } from 'node:path';
+import { resolveReportFolder } from '../common/output/report-folder';
+import { formatFolio, reportFolio } from '../common/integrity/report-digest';
+import { SealOutcome, sealFolderOnDisk } from '../modules/attestation/seal-folder';
 import { createCrevaScore, createCacheStore } from '../modules/creva-score/creva-score.factory';
 import { buildVerificationBadge } from '../modules/business-verification/business-verification.badge';
 import {
@@ -182,19 +185,41 @@ export function renderRadar(result: SourceResult<RegulatoryRadar>): string[] {
   return lines;
 }
 
-export function renderReportPaths(htmlPath: string, jsonPath: string): string {
+export function renderReportPaths(folder: string, htmlPath: string, jsonPath: string): string {
   // Windows resolves `start` against the shell, so the quoted absolute path is what actually opens.
   const opener = process.platform === 'win32' ? 'start' : process.platform === 'darwin' ? 'open' : 'xdg-open';
 
   return [
     'Reporte generado.',
     '',
+    `  Carpeta  ${folder}`,
     `  Página   ${htmlPath}`,
     `  Datos    ${jsonPath}`,
     '',
     '  Para abrirlo:',
     `    ${opener} "${htmlPath}"`,
   ].join('\n');
+}
+
+export function renderSeal(seal: SealOutcome): string {
+  const lines = ['', '  Sello de integridad'];
+
+  if (seal.certificate === null) {
+    return [...lines, `    ⚠ ${seal.note}`].join('\n');
+  }
+
+  if (seal.certificate.report_folio !== null) {
+    lines.push(`    Folio    ${formatFolio(seal.certificate.report_folio)}`);
+  }
+  lines.push(`    Huella   ${seal.certificate.seal_hash}`);
+  lines.push(`    Archivo  ${seal.certificatePath}`);
+
+  lines.push(`    Alcance  ${seal.note}`);
+
+  lines.push('', '  Para comprobar que nadie los alteró:');
+  lines.push(`    node dist/cli/verify-report.js "${seal.certificatePath.replace(/[\\/][^\\/]+$/, '')}"`);
+
+  return lines.join('\n');
 }
 
 async function main(): Promise<void> {
@@ -226,12 +251,22 @@ async function main(): Promise<void> {
       disclosure,
     });
 
-    const htmlPath = resolve('creva-report.html');
-    const jsonPath = resolve('creva-report.json');
+    const folder = resolveReportFolder(args.businessName ?? 'revision-general', report.generated_at);
+    const htmlPath = join(folder, 'creva-reporte.html');
+    const jsonPath = join(folder, 'creva-reporte.json');
 
     writeFileSync(jsonPath, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
     writeFileSync(htmlPath, renderReportHtml(report), 'utf8');
-    process.stdout.write(`${renderReportPaths(htmlPath, jsonPath)}\n`);
+
+    // Sealed after writing, never before: the digest has to describe the bytes actually delivered.
+    const seal = sealFolderOnDisk(
+      folder,
+      ['creva-reporte.html', 'creva-reporte.json'],
+      report.generated_at,
+      reportFolio(report),
+    );
+
+    process.stdout.write(`${renderReportPaths(folder, htmlPath, jsonPath)}\n${renderSeal(seal)}\n`);
     return;
   }
 

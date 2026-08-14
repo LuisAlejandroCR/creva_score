@@ -1123,23 +1123,28 @@ describe('renderReportHtml', () => {
 });
 
 describe('renderReportPaths', () => {
-  const html = String.raw`C:\IA Hackathon - Creva score\creva-report.html`;
-  const json = String.raw`C:\IA Hackathon - Creva score\creva-report.json`;
+  const folder = String.raw`C:\Users\x\Downloads\Creva_Score_acme_2026-08-14T21-30-05Z`;
+  const html = String.raw`C:\Users\x\Downloads\Creva_Score_acme_2026-08-14T21-30-05Z\creva-reporte.html`;
+  const json = String.raw`C:\Users\x\Downloads\Creva_Score_acme_2026-08-14T21-30-05Z\creva-reporte.json`;
 
   it('states where the files landed, not just that they were written', () => {
-    const out = renderReportPaths(html, json);
+    const out = renderReportPaths(folder, html, json);
 
     expect(out).toContain(html);
     expect(out).toContain(json);
   });
 
+  it('names the folder, which is what a person goes looking for', () => {
+    expect(renderReportPaths(folder, html, json)).toContain(folder);
+  });
+
   it('quotes the path, because it almost always contains spaces', () => {
-    expect(renderReportPaths(html, json)).toContain(`"${html}"`);
+    expect(renderReportPaths(folder, html, json)).toContain(`"${html}"`);
   });
 
   it('offers an opener that matches the platform it is running on', () => {
     const expected = process.platform === 'win32' ? 'start' : process.platform === 'darwin' ? 'open' : 'xdg-open';
 
-    expect(renderReportPaths(html, json)).toContain(`${expected} "`);
+    expect(renderReportPaths(folder, html, json)).toContain(`${expected} "`);
   });
 });

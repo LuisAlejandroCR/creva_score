@@ -12,6 +12,7 @@ import {
   visibleFor,
 } from './lanes';
 import { buildRateStrip } from './rate-strip';
+import { formatFolio, reportFolio } from '../../common/integrity/report-digest';
 import { timeline, yearSlicer } from './timeline';
 
 const NODE_X = [90, 230, 370, 510];
@@ -375,6 +376,16 @@ export function market(report: CrevaReport): string {
 </section>`;
 }
 
+export function verificationSeal(report: CrevaReport): string {
+  const folio = reportFolio(report);
+
+  return `<section class="seal">
+  <p class="seal-label">Folio de verificación</p>
+  <p class="seal-code">${escapeHtml(formatFolio(folio))}</p>
+  <p class="seal-help">Este folio identifica el contenido de este reporte. Si tu banco quiere confirmar que es auténtico y que nadie lo modificó, puede pedirte este folio y contrastarlo. Junto a este archivo se entrega <strong>creva-sello.json</strong>, que además registra la huella exacta de cada archivo.</p>
+</section>`;
+}
+
 export function audit(report: CrevaReport): string {
   const levels = report.disclosure.provenance_levels
     .map(
@@ -418,6 +429,8 @@ export function audit(report: CrevaReport): string {
     <p class="label">Lo que NO hace</p>
     <ul class="notes">${report.disclosure.does_not_estimate.map((claim) => `<li>${escapeHtml(claim)}</li>`).join('')}</ul>
   </div>
+
+  ${verificationSeal(report)}
 
   ${fold('De dónde sale cada dato', `<div class="audit-grid">${levels}</div>`)}
   ${notes}

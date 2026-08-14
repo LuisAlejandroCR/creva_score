@@ -620,5 +620,15 @@ font-size:8pt;color:#6a6a6a;text-align:right}
   .net .spark{display:none}
   .item:hover{transform:none}
 }
+
+.seal{margin:1.6rem 0;padding:1rem 1.1rem;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+.seal-label{margin:0;font-size:.72rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.seal-code{margin:.35rem 0 .5rem;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.95rem;font-weight:650;letter-spacing:.02em;word-break:break-all}
+.seal-help{margin:0;font-size:.82rem;line-height:1.5;color:var(--muted)}
+
+.p-seal{margin-top:5mm;padding:3mm 4mm;border:.4mm solid #c9c9c9;border-radius:2mm}
+.p-seal-label{margin:0;font-size:2.5mm;letter-spacing:.09em;text-transform:uppercase;color:#666}
+.p-seal-code{margin:1mm 0 1.4mm;font-family:ui-monospace,Menlo,monospace;font-size:3.4mm;font-weight:700;letter-spacing:.02em}
+.p-seal-help{margin:0;font-size:2.7mm;line-height:1.45;color:#555}
 `;
 }

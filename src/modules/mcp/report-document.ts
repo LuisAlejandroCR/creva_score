@@ -1,9 +1,9 @@
-// report-document: turns a rendered report into a file an assistant can hand over.
+// report-document: turns a rendered report into the files an assistant can hand over.
 
 import { spawn } from 'node:child_process';
-import { existsSync, mkdirSync, statSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { existsSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { resolveReportFolder } from '../../common/output/report-folder';
 
 export type DocumentKind = 'pdf' | 'html';
 
@@ -12,14 +12,16 @@ export interface ReportDocument {
   path: string;
   bytes: number;
   note: string;
+  folder: string;
+  htmlPath: string;
+  htmlBytes: number;
 }
 
 export interface DocumentTools {
   findBrowser: () => string | null;
   print: (browser: string, htmlPath: string, pdfPath: string) => Promise<number>;
   writeFile: (path: string, contents: string) => number;
-  makeDir: (path: string) => void;
-  now: () => number;
+  resolveFolder: (businessName: string, generatedAt: string) => string;
 }
 
 const PRINT_TIMEOUT_MS = 25_000;
@@ -35,21 +37,6 @@ const BROWSER_CANDIDATES = [
   '/usr/bin/chromium',
 ];
 
-export function slugify(name: string): string {
-  const slug = name
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-
-  return slug === '' ? 'reporte' : slug;
-}
-
-export function fileUrl(path: string): string {
-  return `file:///${path.replace(/\\/g, '/').replace(/^\/+/, '')}`;
-}
-
 export const realTools: DocumentTools = {
   findBrowser: () => BROWSER_CANDIDATES.find((candidate) => candidate !== '' && safeExists(candidate)) ?? null,
   print: (browser, htmlPath, pdfPath) => runPrint(browser, htmlPath, pdfPath),
@@ -57,27 +44,29 @@ export const realTools: DocumentTools = {
     writeFileSync(path, contents, 'utf8');
     return Buffer.byteLength(contents, 'utf8');
   },
-  makeDir: (path) => mkdirSync(path, { recursive: true }),
-  now: () => Date.now(),
+  resolveFolder: (businessName, generatedAt) => resolveReportFolder(businessName, generatedAt),
 };
+
+export function fileUrl(path: string): string {
+  return `file:///${path.replace(/\\/g, '/').replace(/^\/+/, '')}`;
+}
 
 export async function buildReportDocument(
   html: string,
   businessName: string,
+  generatedAt: string,
   tools: DocumentTools = realTools,
 ): Promise<ReportDocument> {
-  const folder = join(tmpdir(), `creva-${slugify(businessName)}-${tools.now()}`);
-  tools.makeDir(folder);
+  const folder = tools.resolveFolder(businessName, generatedAt);
 
   const htmlPath = join(folder, 'creva-reporte.html');
   const htmlBytes = tools.writeFile(htmlPath, html);
+  const asHtml = { folder, htmlPath, htmlBytes, kind: 'html' as const, path: htmlPath, bytes: htmlBytes };
 
   const browser = tools.findBrowser();
   if (browser === null) {
     return {
-      kind: 'html',
-      path: htmlPath,
-      bytes: htmlBytes,
+      ...asHtml,
       note: 'No se encontró un navegador para imprimir, así que se entrega el reporte interactivo. Ábrelo y usa "Descargar PDF".',
     };
   }
@@ -87,14 +76,15 @@ export async function buildReportDocument(
 
   if (pdfBytes <= 0) {
     return {
-      kind: 'html',
-      path: htmlPath,
-      bytes: htmlBytes,
+      ...asHtml,
       note: 'La impresión no produjo un archivo, así que se entrega el reporte interactivo en su lugar.',
     };
   }
 
   return {
+    folder,
+    htmlPath,
+    htmlBytes,
     kind: 'pdf',
     path: pdfPath,
     bytes: pdfBytes,

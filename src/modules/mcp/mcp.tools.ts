@@ -7,7 +7,9 @@ import { getVerificationStatus } from '../business-verification/business-verific
 import { CrevaScoreSetup } from '../creva-score/creva-score.factory';
 import { buildReport } from '../creva-score/creva-report.builder';
 import { renderReportHtml } from '../../cli/report';
-import { buildReportDocument, fileUrl } from './report-document';
+import { DocumentTools, ReportDocument, buildReportDocument, fileUrl, realTools } from './report-document';
+import { formatFolio, reportFolio } from '../../common/integrity/report-digest';
+import { SealOutcome, sealFolderOnDisk, verifyFolderOnDisk } from '../attestation/seal-folder';
 import { renderScoreDisclosure } from '../score-disclosure/score-disclosure.service';
 
 export type McpContent =
@@ -61,7 +63,9 @@ const reportShape = {
   document: z
     .boolean()
     .optional()
-    .describe('Si es true, además genera el resumen ejecutivo en PDF y devuelve su ubicación.'),
+    .describe(
+      'Por defecto genera los dos archivos —la página interactiva y el resumen ejecutivo en PDF— y devuelve dónde quedaron. Ponlo en false solo si se pidió el reporte sin archivos.',
+    ),
   embed: z
     .boolean()
     .optional()
@@ -187,13 +191,40 @@ export function buildRegulatoryRadarTool(
   };
 }
 
-export function buildReportTool(setup: CrevaScoreSetup): McpToolDefinition<typeof reportShape> {
+export function describeSeal(seal: SealOutcome): string {
+  if (seal.certificate === null) return `Sello no escrito: ${seal.note}`;
+
+  const folio = seal.certificate.report_folio;
+
+  return [
+    `Sello     ${seal.certificatePath}`,
+    ...(folio === null ? [] : [`Folio     ${formatFolio(folio)}`]),
+    `Huella    ${seal.certificate.seal_hash}`,
+    'Cualquier cambio de un byte en los archivos rompe esta huella, así que quien los reciba puede comprobar que son los originales.',
+    'Comprueba integridad, no autoría: no acredita por sí solo quién emitió el reporte.',
+  ].join('\n');
+}
+
+export function describeDocument(document: ReportDocument): string {
+  const kb = (bytes: number): number => Math.max(1, Math.round(bytes / 1024));
+  const lines = [`Carpeta   ${document.folder}`];
+
+  if (document.kind === 'pdf') lines.push(`PDF       ${document.path} · ${kb(document.bytes)} KB`);
+  lines.push(`Página    ${document.htmlPath} · ${kb(document.htmlBytes)} KB`);
+
+  return [...lines, '', document.note].join('\n');
+}
+
+export function buildReportTool(
+  setup: CrevaScoreSetup,
+  documentTools: DocumentTools = realTools,
+): McpToolDefinition<typeof reportShape> {
   return {
     name: 'creva_report',
     config: {
       title: 'Reporte completo de verificación pública',
       description:
-        'Devuelve el reporte entero de un negocio: las señales encontradas en cada registro de gobierno, cada una con su fuente y su fecha, las fuentes consultadas, y la ficha de qué describe el puntaje y qué NO estima. Es la misma composición que produce el reporte visual. No emite un veredicto ni una recomendación de crédito.',
+        'Devuelve el reporte entero de un negocio: las señales encontradas en cada registro de gobierno, cada una con su fuente y su fecha, las fuentes consultadas, y la ficha de qué describe el puntaje y qué NO estima. Es la herramienta para "dame el reporte": guarda los dos archivos en una carpeta de Descargas —la página interactiva y el resumen ejecutivo en PDF— y devuelve la ruta de cada uno. No emite un veredicto ni una recomendación de crédito.',
       inputSchema: reportShape,
     },
     async handler(args) {
@@ -219,24 +250,39 @@ export function buildReportTool(setup: CrevaScoreSetup): McpToolDefinition<typeo
 
       const content: McpContent[] = [];
 
-      if (args.document === true) {
+      if (args.document !== false) {
         const document = await buildReportDocument(
           renderReportHtml(report),
           report.subject?.business_name ?? 'revision-general',
+          report.generated_at,
+          documentTools,
         );
 
-        content.push({
-          type: 'text',
-          text: `Documento ${document.kind.toUpperCase()} · ${Math.round(document.bytes / 1024)} KB
-${document.path}
-${document.note}`,
-        });
+        const seal = sealFolderOnDisk(
+          document.folder,
+          document.kind === 'pdf' ? ['creva-reporte.html', 'creva-reporte.pdf'] : ['creva-reporte.html'],
+          report.generated_at,
+          reportFolio(report),
+        );
+
+        content.push({ type: 'text', text: `${describeDocument(document)}\n\n${describeSeal(seal)}` });
+
+        if (document.kind === 'pdf') {
+          content.push({
+            type: 'resource_link',
+            uri: fileUrl(document.path),
+            name: 'creva-reporte.pdf',
+            mimeType: 'application/pdf',
+            description: document.note,
+          });
+        }
+
         content.push({
           type: 'resource_link',
-          uri: fileUrl(document.path),
-          name: document.kind === 'pdf' ? 'creva-reporte.pdf' : 'creva-reporte.html',
-          mimeType: document.kind === 'pdf' ? 'application/pdf' : 'text/html',
-          description: document.note,
+          uri: fileUrl(document.htmlPath),
+          name: 'creva-reporte.html',
+          mimeType: 'text/html',
+          description: 'Reporte interactivo completo: cada señal con su fuente y su fecha.',
         });
 
         if (args.embed === true) {
@@ -253,6 +299,56 @@ ${document.note}`,
 
       content.push({ type: 'text', text: JSON.stringify(report, null, 2) });
       return { content };
+    },
+  };
+}
+
+const verifyDocumentShape = {
+  folder: z
+    .string()
+    .min(1)
+    .describe('Ruta de la carpeta del reporte, la que contiene creva-sello.json y los archivos entregados.'),
+};
+
+export function buildVerifyDocumentTool(): McpToolDefinition<typeof verifyDocumentShape> {
+  return {
+    name: 'creva_verify_document',
+    config: {
+      title: 'Comprobar que un reporte no fue alterado',
+      description:
+        'Recibe la carpeta de un reporte de Creva y comprueba, archivo por archivo, que sus bytes son exactamente los que se generaron. Si el reporte se ancló en una cadena pública, además confirma la transacción. Sirve para que quien recibe el documento —un banco, por ejemplo— pueda verificarlo sin confiar en quien se lo entregó. Distingue tres cosas y nunca las mezcla: archivo íntegro, archivo alterado, y no se pudo consultar la cadena.',
+      inputSchema: verifyDocumentShape,
+    },
+    async handler(args) {
+      const outcome = verifyFolderOnDisk(args.folder);
+
+      if ('error' in outcome) return text(outcome.error, true);
+
+      const { certificate, result } = outcome;
+      const altered = !result.files_intact;
+
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify(
+              {
+                files_intact: result.files_intact,
+                files: result.files.map((file) => ({ name: file.name, verdict: file.verdict })),
+                seal_is_self_consistent: result.seal_is_self_consistent,
+                seal_hash: certificate.seal_hash,
+                report_folio: certificate.report_folio,
+                generated_at: certificate.generated_at,
+                does_not_prove: certificate.does_not_prove,
+              },
+              null,
+              2,
+            ),
+          },
+        ],
+        // An altered document is a finding, not a tool failure, so it is reported without isError.
+        ...(altered && { isError: false }),
+      };
     },
   };
 }

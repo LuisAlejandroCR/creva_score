@@ -13,6 +13,9 @@ import { buildScoreDisclosure } from '../../src/modules/score-disclosure/score-d
 import { SieClient } from '../../src/modules/reference-rates/providers/banxico-sie.provider';
 import { DEFAULT_RATE_DEFINITIONS, ReferenceRatesService } from '../../src/modules/reference-rates/reference-rates.service';
 import { buildRegulatoryRadarTool, buildReportTool, buildVerifyBusinessTool, textOf, type McpToolResult } from '../../src/modules/mcp/mcp.tools';
+import { join } from 'node:path';
+import { folderStamp, reportFolderName } from '../../src/common/output/report-folder';
+import type { DocumentTools } from '../../src/modules/mcp/report-document';
 
 class Croma implements CromaCallable {
   readonly calls: Array<{ path: string; body: unknown }> = [];
@@ -219,7 +222,7 @@ describe('creva_report', () => {
 
   it('returns the whole composition, with every signal naming its source', async () => {
     const { setup } = setupWith(new Map([[SIEM_SEARCH_PATH, found]]));
-    const result = await buildReportTool(setup).handler({ business_name: 'ACME', state_code: 8 });
+    const result = await buildReportTool(setup).handler({ business_name: 'ACME', state_code: 8, document: false });
     const report = JSON.parse(textOf(result)) as {
       subject: { business_name: string } | null;
       signals: Array<{ source: string; tone: string }>;
@@ -233,7 +236,7 @@ describe('creva_report', () => {
 
   it('carries the disclosure, so an assistant cannot summarise the caveats away', async () => {
     const { setup } = setupWith(new Map([[SIEM_SEARCH_PATH, found]]));
-    const result = await buildReportTool(setup).handler({ business_name: 'ACME' });
+    const result = await buildReportTool(setup).handler({ business_name: 'ACME', document: false });
     const report = JSON.parse(textOf(result)) as {
       disclosure: { kind: string; does_not_estimate: string[] };
     };
@@ -244,16 +247,71 @@ describe('creva_report', () => {
 
   it('still answers without a business, and says the badge is missing', async () => {
     const { setup } = setupWith(new Map());
-    const result = await buildReportTool(setup).handler({});
+    const result = await buildReportTool(setup).handler({ document: false });
     const report = JSON.parse(textOf(result)) as { subject: unknown; notes: string[] };
 
     expect(report.subject).toBeNull();
     expect(report.notes.join(' ')).toContain('no consultó ningún negocio');
   });
 
+  function fakeDocumentTools(overrides: Partial<DocumentTools> = {}): DocumentTools {
+    return {
+      findBrowser: () => '/fake/chrome',
+      print: async () => 4096,
+      writeFile: (_path, contents) => contents.length,
+      resolveFolder: (businessName, generatedAt) =>
+        join(String.raw`C:\Users\x\Downloads`, reportFolderName(businessName, generatedAt)),
+      ...overrides,
+    };
+  }
+
+  function links(result: McpToolResult): Array<{ name: string; uri: string }> {
+    return result.content.filter(
+      (block): block is { type: 'resource_link'; uri: string; name: string; mimeType: string; description: string } =>
+        block.type === 'resource_link',
+    );
+  }
+
+  it('hands over both files without being asked, because "dame el reporte" means the report', async () => {
+    const { setup } = setupWith(new Map([[SIEM_SEARCH_PATH, found]]));
+    const result = await buildReportTool(setup, fakeDocumentTools()).handler({ business_name: 'ACME' });
+
+    expect(links(result).map((link) => link.name)).toEqual(['creva-reporte.pdf', 'creva-reporte.html']);
+  });
+
+  it('still returns the interactive page when there is no browser to print with', async () => {
+    const { setup } = setupWith(new Map([[SIEM_SEARCH_PATH, found]]));
+    const tools = fakeDocumentTools({ findBrowser: () => null });
+    const result = await buildReportTool(setup, tools).handler({ business_name: 'ACME' });
+
+    expect(links(result).map((link) => link.name)).toEqual(['creva-reporte.html']);
+  });
+
+  it('writes into a Downloads folder named after the business and the report clock', async () => {
+    const { setup } = setupWith(new Map([[SIEM_SEARCH_PATH, found]]));
+    const result = await buildReportTool(setup, fakeDocumentTools()).handler({ business_name: 'ACME' });
+
+    const blocks = result.content.filter((block): block is { type: 'text'; text: string } => block.type === 'text');
+    const report = JSON.parse(blocks[blocks.length - 1]?.text ?? '{}') as { generated_at: string };
+    const folderLine = blocks[0]?.text.split('\n')[0] ?? '';
+
+    // The folder must carry the report's own clock, not a second one read a moment later.
+    expect(folderLine).toContain(join('Downloads', `Creva_Score_acme_${folderStamp(report.generated_at)}`));
+  });
+
+  it('leaves the files alone when the caller opts out', async () => {
+    const { setup } = setupWith(new Map([[SIEM_SEARCH_PATH, found]]));
+    const result = await buildReportTool(setup, fakeDocumentTools()).handler({
+      business_name: 'ACME',
+      document: false,
+    });
+
+    expect(links(result)).toHaveLength(0);
+  });
+
   it('never grades the business', async () => {
     const { setup } = setupWith(new Map([[SIEM_SEARCH_PATH, found]]));
-    const result = await buildReportTool(setup).handler({ business_name: 'ACME' });
+    const result = await buildReportTool(setup).handler({ business_name: 'ACME', document: false });
     const raw = textOf(result).toLowerCase();
 
     for (const verdict of ['favorable', 'aprob', 'rechaz', 'confianza', 'riesgo']) {
