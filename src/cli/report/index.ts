@@ -64,7 +64,7 @@ export function renderReportHtml(report: CrevaReport): string {
 
 ${paper(report, lanes)}
 
-<script>window.CREVA_SHARE=${JSON.stringify({ title: paperTitle(report), summary: shareSummary(report) }).replace(/</g, '\\u003c')};window.CREVA_REPORT=${data};${script()}</script>
+<script>window.CREVA_SHARE=${JSON.stringify({ title: paperTitle(report), summary: shareSummary(report), file: shareFileName(report) }).replace(/</g, '\\u003c')};window.CREVA_REPORT=${data};${script()}</script>
 </body>
 </html>`;
 }
@@ -77,6 +77,18 @@ function shareSummary(report: CrevaReport): string {
   const word = statusWord(report);
 
   return `${signals} ${signals === 1 ? 'señal pública' : 'señales públicas'} de ${sources} ${sources === 1 ? 'fuente de gobierno' : 'fuentes de gobierno'}, cada una con su fuente y su fecha. Directorio oficial: ${word}.`;
+}
+
+function shareFileName(report: CrevaReport): string {
+  const name = report.subject?.business_name ?? 'revision-general';
+  const slug = name
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+
+  return `creva-${slug === '' ? 'reporte' : slug}`;
 }
 
 function tab(stage: Stage, index: number): string {

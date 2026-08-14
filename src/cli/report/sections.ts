@@ -22,6 +22,49 @@ function linkPath(index: number): string {
   return `M${ROOT.x} ${ROOT.y} C${ROOT.x} 110 ${x} 100 ${x} 143`;
 }
 
+
+const RING = 2 * Math.PI * 52;
+
+export function ring(lanes: SourceLane[], total: number): string {
+  let offset = 0;
+  const arcs = lanes
+    .filter((lane) => lane.signals.length > 0)
+    .map((lane, index) => {
+      const share = total === 0 ? 0 : lane.signals.length / total;
+      const dash = `${(share * RING).toFixed(2)} ${(RING - share * RING).toFixed(2)}`;
+      const rotation = offset * 360 - 90;
+      offset += share;
+      return `<circle class="ring-arc a${index}" cx="60" cy="60" r="52" stroke-dasharray="${dash}" transform="rotate(${rotation.toFixed(2)} 60 60)"><title>${escapeHtml(lane.short)}: ${lane.signals.length}</title></circle>`;
+    })
+    .join('');
+
+  return `<svg class="ring" viewBox="0 0 120 120" role="img" aria-label="Reparto de las ${total} señales entre las fuentes" xmlns="http://www.w3.org/2000/svg">
+    <circle class="ring-track" cx="60" cy="60" r="52"/>
+    ${arcs}
+    <text class="ring-n" x="60" y="58">${total}</text>
+    <text class="ring-l" x="60" y="74">señales</text>
+  </svg>`;
+}
+
+export function ranked(lanes: SourceLane[], total: number): string {
+  const largest = lanes.reduce((top, lane) => Math.max(top, lane.signals.length), 0);
+
+  return lanes
+    .map((lane, index) => {
+      const share = total === 0 ? 0 : Math.round((lane.signals.length / total) * 100);
+      const width = largest === 0 ? 0 : Math.round((lane.signals.length / largest) * 100);
+
+      return `<button class="rank a${index}" type="button" data-lane="${lane.id}" style="--i:${index}">
+      <span class="rank-i">${index + 1}</span>
+      <span class="rank-name">${escapeHtml(lane.short)}</span>
+      <span class="rank-track">${lane.signals.length === 0 ? '' : `<span class="rank-bar" style="--w:${width}%"></span>`}</span>
+      <span class="rank-n">${lane.signals.length}</span>
+      <span class="rank-share">${share}%</span>
+    </button>`;
+    })
+    .join('');
+}
+
 export function investigation(report: CrevaReport, lanes: SourceLane[], name: string): string {
   const links = lanes.map((_, i) => `<path class="link" data-link="${i}" d="${linkPath(i)}"/>`).join('');
   const sparks = lanes
@@ -60,12 +103,20 @@ export function hero(report: CrevaReport, lanes: SourceLane[]): string {
   const tone = verification?.tone ?? 'neutral';
   const headline = report.signals.find((s) => s.category === 'reference_rate' && isPercent(s));
 
+  const answered = lanes.filter((lane) => lane.signals.length > 0).length;
   const kpis = [
-    { label: 'Fuentes consultadas', value: String(report.sources.length), note: 'registros de gobierno' },
-    { label: 'Sello del directorio', value: statusWord(report), note: 'SIEM · registro voluntario' },
+    { icon: '◉', label: 'Fuentes consultadas', value: String(report.sources.length), note: 'registros de gobierno' },
+    {
+      icon: '◍',
+      label: 'Fuentes que respondieron',
+      value: `${answered}/${lanes.length}`,
+      note: 'ninguna consulta quedó muda',
+    },
+    { icon: '●', label: 'Sello del directorio', value: statusWord(report), note: 'SIEM · registro voluntario' },
     headline === undefined
-      ? { label: 'Referencia de mercado', value: 'sin dato', note: 'Banco de México' }
+      ? { icon: '≈', label: 'Referencia de mercado', value: 'sin dato', note: 'Banco de México' }
       : {
+          icon: '≈',
           label: headline.label,
           value: headline.detail,
           note: headline.checked_at === null ? 'Banco de México' : formatDate(headline.checked_at),
@@ -73,7 +124,7 @@ export function hero(report: CrevaReport, lanes: SourceLane[]): string {
   ]
     .map(
       (kpi, index) => `<div class="kpi" style="--i:${index}">
-    <p class="kpi-label">${escapeHtml(kpi.label)}</p>
+    <p class="kpi-label"><span class="kpi-icon" aria-hidden="true">${kpi.icon}</span>${escapeHtml(kpi.label)}</p>
     <p class="kpi-value">${escapeHtml(kpi.value)}</p>
     <p class="kpi-note">${escapeHtml(kpi.note)}</p>
   </div>`,
@@ -130,6 +181,9 @@ function jumpCards(report: CrevaReport, lanes: SourceLane[]): string {
 }
 
 export function composition(report: CrevaReport, lanes: SourceLane[]): string {
+  const total = report.signals.length;
+  const answered = lanes.filter((lane) => lane.signals.length > 0).length;
+
   const rows = lanes
     .map((lane, index) => {
       const dots = lane.signals.map((_, i) => `<span class="dot" style="--d:${i}"></span>`).join('');
@@ -144,11 +198,23 @@ export function composition(report: CrevaReport, lanes: SourceLane[]): string {
 
   return `<section class="block composition" data-enter="rail">
   <h2>Composición de las señales</h2>
-  <p class="blurb">Toca una fuente para aislarla.</p>
+  <p class="blurb">Cuánto aportó cada registro. Toca una fuente para aislarla.</p>
+
+  <div class="board">
+    <div class="card">
+      <p class="card-title">¿De qué fuente salió cada señal?</p>
+      <div class="ranked" id="ranked">${ranked(lanes, total)}</div>
+    </div>
+    <div class="card">
+      <p class="card-title">Reparto</p>
+      <div class="ring-wrap">${ring(lanes, total)}</div>
+      <p class="card-note"><strong>${answered}</strong> de ${lanes.length} fuentes devolvieron algo</p>
+    </div>
+  </div>
 
   <div class="comp">
     <div class="comp-detail" id="comp-detail" aria-live="polite">
-      <p class="comp-detail-n"><span id="comp-detail-n" data-count="${report.signals.length}" data-total-count="${report.signals.length}">0</span></p>
+      <p class="comp-detail-n"><span id="comp-detail-n" data-count="${total}" data-total-count="${total}">0</span></p>
       <p class="comp-detail-label" id="comp-detail-label">señales en total</p>
       <button class="comp-go" id="comp-go" type="button" hidden>Explorar evidencia →</button>
     </div>

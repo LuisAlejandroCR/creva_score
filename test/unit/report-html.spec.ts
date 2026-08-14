@@ -440,6 +440,55 @@ describe('renderReportHtml', () => {
     expect(html).not.toContain('Explorar evidencia ↓');
   });
 
+  it('splits the signals into shares that add up to what was found', () => {
+    const html = renderReportHtml(reportWithManyRules(20));
+    const board = html.slice(html.indexOf('class="board"'), html.indexOf('class="comp"'));
+    const shares = [...board.matchAll(/class="rank-share">(\d+)%/g)].map((match) => Number(match[1]));
+
+    expect(shares.reduce((sum, share) => sum + share, 0)).toBeGreaterThanOrEqual(99);
+    expect(shares.reduce((sum, share) => sum + share, 0)).toBeLessThanOrEqual(101);
+    // A lane with nothing in it gets no bar at all: a stub would draw a quantity that is not there.
+    expect(board.match(/class="rank-track">\s*<\/span>/g)?.length).toBe(1);
+  });
+
+  it('draws one ring arc per source that actually returned something', () => {
+    const built = reportWithManyRules(20);
+    const html = renderReportHtml(built);
+    const board = html.slice(html.indexOf('class="board"'), html.indexOf('class="comp"'));
+
+    // SIEM, CNBV and Banxico answered; DOF did not.
+    expect(board.match(/class="ring-arc/g)).toHaveLength(3);
+    // Read from the report, not typed in: the fixture's total is whatever it built.
+    expect(board).toContain(`<text class="ring-n" x="60" y="58">${built.signals.length}</text>`);
+  });
+
+  it('keeps the chart true without the script, and only animates on top of it', () => {
+    const html = renderReportHtml(report());
+
+    // The bar carries its real length in CSS; the script rewinds it to play it forwards.
+    expect(html).toContain('.rank-bar{display:block;height:100%;border-radius:5px;width:var(--w)');
+    expect(html).not.toMatch(/\.rank-bar\{[^}]*width:0/);
+    expect(html).not.toMatch(/\.ring-arc\{[^}]*opacity:0/);
+  });
+
+  it('hands the whole report to the share sheet, and falls back to text', () => {
+    const html = renderReportHtml(report());
+    const share = /window\.CREVA_SHARE=(\{.*?\});window\.CREVA_REPORT/.exec(html)?.[1] ?? '';
+
+    expect(JSON.parse(share).file).toBe('creva-abarrotes-erendira'.replace('abarrotes-erendira', 'estetica-anita'));
+    expect(html).toContain('navigator.canShare({files:[file]})');
+    expect(html).toContain("window.open('https://wa.me/?text='");
+  });
+
+  it('puts the same two graphics on paper', () => {
+    const html = renderReportHtml(report());
+    const paper = html.slice(html.indexOf('<article class="paper"'));
+
+    expect(paper).toContain('class="p-ring"');
+    expect(paper).toContain('class="p-ranked"');
+    expect(paper.match(/class="ring-arc/g)?.length).toBeGreaterThan(0);
+  });
+
   it('leads the summary with figures that carry their own source', () => {
     const html = renderReportHtml(report());
 

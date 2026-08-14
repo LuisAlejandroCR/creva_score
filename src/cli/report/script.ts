@@ -124,7 +124,25 @@ export function script(): string {
     jumps.forEach(function(j,i){setTimeout(function(){j.classList.add('on');},reduce?0:cards.length*160+i*110);});
   }
 
+  // Rewind, then let it play. Nothing here is required for the chart to be correct.
+  function playGraphics(){
+    var bars=[].slice.call(document.querySelectorAll('.board .rank-bar'));
+    var arcs=[].slice.call(document.querySelectorAll('.board .ring-arc'));
+    bars.forEach(function(b){b.style.width='0';});
+    arcs.forEach(function(a){a.style.opacity='0';});
+    requestAnimationFrame(function(){
+      bars.forEach(function(b){b.style.width='';});
+      setTimeout(function(){arcs.forEach(function(a){a.style.opacity='';});},240);
+    });
+    // If no frame ever arrives, put the data back rather than leave an empty chart.
+    setTimeout(function(){
+      bars.forEach(function(b){b.style.width='';});
+      arcs.forEach(function(a){a.style.opacity='';});
+    },1400);
+  }
+
   function growComposition(){
+    if(!reduce)playGraphics();
     [].slice.call(document.querySelectorAll('.comp-row')).forEach(function(row,i){
       setTimeout(function(){
         row.classList.add('grown');
@@ -228,10 +246,25 @@ export function script(): string {
     panes.forEach(function(p){p.hidden=p.getAttribute('data-pane')!==current;});
   }
 
-  // No number in the link: WhatsApp opens its own contact picker so the sender chooses.
+  // A page cannot attach a PDF to wa.me — no URL parameter carries a file, and the
+  // print dialog's output never comes back to the page. What it can do is hand the
+  // whole self-contained report to the share sheet, which WhatsApp accepts as a file.
   function shareOnWhatsApp(){
     var share=window.CREVA_SHARE||{};
     var text=(share.title||'Creva')+String.fromCharCode(10)+(share.summary||'');
+
+    try{
+      if(navigator.canShare&&window.File){
+        openEverything();
+        var page='<!doctype html>'+document.documentElement.outerHTML;
+        var file=new File([page],(share.file||'creva-reporte')+'.html',{type:'text/html'});
+        if(navigator.canShare({files:[file]})){
+          navigator.share({title:share.title,text:text,files:[file]}).catch(function(){});
+          return;
+        }
+      }
+    }catch(e){/* fall through to the text-only path */}
+
     window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank','noopener');
   }
 
@@ -489,7 +522,7 @@ export function script(): string {
     var point=t.closest('.point');
     if(point){pickPoint(parseInt(point.getAttribute('data-point'),10)||0);return;}
 
-    var row=t.closest('.comp-row');
+    var row=t.closest('.comp-row')||t.closest('.rank');
     if(row){pickComposition(row.getAttribute('data-lane'),true);return;}
 
     var go=t.closest('.comp-go');

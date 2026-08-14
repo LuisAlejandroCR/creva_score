@@ -169,6 +169,46 @@ border-color var(--mid) var(--ease),box-shadow var(--mid) var(--ease)}
 .jump-figure{grid-area:fig;font-size:1.9rem;font-weight:700;letter-spacing:-.03em;color:var(--crimson-dark)}
 .jump-note{grid-area:note;margin-top:.45rem;font-size:.8rem;color:var(--muted)}
 
+.board{display:grid;gap:.7rem;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);margin:1.6rem 0 0}
+@media(max-width:860px){
+  .board{grid-template-columns:1fr}
+  .rank{grid-template-columns:1rem minmax(3rem,auto) minmax(2rem,1fr) 1.8rem 2.2rem}
+}
+.card{background:var(--s1);border:1px solid var(--bd);border-radius:18px;padding:1.3rem 1.4rem}
+.card-title{margin:0 0 1rem;font-weight:650;font-size:.94rem}
+.card-note{margin:.9rem 0 0;font-size:.8rem;color:var(--muted);text-align:center}
+.card-note strong{color:var(--tx)}
+
+.ranked{display:grid;gap:.5rem}
+.rank{display:grid;grid-template-columns:1rem minmax(3.2rem,auto) minmax(2.5rem,1fr) 1.9rem 2.3rem;
+gap:.5rem;align-items:center;
+width:100%;padding:.3rem 0;background:none;border:0;cursor:pointer;color:inherit;text-align:left}
+.rank-i{font-size:.74rem;color:var(--subtle)}
+.rank-name{font-size:.8rem;letter-spacing:.1em;color:var(--muted)}
+.rank-track{height:10px;border-radius:5px;background:rgba(26,22,19,.06);overflow:hidden}
+/* The bar is already its real length. The script only takes it back to zero to
+   play it forwards, so a throttled tab shows the data instead of an empty chart. */
+.rank-bar{display:block;height:100%;border-radius:5px;width:var(--w);background:var(--crimson);
+transition:width 620ms var(--ease) calc(var(--i) * 90ms)}
+.rank.a1 .rank-bar{background:#D62E52}
+.rank.a2 .rank-bar{background:#9E1329}
+.rank.a3 .rank-bar{background:var(--rosa)}
+.rank-n{font-size:1rem;font-weight:700;text-align:right}
+.rank-share{font-size:.78rem;color:var(--muted);text-align:right}
+.rank:hover .rank-name,.rank:focus-visible .rank-name{color:var(--tx)}
+
+.ring-wrap{display:flex;justify-content:center}
+.ring{width:min(11rem,100%);height:auto}
+.ring-track{fill:none;stroke:rgba(26,22,19,.07);stroke-width:14}
+.ring-arc{fill:none;stroke-width:14;stroke-linecap:butt;stroke:var(--crimson);
+transition:opacity var(--slow) var(--ease)}
+.ring-arc.a1{stroke:#D62E52}
+.ring-arc.a2{stroke:#9E1329}
+.ring-arc.a3{stroke:var(--rosa)}
+.ring-n{font-size:26px;font-weight:700;text-anchor:middle;fill:var(--tx)}
+.ring-l{font-size:8px;letter-spacing:.16em;text-anchor:middle;fill:var(--muted);text-transform:uppercase}
+
+.kpi-icon{margin-right:.4rem;color:var(--crimson)}
 .comp{display:block}
 .comp-rows{display:grid;gap:.3rem;min-width:0;margin-top:2.4rem}
 .comp-row{display:flex;align-items:center;gap:.9rem;width:100%;padding:.7rem .5rem;
@@ -463,6 +503,22 @@ border:1px solid #d9d9d9;padding:2.6mm 3mm;text-align:left;vertical-align:top;fo
 .p-num{text-align:right;white-space:nowrap}
 .p-callout th{background:#eef5ee}
 .p-callout.warn th{background:#fdf3e7;color:#8a5a12}
+.p-board{display:flex;gap:4mm;margin:0 0 5mm;align-items:stretch}
+.p-card{flex:1;border:1px solid #d9d9d9;border-radius:2mm;padding:3mm;background:#fbfbfa}
+.p-card.wide{flex:1.7}
+.p-card-title{margin:0 0 2.5mm;font-size:9pt;font-weight:700;color:#1f4c33}
+.p-ring{display:flex;justify-content:center}
+.p-ring .ring{width:34mm}
+.p-ring .ring-arc{opacity:1}
+.p-ranked{display:block}
+.p-ranked .rank{display:grid;grid-template-columns:5mm 16mm 1fr 8mm 10mm;gap:2mm;align-items:center;
+width:100%;padding:1mm 0;border:0;background:none;text-align:left}
+.p-ranked .rank-i{font-size:7.5pt;color:#8a8a8a}
+.p-ranked .rank-name{font-size:8pt;color:#4a4a4a}
+.p-ranked .rank-track{height:2.4mm;border-radius:1.2mm;background:#e8e8e8;overflow:hidden}
+.p-ranked .rank-bar{display:block;height:100%;width:var(--w);border-radius:1.2mm;background:#C41E3A;transition:none}
+.p-ranked .rank-n{font-size:9pt;font-weight:700;text-align:right}
+.p-ranked .rank-share{font-size:8pt;color:#6a6a6a;text-align:right}
 .p-kpis{display:flex;gap:3mm;margin:0 0 6mm}
 .p-kpi{flex:1;border:1px solid #d9d9d9;border-radius:2mm;padding:3mm;background:#fbfbfa}
 .p-kpi-label{margin:0;font-size:7.5pt;letter-spacing:.08em;text-transform:uppercase;color:#6a6a6a}
@@ -497,7 +553,7 @@ font-size:8pt;color:#6a6a6a;text-align:right}
   .item.fresh,.tick.on .tick-mark,.insight.on .insight-mark,.net .node.on circle{animation:none}
   [data-enter],.bar,.panel-body,.panel-inner,.net .link,.net .node circle,.net .node text,
   .investigate,.net,.figure,.insight,.dot,.tick,.flash,
-  .filter-result,.item,.item::before,.point,.point-tag,.meta-dot,.doc-go,.panel-seen,.panels,.item-seen,.step,.kpi,.jump,
+  .filter-result,.item,.item::before,.point,.point-tag,.meta-dot,.doc-go,.panel-seen,.panels,.item-seen,.step,.kpi,.jump,.rank-bar,.ring-arc,
   .why-step,.why-n,.why-num,.why-check,.why-line::after,.stage-tab,.stage-tab::before{transition:none}
   .pane.arriving,.pane.arriving-back{animation:none}
   .net .spark{display:none}

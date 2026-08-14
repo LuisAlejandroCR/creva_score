@@ -2,6 +2,7 @@
 
 import { CrevaReport, ReportSignal } from '../../common/types/creva-report.types';
 import { SourceLane, escapeHtml, formatDate, formatDateTime, isPercent, plural, statusWord } from './lanes';
+import { ranked, ring } from './sections';
 
 const HIGHLIGHTS_PER_LANE = 2;
 
@@ -141,6 +142,16 @@ function signalsPage(report: CrevaReport, lanes: SourceLane[], name: string): st
   return `<section class="p-page">
   ${runningHead(name)}
   <h2 class="p-h2">1. Señales por fuente</h2>
+  <div class="p-board">
+    <div class="p-card">
+      <p class="p-card-title">Reparto de las señales</p>
+      <div class="p-ring">${ring(lanes, report.signals.length)}</div>
+    </div>
+    <div class="p-card wide">
+      <p class="p-card-title">¿De qué fuente salió cada una?</p>
+      <div class="p-ranked">${ranked(lanes, report.signals.length)}</div>
+    </div>
+  </div>
   <table class="p-table">
     <thead><tr><th>Fuente</th><th>Qué aporta</th><th>Peso relativo</th><th class="p-num">Señales</th></tr></thead>
     <tbody>${rows}</tbody>
