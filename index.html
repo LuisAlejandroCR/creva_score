@@ -8,9 +8,10 @@
 <script>document.documentElement.className='js'</script>
 <style>
 :root{
-  --ink:#080B14; --ink2:#0F1524; --ink3:#161E33;
-  --gold:#F2B544; --warm:#FF8A5B; --teal:#4ECDC4;
-  --tx:#F6F4EF; --muted:#98A2B8; --line:rgba(255,255,255,.10);
+  /* Creva brand tokens, taken from the product's own theme */
+  --ink:#161616; --ink2:#1F1218; --ink3:#2E1520;
+  --gold:#FF6B8A; --warm:#C41E3A; --teal:#F57E8F;
+  --tx:#F8F4F0; --muted:rgba(255,255,255,.52); --line:rgba(255,255,255,.09);
   --ease:cubic-bezier(.16,1,.3,1); --slow:1.1s; --mid:.62s;
   --pad:clamp(1.25rem,5vw,6rem);
 }
@@ -42,9 +43,9 @@ p{max-width:66ch}
 .bed{position:absolute;inset:0;z-index:0;overflow:hidden;background:var(--ink2)}
 .aurora{position:absolute;inset:-25%;opacity:.55;
   background:
-    radial-gradient(38% 46% at 22% 30%,rgba(242,181,68,.30),transparent 62%),
-    radial-gradient(34% 42% at 76% 24%,rgba(255,138,91,.24),transparent 60%),
-    radial-gradient(46% 52% at 58% 78%,rgba(78,205,196,.20),transparent 64%);
+    radial-gradient(38% 46% at 22% 30%,rgba(196,30,58,.34),transparent 62%),
+    radial-gradient(34% 42% at 76% 24%,rgba(255,107,138,.26),transparent 60%),
+    radial-gradient(46% 52% at 58% 78%,rgba(245,126,143,.18),transparent 64%);
   filter:blur(28px);animation:drift 26s var(--ease) infinite alternate}
 .aurora.slow{animation-duration:40s}
 @keyframes drift{
@@ -54,7 +55,7 @@ p{max-width:66ch}
 }
 .bed::after{
   content:'';position:absolute;inset:0;
-  background:radial-gradient(115% 85% at 18% 12%,rgba(8,11,20,.42) 0%,rgba(8,11,20,.90) 62%,var(--ink) 100%);
+  background:radial-gradient(115% 85% at 18% 12%,rgba(22,22,22,.40) 0%,rgba(22,22,22,.90) 62%,var(--ink) 100%);
 }
 .grain{position:absolute;inset:0;z-index:1;opacity:.5;pointer-events:none;
   background-image:radial-gradient(rgba(255,255,255,.045) 1px,transparent 1px);
@@ -65,7 +66,7 @@ p{max-width:66ch}
 .brand{display:flex;align-items:center;gap:.7rem;margin-bottom:clamp(2rem,7vh,4rem)}
 .mark{width:34px;height:34px;border-radius:9px;flex:0 0 auto;
   background:linear-gradient(135deg,var(--gold),var(--warm));
-  box-shadow:0 0 34px rgba(242,181,68,.35)}
+  box-shadow:0 0 40px rgba(196,30,58,.45)}
 .brand b{font-size:1.02rem;letter-spacing:-.01em}
 .brand span{color:var(--muted);font-size:.86rem}
 #hero h1{max-width:16ch}
@@ -96,7 +97,7 @@ p{max-width:66ch}
   background:linear-gradient(170deg,var(--ink3),var(--ink2))}
 .stat .n{font-size:clamp(2.5rem,5.6vw,3.9rem);font-weight:700;letter-spacing:-.04em;line-height:1}
 .stat .l{margin-top:.7rem;font-size:.9rem;color:var(--muted);max-width:none}
-.stat .src{margin-top:1rem;font-size:.72rem;color:#6D7791;max-width:none}
+.stat .src{margin-top:1rem;font-size:.72rem;color:rgba(255,255,255,.34);max-width:none}
 .bars{margin-top:2.6rem;display:grid;gap:.85rem}
 .bar{display:grid;grid-template-columns:minmax(90px,150px) 1fr auto;gap:.9rem;align-items:center}
 .bar span:first-child{font-size:.86rem;color:var(--muted)}
@@ -127,7 +128,7 @@ p{max-width:66ch}
 .dot{width:9px;height:9px;border-radius:99px;background:var(--teal);flex:0 0 auto}
 .demo .head b{font-size:.94rem}
 .demo .head span{margin-left:auto;font-size:.74rem;color:var(--muted)}
-.screen{aspect-ratio:16/10;background:#05070E;position:relative}
+.screen{aspect-ratio:16/10;background:#0C080A;position:relative}
 .screen video{width:100%;height:100%;object-fit:cover}
 .placeholder{position:absolute;inset:0;display:flex;flex-direction:column;
   align-items:center;justify-content:center;gap:.7rem;text-align:center;padding:1.5rem}
@@ -161,7 +162,7 @@ p{max-width:66ch}
 #close h2{max-width:18ch;margin-inline:auto}
 #close p{margin-inline:auto;margin-top:1.5rem}
 footer{padding:2.5rem var(--pad);border-top:1px solid var(--line);
-  color:#6D7791;font-size:.8rem;text-align:center}
+  color:rgba(255,255,255,.34);font-size:.8rem;text-align:center}
 
 /* ── motion ──
    The dimming is applied by the script, never by the static file. A page whose text
