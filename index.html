@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="es-MX" class="no-js">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Creva Score — Tu negocio ya tiene historia</title>
+<meta name="description" content="Acceso a crédito para emprendedoras mexicanas, anclado en registros de gobierno reales. Construido sobre Croma para el IA Hackathon GovTech.">
+<script>document.documentElement.className='js'</script>
+<style>
+:root{
+  --ink:#080B14; --ink2:#0F1524; --ink3:#161E33;
+  --gold:#F2B544; --warm:#FF8A5B; --teal:#4ECDC4;
+  --tx:#F6F4EF; --muted:#98A2B8; --line:rgba(255,255,255,.10);
+  --ease:cubic-bezier(.16,1,.3,1); --slow:1.1s; --mid:.62s;
+  --pad:clamp(1.25rem,5vw,6rem);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{
+  background:var(--ink);color:var(--tx);
+  font:400 16px/1.6 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Inter,sans-serif;
+  overflow-x:hidden;
+}
+img,video{max-width:100%;display:block}
+section{position:relative;padding:clamp(4.5rem,11vh,9rem) var(--pad);overflow:hidden}
+.wrap{max-width:1180px;margin:0 auto;position:relative;z-index:2}
+h1,h2,h3{line-height:1.06;letter-spacing:-.03em;font-weight:700}
+h1{font-size:clamp(2.4rem,7.4vw,5.6rem)}
+h2{font-size:clamp(1.9rem,4.6vw,3.4rem)}
+h3{font-size:clamp(1.1rem,2vw,1.45rem);letter-spacing:-.02em}
+p{max-width:66ch}
+.lead{font-size:clamp(1.05rem,1.9vw,1.32rem);color:var(--muted);line-height:1.62}
+.eyebrow{
+  font-size:.7rem;letter-spacing:.24em;text-transform:uppercase;
+  color:var(--gold);font-weight:650;margin-bottom:1.1rem;
+}
+.gold{color:var(--gold)}.teal{color:var(--teal)}.warm{color:var(--warm)}
+.dim{color:var(--muted)}
+
+/* ── cinematic video beds ── */
+.bed{position:absolute;inset:0;z-index:0;overflow:hidden;background:var(--ink2)}
+.aurora{position:absolute;inset:-25%;opacity:.55;
+  background:
+    radial-gradient(38% 46% at 22% 30%,rgba(242,181,68,.30),transparent 62%),
+    radial-gradient(34% 42% at 76% 24%,rgba(255,138,91,.24),transparent 60%),
+    radial-gradient(46% 52% at 58% 78%,rgba(78,205,196,.20),transparent 64%);
+  filter:blur(28px);animation:drift 26s var(--ease) infinite alternate}
+.aurora.slow{animation-duration:40s}
+@keyframes drift{
+  0%{transform:translate3d(-3%,-2%,0) scale(1)}
+  50%{transform:translate3d(3%,2%,0) scale(1.09)}
+  100%{transform:translate3d(-2%,3%,0) scale(1.03)}
+}
+.bed::after{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(115% 85% at 18% 12%,rgba(8,11,20,.42) 0%,rgba(8,11,20,.90) 62%,var(--ink) 100%);
+}
+.grain{position:absolute;inset:0;z-index:1;opacity:.5;pointer-events:none;
+  background-image:radial-gradient(rgba(255,255,255,.045) 1px,transparent 1px);
+  background-size:3px 3px}
+
+/* ── hero ── */
+#hero{min-height:100svh;display:flex;align-items:center;padding-top:6rem}
+.brand{display:flex;align-items:center;gap:.7rem;margin-bottom:clamp(2rem,7vh,4rem)}
+.mark{width:34px;height:34px;border-radius:9px;flex:0 0 auto;
+  background:linear-gradient(135deg,var(--gold),var(--warm));
+  box-shadow:0 0 34px rgba(242,181,68,.35)}
+.brand b{font-size:1.02rem;letter-spacing:-.01em}
+.brand span{color:var(--muted);font-size:.86rem}
+#hero h1{max-width:16ch}
+#hero h1 em{font-style:normal;display:block;
+  background:linear-gradient(100deg,var(--gold),var(--warm) 55%,var(--teal));
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{margin-top:1.6rem;max-width:52ch}
+.meta{display:flex;flex-wrap:wrap;gap:.55rem;margin-top:2.4rem}
+.chip{border:1px solid var(--line);border-radius:999px;padding:.44rem .9rem;
+  font-size:.78rem;color:var(--muted);background:rgba(255,255,255,.03)}
+.chip b{color:var(--tx);font-weight:600}
+.scroll{position:absolute;bottom:2rem;left:var(--pad);font-size:.72rem;
+  letter-spacing:.2em;text-transform:uppercase;color:var(--muted);z-index:3}
+
+/* ── the circle ── */
+.circle{display:grid;gap:1px;margin-top:3rem;background:var(--line);
+  border:1px solid var(--line);border-radius:16px;overflow:hidden;
+  grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}
+.circle div{background:var(--ink2);padding:1.6rem 1.35rem}
+.circle b{display:block;font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--warm);margin-bottom:.55rem}
+.circle p{font-size:.95rem;color:var(--muted);max-width:none}
+
+/* ── evidence ── */
+.eyes{display:grid;gap:1.15rem;margin-top:3rem;
+  grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.stat{border:1px solid var(--line);border-radius:16px;padding:1.7rem 1.5rem;
+  background:linear-gradient(170deg,var(--ink3),var(--ink2))}
+.stat .n{font-size:clamp(2.5rem,5.6vw,3.9rem);font-weight:700;letter-spacing:-.04em;line-height:1}
+.stat .l{margin-top:.7rem;font-size:.9rem;color:var(--muted);max-width:none}
+.stat .src{margin-top:1rem;font-size:.72rem;color:#6D7791;max-width:none}
+.bars{margin-top:2.6rem;display:grid;gap:.85rem}
+.bar{display:grid;grid-template-columns:minmax(90px,150px) 1fr auto;gap:.9rem;align-items:center}
+.bar span:first-child{font-size:.86rem;color:var(--muted)}
+.bar .t{height:11px;border-radius:99px;background:rgba(255,255,255,.06);overflow:hidden}
+.bar .f{height:100%;border-radius:99px;
+  background:linear-gradient(90deg,var(--gold),var(--warm));width:var(--w)}
+.bar .v{font-variant-numeric:tabular-nums;font-weight:650;font-size:.92rem;min-width:3.4em;text-align:right}
+
+/* ── pieces ── */
+.pieces{display:grid;gap:1.15rem;margin-top:3rem;
+  grid-template-columns:repeat(auto-fit,minmax(270px,1fr))}
+.piece{border:1px solid var(--line);border-radius:18px;padding:1.9rem 1.6rem;
+  background:var(--ink2);position:relative;overflow:hidden}
+.piece::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--gold),transparent)}
+.piece .num{font-size:.72rem;letter-spacing:.2em;color:var(--gold);font-weight:650}
+.piece h3{margin:.85rem 0 .7rem}
+.piece p{font-size:.94rem;color:var(--muted);max-width:none}
+.piece ul{margin-top:1rem;padding-left:1.05rem}
+.piece li{font-size:.88rem;color:var(--muted);margin-bottom:.42rem}
+
+/* ── demo slots ── */
+.demos{display:grid;gap:1.6rem;margin-top:3rem;
+  grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
+.demo{border:1px solid var(--line);border-radius:18px;overflow:hidden;background:var(--ink2)}
+.demo .head{padding:1.15rem 1.4rem;border-bottom:1px solid var(--line);
+  display:flex;align-items:center;gap:.7rem}
+.dot{width:9px;height:9px;border-radius:99px;background:var(--teal);flex:0 0 auto}
+.demo .head b{font-size:.94rem}
+.demo .head span{margin-left:auto;font-size:.74rem;color:var(--muted)}
+.screen{aspect-ratio:16/10;background:#05070E;position:relative}
+.screen video{width:100%;height:100%;object-fit:cover}
+.placeholder{position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:.7rem;text-align:center;padding:1.5rem}
+.placeholder code{font-size:.82rem;color:var(--gold);
+  font-family:ui-monospace,Menlo,monospace;word-break:break-all}
+.placeholder p{font-size:.82rem;color:var(--muted);max-width:34ch}
+.rec{width:34px;height:34px;border-radius:99px;border:2px solid var(--warm);
+  display:grid;place-items:center}
+.rec::after{content:'';width:13px;height:13px;border-radius:99px;background:var(--warm)}
+
+/* ── seal ── */
+.seal{margin-top:2.8rem;border:1px solid var(--line);border-radius:18px;
+  padding:clamp(1.5rem,3vw,2.4rem);background:linear-gradient(160deg,var(--ink3),var(--ink2))}
+.seal .lab{font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.folio{font-family:ui-monospace,Menlo,monospace;font-weight:700;
+  font-size:clamp(.95rem,2.6vw,1.7rem);letter-spacing:.02em;margin:.6rem 0 .3rem;
+  color:var(--gold);word-break:break-all}
+.verdicts{display:grid;gap:.7rem;margin-top:1.8rem}
+.v{display:flex;gap:.8rem;align-items:flex-start;font-size:.92rem}
+.v i{font-style:normal;flex:0 0 1.4em;font-weight:700}
+.ok{color:var(--teal)}.bad{color:var(--warm)}
+
+/* ── honesty ── */
+.honest{border-left:2px solid var(--warm);padding-left:1.5rem;margin-top:2.6rem;display:grid;gap:1rem}
+.honest p{color:var(--muted);font-size:.98rem}
+.honest b{color:var(--tx)}
+
+/* ── close ── */
+#close{text-align:center;min-height:78svh;display:flex;align-items:center}
+#close .wrap{margin-inline:auto}
+#close h2{max-width:18ch;margin-inline:auto}
+#close p{margin-inline:auto;margin-top:1.5rem}
+footer{padding:2.5rem var(--pad);border-top:1px solid var(--line);
+  color:#6D7791;font-size:.8rem;text-align:center}
+
+/* ── motion ──
+   The dimming is applied by the script, never by the static file. A page whose text
+   only appears once an observer fires is a page that renders blank when it does not. */
+.rise.anim{opacity:0;transform:translateY(26px);
+  transition:opacity var(--slow) var(--ease),transform var(--slow) var(--ease)}
+.rise.anim.in{opacity:1;transform:none}
+.rise.anim.d1{transition-delay:.10s}.rise.anim.d2{transition-delay:.20s}
+.rise.anim.d3{transition-delay:.30s}.rise.anim.d4{transition-delay:.40s}
+.bar.anim .f{width:0;transition:width 1.25s var(--ease)}
+.bar.anim.in .f{width:var(--w)}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .rise.anim{opacity:1;transform:none;transition:none}
+  .bar.anim .f{width:var(--w);transition:none}
+  .aurora{animation:none}
+}
+@media (max-width:640px){
+  .bar{grid-template-columns:1fr;gap:.35rem}
+  .bar .v{text-align:left}
+}
+</style>
+</head>
+<body>
+
+<!-- ══ HERO ══ -->
+<section id="hero">
+  <div class="bed">
+    <div class="aurora" aria-hidden="true"></div>
+  </div>
+  <div class="grain"></div>
+  <div class="wrap">
+    <div class="brand rise">
+      <div class="mark"></div>
+      <div><b>Creva Score</b><br><span>IA Hackathon GovTech · Croma</span></div>
+    </div>
+    <h1 class="rise d1">La falta de historial<em>no es falta de negocio.</em></h1>
+    <p class="lead sub rise d2">
+      Su negocio ya está en registros públicos de gobierno. Su actividad ya está declarada.
+      Nadie los junta y nadie los mira — así que el banco le pide un historial que nunca la dejaron construir.
+    </p>
+    <div class="meta rise d3">
+      <span class="chip"><b>4</b> registros de gobierno</span>
+      <span class="chip"><b>25</b> señales por reporte</span>
+      <span class="chip"><b>358</b> pruebas automatizadas</span>
+      <span class="chip">Datos vía <b>Croma</b></span>
+    </div>
+  </div>
+  <div class="scroll">Desliza ↓</div>
+</section>
+
+<!-- ══ EL PROBLEMA ══ -->
+<section id="problema">
+  <div class="wrap">
+    <p class="eyebrow rise">El círculo</p>
+    <h2 class="rise d1">Sin crédito no hay historial.<br>Sin historial no hay crédito.</h2>
+    <div class="circle rise d2">
+      <div><b>Ella abre su negocio</b><p>Vende, cobra, paga proveedores. El negocio opera todos los días.</p></div>
+      <div><b>Pide su primer crédito</b><p>El banco le pide historial crediticio para decidir.</p></div>
+      <div><b>No lo tiene</b><p>No porque no venda: porque nunca le prestaron.</p></div>
+      <div><b>Y como no le prestan…</b><p>Nunca lo construye. El círculo se cierra sobre sí mismo.</p></div>
+    </div>
+    <p class="lead rise d3" style="margin-top:2.6rem">
+      El buró responde <i>¿pagará a tiempo?</i> con un historial que ella no tiene.
+      Creva responde otra pregunta: <b class="gold">¿este negocio opera, y con qué disciplina?</b>
+    </p>
+  </div>
+</section>
+
+<!-- ══ LA EVIDENCIA ══ -->
+<section id="evidencia" style="background:var(--ink2)">
+  <div class="wrap">
+    <p class="eyebrow rise">Lo que medimos antes de decidir</p>
+    <h2 class="rise d1">Un dato de gobierno<br>también puede excluir.</h2>
+    <p class="lead rise d2" style="margin-top:1.4rem">
+      El directorio oficial de establecimientos parecía la fuente obvia para premiar a quien está registrada.
+      Lo medimos en vivo antes de construir sobre él — y encontramos un sesgo geográfico que habría
+      repartido puntos por código postal.
+    </p>
+
+    <div class="bars rise d3" aria-label="Negocios de abarrotes registrados por estado">
+      <div class="bar"><span>Chihuahua</span><span class="t"><span class="f" style="--w:100%"></span></span><span class="v">2,171</span></div>
+      <div class="bar"><span>Nuevo León</span><span class="t"><span class="f" style="--w:97%"></span></span><span class="v">2,106</span></div>
+      <div class="bar"><span>Edo. de México</span><span class="t"><span class="f" style="--w:5.1%"></span></span><span class="v">110</span></div>
+      <div class="bar"><span>Puebla</span><span class="t"><span class="f" style="--w:2.9%"></span></span><span class="v">64</span></div>
+      <div class="bar"><span>Tlaxcala</span><span class="t"><span class="f" style="--w:1.5%"></span></span><span class="v">32</span></div>
+    </div>
+
+    <div class="eyes">
+      <div class="stat rise">
+        <div class="n gold">~30×</div>
+        <p class="l">más registros por habitante en el norte que en el centro, para el mismo giro y la misma palabra de búsqueda.</p>
+        <p class="src">Medición propia en vivo · 5 estados · 2026‑08‑13</p>
+      </div>
+      <div class="stat rise d1">
+        <div class="n warm">3 de 3</div>
+        <p class="l">negocios reales, formales y dados de alta ante el SAT, que <b>no aparecen</b> en ese directorio.</p>
+        <p class="src">Prueba con negocios reales · 2026‑08‑13</p>
+      </div>
+      <div class="stat rise d2">
+        <div class="n teal">0</div>
+        <p class="l">puntos que ese registro aporta al número. Emite un sello informativo, con su fuente y su fecha.</p>
+        <p class="src">Decisión D‑02, tomada contra la evidencia</p>
+      </div>
+    </div>
+
+    <p class="lead rise d3" style="margin-top:2.8rem">
+      Para un producto que existe para corregir una exclusión estructural,
+      <b class="warm">reproducir otra por código postal era el peor resultado posible.</b>
+      Así que el registro informa, pero no puntúa.
+    </p>
+  </div>
+</section>
+
+<!-- ══ LO QUE CONSTRUIMOS ══ -->
+<section id="producto">
+  <div class="bed">
+    <div class="aurora" aria-hidden="true"></div>
+  </div>
+  <div class="grain"></div>
+  <div class="wrap">
+    <p class="eyebrow rise">Tres piezas, funcionando de punta a punta</p>
+    <h2 class="rise d1">Un expediente que<br>ella sí puede enseñar.</h2>
+    <div class="pieces">
+      <div class="piece rise d1">
+        <div class="num">01</div>
+        <h3>El sello de su negocio</h3>
+        <p>Busca su negocio en el directorio oficial y, si lo identifica sin ambigüedad, emite un sello con fuente y fecha.</p>
+        <ul>
+          <li>Si hay homónimos, lo dice y no emite nada</li>
+          <li>Su puntaje es el mismo con sello o sin él</li>
+          <li>El RFC se compara localmente: nunca sale de su equipo</li>
+        </ul>
+      </div>
+      <div class="piece rise d2">
+        <div class="num">02</div>
+        <h3>Radar regulatorio</h3>
+        <p>Revisa el Diario Oficial y el catálogo de normas de la CNBV, y separa lo que toca su crédito de lo que no.</p>
+        <ul>
+          <li>No consulta ningún dato suyo: sirve igual para todas</li>
+          <li>Distingue una novedad de una regla ya vigente</li>
+          <li>Si una fuente no responde ese día, lo dice</li>
+        </ul>
+      </div>
+      <div class="piece rise d3">
+        <div class="num">03</div>
+        <h3>Reporte sellado y firmado</h3>
+        <p>Un expediente con cada señal, su fuente y su fecha — que el banco puede verificar sin confiar en nosotros.</p>
+        <ul>
+          <li>Un byte alterado y la huella deja de coincidir</li>
+          <li>Firmado con una llave que solo Creva tiene</li>
+          <li>Se abre con doble clic, sin servidor ni internet</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ DEMO ══ -->
+<section id="demo" style="background:var(--ink2)">
+  <div class="wrap">
+    <p class="eyebrow rise">Corriendo, no en diapositiva</p>
+    <h2 class="rise d1">Dos superficies,<br>los mismos datos reales.</h2>
+    <p class="lead rise d2" style="margin-top:1.3rem">
+      La misma composición responde por línea de comandos y como herramienta MCP dentro de un asistente.
+      Un jurado puede pedir el reporte con lenguaje natural y recibir el archivo.
+    </p>
+
+    <div class="demos">
+      <div class="demo rise d1">
+        <div class="head"><span class="dot"></span><b>Claude Escritorio · MCP</b><span>“dame el reporte”</span></div>
+        <div class="screen">
+          <video data-slot src="demo-claude-escritorio.mp4" muted loop playsinline preload="metadata"></video>
+          <div class="placeholder" data-ph>
+            <div class="rec"></div>
+            <p>Coloca aquí tu grabación, junto a este archivo:</p>
+            <code>demo-claude-escritorio.mp4</code>
+          </div>
+        </div>
+      </div>
+      <div class="demo rise d2">
+        <div class="head"><span class="dot"></span><b>Terminal · CLI</b><span>reporte + sello</span></div>
+        <div class="screen">
+          <video data-slot src="demo-terminal.mp4" muted loop playsinline preload="metadata"></video>
+          <div class="placeholder" data-ph>
+            <div class="rec"></div>
+            <p>Coloca aquí tu grabación, junto a este archivo:</p>
+            <code>demo-terminal.mp4</code>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ EL SELLO ══ -->
+<section id="sello">
+  <div class="wrap">
+    <p class="eyebrow rise">Confianza bancaria</p>
+    <h2 class="rise d1">Un documento que<br>no se puede falsificar.</h2>
+    <p class="lead rise d2" style="margin-top:1.3rem">
+      Un reporte es un archivo, y un archivo se edita. Cambiar “Sin sello” por “Verificado” toma un minuto,
+      y hasta ahora el banco que lo recibía no tenía forma de notarlo.
+    </p>
+
+    <div class="seal rise d3">
+      <p class="lab">Folio de verificación · impreso dentro del reporte</p>
+      <p class="folio">CB6EC68C-A87E2BB9-E66AA971-3CA82D0B</p>
+      <p class="dim" style="font-size:.88rem">
+        Identifica el contenido del reporte. El banco lo lee del PDF y lo contrasta.
+      </p>
+      <div class="verdicts">
+        <p class="v"><i class="ok">✔</i><span><b>Íntegro y auténtico</b> — los archivos son los que se generaron, firmados por Creva.</span></p>
+        <p class="v"><i class="bad">✘</i><span><b>Alterado</b> — se nombra exactamente cuál archivo dejó de coincidir.</span></p>
+        <p class="v"><i class="bad">✘</i><span><b>Falta la firma</b> — volver a sellar un documento editado es la falsificación más barata, y se reporta como fallo.</span></p>
+        <p class="v"><i class="dim">·</i><span><b>No se pudo comprobar</b> — sin llave de confianza no se opina. No saber es su propia respuesta.</span></p>
+      </div>
+    </div>
+
+    <p class="lead rise" style="margin-top:2.2rem">
+      La llave pública de confianza se toma de la configuración de quien verifica, <b class="gold">nunca del documento revisado</b>:
+      si no, un falsificador incluiría su propia llave junto a su propia firma.
+    </p>
+  </div>
+</section>
+
+<!-- ══ CROMA ══ -->
+<section id="croma" style="background:var(--ink2)">
+  <div class="wrap">
+    <p class="eyebrow rise">Integración</p>
+    <h2 class="rise d1">Croma <span class="gold">es</span> la verificación.</h2>
+    <p class="lead rise d2" style="margin-top:1.3rem">
+      Sin Croma no hay sello que mostrar ni radar que revisar. La credencial se audita en vivo contra la fuente
+      de gobierno, delante del jurado. Y como Croma cubre México, Colombia y Perú con la misma API,
+      la expansión a LATAM no es una promesa de pitch: es el mismo código apuntando a otro conector.
+    </p>
+    <div class="eyes">
+      <div class="stat rise"><div class="n">SIEM</div><p class="l">Directorio oficial de establecimientos. El sello del negocio.</p></div>
+      <div class="stat rise d1"><div class="n">DOF</div><p class="l">Diario Oficial de la Federación. Las novedades que sí le tocan.</p></div>
+      <div class="stat rise d2"><div class="n">CNBV</div><p class="l">Normas bancarias vigentes, no un feed de noticias.</p></div>
+      <div class="stat rise d3"><div class="n">Banxico</div><p class="l">Tasas de referencia, cada una con su propia fecha.</p></div>
+    </div>
+    <p class="dim rise" style="margin-top:1.8rem;font-size:.84rem">
+      Diseñado para caber en 100 consultas al día. Los resultados se guardan bajo una huella irreversible,
+      no bajo el nombre del negocio, y se pueden borrar por titular.
+    </p>
+  </div>
+</section>
+
+<!-- ══ HONESTIDAD ══ -->
+<section id="limites">
+  <div class="wrap">
+    <p class="eyebrow rise">Lo que este puntaje NO hace</p>
+    <h2 class="rise d1">Decirlo es<br>el producto.</h2>
+    <div class="honest rise d2">
+      <p><b>No estima probabilidad de impago.</b> Describe comportamiento operativo observado. Confundir las dos cosas sería insostenible ante cualquiera que sepa de riesgo.</p>
+      <p><b>No usa antecedentes penales.</b> Ni de ella ni de nadie. Es exclusión ética antes que técnica, y no va a cambiar.</p>
+      <p><b>No castiga la ausencia.</b> Muchos registros son voluntarios: no aparecer no es señal de nada, y así se trata.</p>
+      <p><b>No acredita la fecha ante un tercero.</b> La firma prueba integridad y origen; el sellado de tiempo certificado es el siguiente paso, no una promesa cumplida.</p>
+    </div>
+    <p class="lead rise d3" style="margin-top:2.4rem">
+      Ninguno de los dos burós grandes de la región publica los pesos de su modelo.
+      <b class="gold">El buró no te dice por qué; Creva sí.</b>
+    </p>
+  </div>
+</section>
+
+<!-- ══ CIERRE ══ -->
+<section id="close">
+  <div class="bed">
+    <div class="aurora slow" aria-hidden="true"></div>
+  </div>
+  <div class="grain"></div>
+  <div class="wrap">
+    <p class="eyebrow rise" style="text-align:center">México primero, y luego la región</p>
+    <h2 class="rise d1">Los datos ya prueban<br>que el negocio existe.</h2>
+    <p class="lead rise d2">Solo que ningún banco los mira. Todavía.</p>
+    <div class="meta rise d3" style="justify-content:center">
+      <span class="chip">🇲🇽 <b>México</b></span>
+      <span class="chip">🇨🇴 Colombia</span>
+      <span class="chip">🇵🇪 Perú</span>
+      <span class="chip">La misma API</span>
+    </div>
+  </div>
+</section>
+
+<footer>
+  Creva Score · IA Hackathon GovTech (12–16 de agosto de 2026) sobre Croma ·
+  Cada cifra de esta página está medida y fechada en la bitácora del proyecto.
+</footer>
+
+<script>
+(function(){
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // A recording that is not there yet must not leave a black rectangle.
+  Array.prototype.forEach.call(document.querySelectorAll('[data-slot]'), function(v){
+    var ph = v.parentNode.querySelector('[data-ph]');
+    v.hidden = true;
+    v.addEventListener('loadeddata', function(){
+      v.hidden = false;
+      if (ph) ph.hidden = true;
+      if (!reduce) { v.autoplay = true; var p = v.play(); if (p && p.catch) p.catch(function(){}); }
+    });
+    v.addEventListener('error', function(){ v.hidden = true; });
+    v.load();
+  });
+
+  var targets = [].slice.call(document.querySelectorAll('.rise,.bar'));
+
+  function revealAll(){
+    targets.forEach(function(el){ el.classList.add('in'); });
+  }
+
+  // No observer, or motion turned down: the page is already correct, so leave it alone.
+  if (reduce || !('IntersectionObserver' in window)) return;
+
+  targets.forEach(function(el){ el.classList.add('anim'); });
+
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if (!e.isIntersecting) return;
+      e.target.classList.add('in');
+      io.unobserve(e.target);
+    });
+  }, { rootMargin: '0px 0px -12% 0px', threshold: 0.12 });
+
+  targets.forEach(function(el){ io.observe(el); });
+
+  // Failsafe: if the observer never delivers — a throttled tab, a static renderer, an
+  // embedded webview — nothing may stay dimmed. A blank pitch is worse than no animation.
+  setTimeout(function(){
+    if (!document.querySelector('.rise.anim.in')) revealAll();
+  }, 1800);
+})();
+</script>
+</body>
+</html>
