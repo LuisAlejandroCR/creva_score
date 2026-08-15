@@ -36,6 +36,12 @@ const envSchema = z.object({
   BUSINESS_VERIFICATION_CACHE_TTL_MS: z.coerce.number().int().min(0).default(7 * DAY_MS),
   BUSINESS_VERIFICATION_MAX_DETAIL_LOOKUPS: z.coerce.number().int().min(0).max(5).default(1),
 
+  // Path to Creva's Ed25519 private key. Empty leaves reports sealed but unsigned.
+  CREVA_SIGNING_KEY_FILE: z.string().default(''),
+  // Creva's public key, for whoever verifies. Never taken from the document being checked.
+  // A file is the robust form: a PEM inside a dotenv line loses its newlines.
+  CREVA_SIGNING_PUBLIC_KEY_FILE: z.string().default(''),
+  CREVA_SIGNING_PUBLIC_KEY: z.string().default(''),
 });
 
 export type Env = z.infer<typeof envSchema>;

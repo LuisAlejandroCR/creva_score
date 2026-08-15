@@ -21,3 +21,9 @@ creva-report.json
 # Skills vendored by `npx skills add`; skills-lock.json is what pins them.
 .agents/
 .claude/
+
+# Llaves de firma. La privada nunca se commitea; la pública se publica
+# deliberadamente en una URL estable, no por accidente desde una llave de prueba.
+*.key
+*.key.pub
+creva-signing.key

@@ -2,7 +2,27 @@
 
 import { Certificate, VerificationResult } from '../common/integrity/certificate';
 import { formatFolio } from '../common/integrity/report-digest';
+import { readPublicKey } from '../common/integrity/signing-key';
+import { loadEnvWithFallback } from '../config/env';
+import { readEnvFile } from './env-file';
+import { join } from 'node:path';
 import { verifyFolderOnDisk } from '../modules/attestation/seal-folder';
+
+const SIGNATURE_MARK: Record<VerificationResult['signature'], string> = {
+  valid: '✔',
+  invalid: '✘',
+  missing: '✘',
+  unsigned: '·',
+  no_key: '?',
+};
+
+const SIGNATURE_SAY: Record<VerificationResult['signature'], string> = {
+  valid: 'auténtica, emitida por Creva',
+  invalid: 'NO ES VÁLIDA',
+  missing: 'FALTA — se esperaba la firma de Creva',
+  unsigned: 'el reporte no está firmado',
+  no_key: 'no se pudo comprobar',
+};
 
 export function renderVerification(certificate: Certificate, result: VerificationResult): string {
   const lines = ['Verificación de integridad', ''];
@@ -36,6 +56,10 @@ export function renderVerification(certificate: Certificate, result: Verificatio
   }
 
   lines.push('');
+  lines.push(`  ${SIGNATURE_MARK[result.signature]} Firma: ${SIGNATURE_SAY[result.signature]}`);
+  lines.push(`    ${result.signature_detail}`);
+
+  lines.push('');
   lines.push('  Lo que este sello NO prueba:');
   for (const limit of certificate.does_not_prove) lines.push(`    · ${limit}`);
 
@@ -59,7 +83,8 @@ async function main(): Promise<void> {
     return;
   }
 
-  const outcome = verifyFolderOnDisk(folder);
+  const env = loadEnvWithFallback(readEnvFile(join(process.cwd(), '.env')));
+  const outcome = verifyFolderOnDisk(folder, readPublicKey(env.CREVA_SIGNING_PUBLIC_KEY_FILE, env.CREVA_SIGNING_PUBLIC_KEY));
 
   if ('error' in outcome) {
     process.stdout.write(`${outcome.error}\n`);
@@ -70,7 +95,9 @@ async function main(): Promise<void> {
   process.stdout.write(`${renderVerification(outcome.certificate, outcome.result)}\n`);
 
   // A tampered file must fail the command, so a script can gate on it.
-  if (!outcome.result.files_intact) process.exitCode = 2;
+  if (!outcome.result.files_intact || outcome.result.signature === 'invalid' || outcome.result.signature === 'missing') {
+    process.exitCode = 2;
+  }
 }
 
 if (require.main === module) {

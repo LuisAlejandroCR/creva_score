@@ -20,7 +20,8 @@
     "verify": "npm run typecheck && npm run lint && npm test && npm run build",
     "mcp": "npm run build && node dist/modules/mcp/mcp.server.js",
     "mcp:probe": "npm run build && node dist/cli/mcp-probe.js",
-    "verificar": "npm run build && node dist/cli/verify-report.js"
+    "verificar": "npm run build && node dist/cli/verify-report.js",
+    "keygen": "npm run build && node dist/cli/keygen.js"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",

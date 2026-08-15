@@ -13,12 +13,15 @@ export interface SealOutcome {
 
 const SEALED_NOTE =
   'El sello guarda la huella SHA-256 de cada archivo entregado, así que cualquier cambio posterior se detecta.';
+const SIGNED_NOTE =
+  'Sellado y firmado por Creva: además de detectar alteraciones, la firma acredita quién lo emitió.';
 
 export function sealFolderOnDisk(
   folder: string,
   fileNames: string[],
   generatedAt: string,
   folio: string | null = null,
+  signingKeyPem?: string,
 ): SealOutcome {
   const certificatePath = join(folder, CERTIFICATE_FILE);
 
@@ -32,10 +35,10 @@ export function sealFolderOnDisk(
       return { certificate: null, certificatePath, note: 'No había archivos que sellar.' };
     }
 
-    const certificate = sealReport(files, generatedAt, folio);
+    const certificate = sealReport(files, generatedAt, folio, signingKeyPem);
     writeFileSync(certificatePath, `${JSON.stringify(certificate, null, 2)}\n`, 'utf8');
 
-    return { certificate, certificatePath, note: SEALED_NOTE };
+    return { certificate, certificatePath, note: certificate.signature === null ? SEALED_NOTE : SIGNED_NOTE };
   } catch (error) {
     // A report that could not be sealed is still a report; it just cannot claim to be sealed.
     return {
@@ -48,6 +51,7 @@ export function sealFolderOnDisk(
 
 export function verifyFolderOnDisk(
   folder: string,
+  trustedPublicKeyPem?: string,
 ): { certificate: Certificate; result: VerificationResult } | { error: string } {
   const certificatePath = join(folder, CERTIFICATE_FILE);
 
@@ -67,5 +71,5 @@ export function verifyFolderOnDisk(
     if (existsSync(path)) found.set(name, readFileSync(path));
   }
 
-  return verifySealedFolder(raw, found);
+  return verifySealedFolder(raw, found, trustedPublicKeyPem);
 }

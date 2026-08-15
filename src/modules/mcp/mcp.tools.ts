@@ -9,6 +9,7 @@ import { buildReport } from '../creva-score/creva-report.builder';
 import { renderReportHtml } from '../../cli/report';
 import { DocumentTools, ReportDocument, buildReportDocument, fileUrl, realTools } from './report-document';
 import { formatFolio, reportFolio } from '../../common/integrity/report-digest';
+import { readPublicKey, readSigningKey } from '../../common/integrity/signing-key';
 import { SealOutcome, sealFolderOnDisk, verifyFolderOnDisk } from '../attestation/seal-folder';
 import { renderScoreDisclosure } from '../score-disclosure/score-disclosure.service';
 
@@ -201,7 +202,9 @@ export function describeSeal(seal: SealOutcome): string {
     ...(folio === null ? [] : [`Folio     ${formatFolio(folio)}`]),
     `Huella    ${seal.certificate.seal_hash}`,
     'Cualquier cambio de un byte en los archivos rompe esta huella, así que quien los reciba puede comprobar que son los originales.',
-    'Comprueba integridad, no autoría: no acredita por sí solo quién emitió el reporte.',
+    ...(seal.certificate.signature === null
+      ? ['Comprueba integridad, no autoría: este reporte no está firmado.']
+      : [`Firmado por Creva con la llave ${seal.certificate.signature.key_id}, así que además acredita el origen.`]),
   ].join('\n');
 }
 
@@ -263,6 +266,7 @@ export function buildReportTool(
           document.kind === 'pdf' ? ['creva-reporte.html', 'creva-reporte.pdf'] : ['creva-reporte.html'],
           report.generated_at,
           reportFolio(report),
+          readSigningKey(setup.env.CREVA_SIGNING_KEY_FILE),
         );
 
         content.push({ type: 'text', text: `${describeDocument(document)}\n\n${describeSeal(seal)}` });
@@ -310,7 +314,7 @@ const verifyDocumentShape = {
     .describe('Ruta de la carpeta del reporte, la que contiene creva-sello.json y los archivos entregados.'),
 };
 
-export function buildVerifyDocumentTool(): McpToolDefinition<typeof verifyDocumentShape> {
+export function buildVerifyDocumentTool(setup: CrevaScoreSetup): McpToolDefinition<typeof verifyDocumentShape> {
   return {
     name: 'creva_verify_document',
     config: {
@@ -320,12 +324,12 @@ export function buildVerifyDocumentTool(): McpToolDefinition<typeof verifyDocume
       inputSchema: verifyDocumentShape,
     },
     async handler(args) {
-      const outcome = verifyFolderOnDisk(args.folder);
+      const outcome = verifyFolderOnDisk(args.folder, readPublicKey(setup.env.CREVA_SIGNING_PUBLIC_KEY_FILE, setup.env.CREVA_SIGNING_PUBLIC_KEY));
 
       if ('error' in outcome) return text(outcome.error, true);
 
       const { certificate, result } = outcome;
-      const altered = !result.files_intact;
+      const altered = !result.files_intact || result.signature === 'invalid' || result.signature === 'missing';
 
       return {
         content: [
@@ -335,6 +339,8 @@ export function buildVerifyDocumentTool(): McpToolDefinition<typeof verifyDocume
               {
                 files_intact: result.files_intact,
                 files: result.files.map((file) => ({ name: file.name, verdict: file.verdict })),
+                signature: result.signature,
+                signature_detail: result.signature_detail,
                 seal_is_self_consistent: result.seal_is_self_consistent,
                 seal_hash: certificate.seal_hash,
                 report_folio: certificate.report_folio,

@@ -54,7 +54,8 @@ Empezamos en México porque ahí están nuestras usuarias. La misma idea funcion
 **3. Un reporte que no se puede falsificar.** Cuando generas tu reporte, se guarda junto a él la huella digital de cada archivo.
 
 - **Si alguien le cambia un solo byte, se nota.** Una cifra movida, una fecha cambiada, un "Sin sello" convertido en "Verificado": la huella deja de coincidir.
-- **El banco lo comprueba sin pedirte nada** — y sin tener que confiar en nosotros.
+- **Va firmado por Creva**, con una llave que solo nosotros tenemos: nadie más puede emitir un reporte que se haga pasar por uno tuyo.
+- **El banco lo comprueba sin pedirte nada.**
 - **Tu reporte lleva un folio a la vista**, para que tu banco pueda pedírtelo y contrastarlo.
 
 **Lo que guardamos.** Los resultados se guardan un rato para no repetir la misma consulta. Se archivan bajo una huella ilegible, no bajo el nombre de tu negocio, y se pueden borrar de verdad.
@@ -130,7 +131,25 @@ node dist/cli/verify-report.js "<carpeta del reporte>"
 
 Responde archivo por archivo: **sin cambios**, **alterado** o **no está**. Y termina con código de salida distinto de cero cuando algo no cuadra, para que se pueda revisar de forma automática.
 
-⚠️ **Lo que el sello sí prueba, y lo que no.** Prueba **integridad**: que el archivo es idéntico al que se generó, o exactamente cuál dejó de serlo. **No prueba autoría por sí solo** — es un archivo que acompaña al reporte, así que quien rehiciera el documento podría volver a sellarlo. Acreditar que un reporte viene de Creva exige un mecanismo de firma adicional; está identificado como pendiente, y el propio sello lo dice en su campo `does_not_prove` en vez de dejarlo implícito.
+### La firma, que es lo que acredita el origen
+
+Un sello por sí solo comprueba integridad, no autoría: quien rehiciera el documento podría volver a sellarlo. Por eso el reporte se **firma** con una llave que solo Creva tiene.
+
+```bash
+npm run keygen
+```
+
+Genera el par, guarda la privada con permisos restringidos —**nunca se imprime en pantalla**— y te da la pública para publicar. Quien verifica la pone en su `.env`:
+
+```
+CREVA_SIGNING_PUBLIC_KEY_FILE=creva-signing.key.pub
+```
+
+La verificación distingue cinco casos y no los mezcla: **válida**, **no válida**, **falta** (se esperaba firma y no está), **sin firmar** (y nada indica que debiera llevarla) y **no se pudo comprobar** (no hay llave de confianza).
+
+⚠️ **La llave pública de confianza se lee de tu configuración, jamás del documento que estás revisando.** Si se leyera del archivo, un falsificador solo tendría que incluir su propia llave junto a su propia firma.
+
+⚠️ **Lo que la firma todavía no hace:** no acredita la fecha ante un tercero —la afirma quien firma—, y no sustituye una firma electrónica avanzada ni una constancia NOM-151.
 
 ### Usarlo desde un agente (MCP)
 

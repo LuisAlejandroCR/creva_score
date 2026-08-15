@@ -18,18 +18,20 @@ export function sealReport(
   files: Array<{ name: string; contents: Buffer }>,
   generatedAt: string,
   folio: string | null = null,
+  signingKeyPem?: string,
 ): Certificate {
-  return buildCertificate({ files: digestsOf(files), generatedAt, folio });
+  return buildCertificate({ files: digestsOf(files), generatedAt, folio, signingKeyPem });
 }
 
 export function verifySealedFolder(
   certificateRaw: string,
   found: Map<string, Buffer>,
+  trustedPublicKeyPem?: string,
 ): { certificate: Certificate; result: VerificationResult } | { error: string } {
   const certificate = parseCertificate(certificateRaw);
   if (certificate === null) {
     return { error: `El archivo ${CERTIFICATE_FILE} no se pudo leer o no tiene la forma esperada.` };
   }
 
-  return { certificate, result: verifyCertificate(certificate, found) };
+  return { certificate, result: verifyCertificate(certificate, found, trustedPublicKeyPem) };
 }

@@ -4,6 +4,7 @@ import { writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { resolveReportFolder } from '../common/output/report-folder';
 import { formatFolio, reportFolio } from '../common/integrity/report-digest';
+import { readSigningKey } from '../common/integrity/signing-key';
 import { SealOutcome, sealFolderOnDisk } from '../modules/attestation/seal-folder';
 import { createCrevaScore, createCacheStore } from '../modules/creva-score/creva-score.factory';
 import { buildVerificationBadge } from '../modules/business-verification/business-verification.badge';
@@ -214,6 +215,13 @@ export function renderSeal(seal: SealOutcome): string {
   lines.push(`    Huella   ${seal.certificate.seal_hash}`);
   lines.push(`    Archivo  ${seal.certificatePath}`);
 
+  lines.push(
+    `    Firma    ${
+      seal.certificate.signature === null
+        ? 'sin firmar — el sello comprueba integridad, no origen'
+        : `Creva · llave ${seal.certificate.signature.key_id}`
+    }`,
+  );
   lines.push(`    Alcance  ${seal.note}`);
 
   lines.push('', '  Para comprobar que nadie los alteró:');
@@ -264,6 +272,7 @@ async function main(): Promise<void> {
       ['creva-reporte.html', 'creva-reporte.json'],
       report.generated_at,
       reportFolio(report),
+      readSigningKey(env.CREVA_SIGNING_KEY_FILE),
     );
 
     process.stdout.write(`${renderReportPaths(folder, htmlPath, jsonPath)}\n${renderSeal(seal)}\n`);

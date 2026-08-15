@@ -47,7 +47,7 @@ export function createMcpServer(): McpServer {
   const report = buildReportTool(setup);
   server.registerTool(report.name, report.config, report.handler);
 
-  const verifyDocument = buildVerifyDocumentTool();
+  const verifyDocument = buildVerifyDocumentTool(setup);
   server.registerTool(verifyDocument.name, verifyDocument.config, verifyDocument.handler);
 
   return server;
