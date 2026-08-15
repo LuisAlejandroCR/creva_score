@@ -135,6 +135,16 @@ export interface Kpi {
   meter: KpiMeter | null;
 }
 
+/**
+ * Only the directory is consulted about the subject. The regulatory corpus and the reference
+ * rates are the same for every reader, so counting them as findings about her would overstate
+ * the report by an order of magnitude.
+ */
+export function signalSplit(report: CrevaReport): { subject: number; context: number } {
+  const subject = report.signals.filter((signal) => signal.category === 'business_verification').length;
+  return { subject, context: report.signals.length - subject };
+}
+
 // One definition, read by the screen and by the printable, so the two cannot drift apart.
 export function summaryKpis(report: CrevaReport, lanes: SourceLane[]): Kpi[] {
   const headline = report.signals.find((s) => s.category === 'reference_rate' && isPercent(s));
@@ -164,6 +174,7 @@ export function summaryKpis(report: CrevaReport, lanes: SourceLane[]): Kpi[] {
 // The summary is where the investigation lands: the total the intro announced arrives in
 // the centre of the ring, and everything else is a door. Each figure is stated once.
 export function hero(report: CrevaReport, lanes: SourceLane[]): string {
+  const split = signalSplit(report);
   const kpis = summaryKpis(report, lanes)
     .map(
       (kpi, index) => `<div class="kpi" style="--i:${index}">
@@ -180,7 +191,7 @@ export function hero(report: CrevaReport, lanes: SourceLane[]): string {
   <div class="landing">
     <div class="landing-ring">${ring(lanes, report.signals.length, 'kpi-count')}</div>
     <div class="landing-side">
-      <p class="lead">Preguntamos a ${report.sources.length} ${plural(report.sources.length, 'registro', 'registros')} de gobierno por este negocio. Esto devolvieron, cada dato con su fuente y su fecha.</p>
+      <p class="lead">${split.subject} de estas ${report.signals.length} señales ${plural(split.subject, 'es', 'son')} sobre tu negocio. Las otras ${split.context} son el marco regulatorio y las tasas de referencia: las mismas para cualquiera, y aquí van con su fuente y su fecha.</p>
       <button class="lead-go" type="button" data-step="signals">Ver de dónde salió cada señal <span class="jump-go" aria-hidden="true">→</span></button>
     </div>
   </div>

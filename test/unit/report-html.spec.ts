@@ -1,7 +1,7 @@
 import { buildReport } from '../../src/modules/creva-score/creva-report.builder';
 import { buildScoreDisclosure } from '../../src/modules/score-disclosure/score-disclosure.service';
 import { moreLabel, nextVisible, renderReportHtml } from '../../src/cli/report';
-import { summaryKpis } from '../../src/cli/report/sections';
+import { signalSplit, summaryKpis } from '../../src/cli/report/sections';
 import { buildLanes } from '../../src/cli/report/lanes';
 import { script } from '../../src/cli/report/script';
 import ts from 'typescript';
@@ -1146,5 +1146,36 @@ describe('renderReportPaths', () => {
     const expected = process.platform === 'win32' ? 'start' : process.platform === 'darwin' ? 'open' : 'xdg-open';
 
     expect(renderReportPaths(folder, html, json)).toContain(`${expected} "`);
+  });
+});
+
+describe('the report does not claim the whole corpus is about the subject', () => {
+  it('never says the registries were asked about this business', () => {
+    // Only the directory is asked about her; the gazette, the rulebook and the rates are
+    // identical for every reader. Claiming otherwise overstated the report by 24 signals.
+    const html = renderReportHtml(report());
+
+    expect(html).not.toContain('de gobierno por este negocio');
+    expect(html).not.toMatch(/Preguntamos a \d+ registros? de gobierno por este negocio/);
+  });
+
+  it('states how many signals are about the business and how many are context', () => {
+    const r = report();
+    const split = signalSplit(r);
+    const html = renderReportHtml(r);
+
+    expect(split.subject).toBe(1);
+    expect(split.context).toBe(r.signals.length - 1);
+    expect(html).toContain(`${split.subject} de estas ${r.signals.length} señales es sobre tu negocio`);
+    expect(html).toContain('las mismas para cualquiera');
+  });
+
+  it('counts only the directory signal as being about the subject', () => {
+    const r = reportWithManyRules(20);
+    const split = signalSplit(r);
+
+    // However big the regulatory corpus grows, it never becomes a finding about her.
+    expect(split.subject).toBe(1);
+    expect(split.context).toBeGreaterThan(20);
   });
 });
