@@ -1,7 +1,7 @@
 import { buildReport } from '../../src/modules/creva-score/creva-report.builder';
 import { buildScoreDisclosure } from '../../src/modules/score-disclosure/score-disclosure.service';
 import { moreLabel, nextVisible, renderReportHtml } from '../../src/cli/report';
-import { signalSplit, summaryKpis } from '../../src/cli/report/sections';
+import { reportShape, signalSplit, summaryKpis } from '../../src/cli/report/sections';
 import { buildLanes } from '../../src/cli/report/lanes';
 import { script } from '../../src/cli/report/script';
 import ts from 'typescript';
@@ -1177,5 +1177,84 @@ describe('the report does not claim the whole corpus is about the subject', () =
     // However big the regulatory corpus grows, it never becomes a finding about her.
     expect(split.subject).toBe(1);
     expect(split.context).toBeGreaterThan(20);
+  });
+});
+
+describe('the report takes a different shape when nothing public was found', () => {
+  const notListed = sourceOk(
+    'mx.siem',
+    { matched: false, confirmed_by_rfc: false, establishment_id: null, commercial_name: null, state: null, candidates_found: 0 },
+    '2026-08-13T00:00:00.000Z',
+  );
+
+  function personaFisica() {
+    return buildReport({
+      subject: { business_name: 'MARIA JOSE PEREZ', state_code: null },
+      verification: notListed,
+      radar,
+      rates,
+      disclosure,
+      now,
+    });
+  }
+
+  it('keeps the existing shape when the directory found her', () => {
+    expect(reportShape(report())).toBe('expediente');
+    expect(renderReportHtml(report())).toContain('de estas');
+  });
+
+  it('switches shape when the directory did not', () => {
+    expect(reportShape(personaFisica())).toBe('sin-registro');
+  });
+
+  it('opens with the state, not with a count of signals that are not hers', () => {
+    const html = renderReportHtml(personaFisica());
+
+    expect(html).toContain('Todavía no hay nada público sobre tu negocio');
+    expect(html).not.toContain('señales es sobre tu negocio');
+    expect(html).not.toContain('señales son sobre tu negocio');
+  });
+
+  it('says the directory is voluntary and that the absence does not count against her', () => {
+    const html = renderReportHtml(personaFisica());
+
+    expect(html).toContain('voluntario');
+    expect(html).toContain('Eso no te resta');
+    expect(html).toContain('Tu puntaje no depende de esto');
+  });
+
+  it('never invents how to register, and never offers the tax registry as consultable', () => {
+    // verificacion.md marks the obligation and the chamber process as unverified, and there
+    // is no SAT connector. A fabricated how-to inside a document shown to a bank is the
+    // exact failure this project refuses.
+    //
+    // Scoped to the empty state the rule is about: searching the whole document also reads
+    // the emitted script's English comments, where the word "sat" occurs innocently.
+    // The class name also appears in the stylesheet, so the start is anchored to the markup.
+    // Slicing from the rule instead swept in the emitted script and its English comments.
+    const html = renderReportHtml(personaFisica());
+    const start = html.indexOf('<div class="landing landing-empty">');
+    const end = html.indexOf('class="kpis"', start);
+
+    expect(start).toBeGreaterThan(-1);
+    expect(end).toBeGreaterThan(start);
+
+    const landing = html.slice(start, end).toLowerCase();
+
+    // A runaway slice must fail loudly rather than quietly measure the whole document.
+    expect(landing.length).toBeLessThan(3000);
+
+    for (const invented of ['canaco', 'cámara de comercio', 'ley de cámaras', 'inscríbete', 'constancia de situación fiscal']) {
+      expect(landing).not.toContain(invented);
+    }
+    expect(landing).not.toMatch(/\bsat\b/);
+  });
+
+  it('still carries the context signals, labelled as context', () => {
+    const built = personaFisica();
+    const html = renderReportHtml(built);
+
+    expect(signalSplit(built).context).toBeGreaterThan(0);
+    expect(html).toContain('las mismas para cualquiera');
   });
 });

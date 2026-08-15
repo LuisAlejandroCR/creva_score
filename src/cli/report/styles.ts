@@ -136,6 +136,21 @@ transition:all var(--mid) var(--ease)}
 margin:0 0 2rem}
 .landing-ring{display:flex;justify-content:center}
 .ring.big{width:min(15rem,58vw)}
+
+/* The empty state opens with a state, not a count: nothing was found, and that is the finding. */
+.landing-empty{align-items:start}
+.empty-mark{width:min(11rem,42vw);justify-self:center}
+.empty-mark svg{width:100%;height:auto;display:block}
+.empty-dash{fill:none;stroke:var(--bd);stroke-width:2;stroke-dasharray:5 9;stroke-linecap:round}
+.empty-core{fill:var(--s2)}
+.empty-title{font-size:clamp(1.15rem,2.6vw,1.6rem);font-weight:650;letter-spacing:-.02em;
+  line-height:1.2;margin-bottom:.7rem}
+.empty-points{list-style:none;margin:1.1rem 0;padding:0;display:grid;gap:.65rem}
+.empty-points li{position:relative;padding-left:1.1rem;font-size:.94rem;color:var(--muted);line-height:1.55}
+.empty-points li::before{content:'';position:absolute;left:0;top:.55em;width:5px;height:5px;
+  border-radius:50%;background:var(--crimson)}
+.empty-points b{color:var(--tx);font-weight:650}
+@media(max-width:720px){.landing-empty .empty-points li{text-align:left}}
 @media(max-width:720px){
   .landing{grid-template-columns:1fr;gap:1.2rem;text-align:center;justify-items:center}
   .lead{text-align:center}

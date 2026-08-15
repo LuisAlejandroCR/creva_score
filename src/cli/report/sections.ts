@@ -145,6 +145,46 @@ export function signalSplit(report: CrevaReport): { subject: number; context: nu
   return { subject, context: report.signals.length - subject };
 }
 
+export type ReportShape = 'expediente' | 'sin-registro';
+
+/**
+ * A subject with nothing in the registries has one signal, and it is an absence. Opening her
+ * report with a count of findings would announce a number that is not hers.
+ */
+export function reportShape(report: CrevaReport): ReportShape {
+  const found = report.signals.some(
+    (signal) => signal.category === 'business_verification' && signal.tone === 'positive',
+  );
+  return found ? 'expediente' : 'sin-registro';
+}
+
+// What the empty state may claim is bounded by what has been verified: the directory is
+// voluntary (Croma's own documentation) and the score does not depend on it (D-02). How to
+// register is NOT verified, so no instructions appear here.
+function emptyLanding(report: CrevaReport): string {
+  const split = signalSplit(report);
+
+  return `<div class="landing landing-empty">
+    <div class="empty-mark" aria-hidden="true">
+      <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+        <circle class="empty-dash" cx="60" cy="60" r="47"/>
+        <circle class="empty-core" cx="60" cy="60" r="31"/>
+      </svg>
+    </div>
+    <div class="landing-side">
+      <p class="empty-title">Todavía no hay nada público sobre tu negocio.</p>
+      <p class="lead">Buscamos en el directorio oficial de establecimientos y no encontramos un registro a este nombre.</p>
+      <ul class="empty-points">
+        <li><b>Eso no te resta.</b> Ese directorio es <b>voluntario</b>: muchos negocios formales, que facturan y pagan impuestos, simplemente no están inscritos.</li>
+        <li><b>Tu puntaje no depende de esto.</b> Sale de cómo opera tu negocio, no de aparecer en un padrón.</li>
+        <li><b>Si algún día te inscribes</b>, aquí aparecería el sello con su fuente y su fecha, sin que tengas que pedirlo.</li>
+      </ul>
+      <p class="lead">Lo que sigue no es sobre ti: son las ${split.context} referencias de marco regulatorio y de mercado, las mismas para cualquiera, cada una con su fuente y su fecha.</p>
+      <button class="lead-go" type="button" data-step="signals">Ver ese contexto <span class="jump-go" aria-hidden="true">→</span></button>
+    </div>
+  </div>`;
+}
+
 // One definition, read by the screen and by the printable, so the two cannot drift apart.
 export function summaryKpis(report: CrevaReport, lanes: SourceLane[]): Kpi[] {
   const headline = report.signals.find((s) => s.category === 'reference_rate' && isPercent(s));
@@ -187,14 +227,19 @@ export function hero(report: CrevaReport, lanes: SourceLane[]): string {
     )
     .join('');
 
-  return `<section class="block hero" data-enter="hero">
-  <div class="landing">
+  const landing =
+    reportShape(report) === 'sin-registro'
+      ? emptyLanding(report)
+      : `<div class="landing">
     <div class="landing-ring">${ring(lanes, report.signals.length, 'kpi-count')}</div>
     <div class="landing-side">
       <p class="lead">${split.subject} de estas ${report.signals.length} señales ${plural(split.subject, 'es', 'son')} sobre tu negocio. Las otras ${split.context} son el marco regulatorio y las tasas de referencia: las mismas para cualquiera, y aquí van con su fuente y su fecha.</p>
       <button class="lead-go" type="button" data-step="signals">Ver de dónde salió cada señal <span class="jump-go" aria-hidden="true">→</span></button>
     </div>
-  </div>
+  </div>`;
+
+  return `<section class="block hero" data-enter="hero">
+  ${landing}
 
   <div class="kpis" id="kpis">${kpis}</div>
   <div class="jumps" id="jumps">${jumpCards(report)}</div>
