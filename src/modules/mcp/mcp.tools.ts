@@ -4,6 +4,8 @@ import { readFileSync } from 'node:fs';
 import { z } from 'zod/v3';
 import { buildVerificationBadge } from '../business-verification/business-verification.badge';
 import { getVerificationStatus } from '../business-verification/business-verification.service';
+import { verifySubject } from '../business-verification/verify-subject';
+import { inspectRfc } from '../business-verification/rfc';
 import { CrevaScoreSetup } from '../creva-score/creva-score.factory';
 import { buildReport } from '../creva-score/creva-report.builder';
 import { renderReportHtml } from '../../cli/report';
@@ -35,7 +37,17 @@ const verifyBusinessShape = {
     .string()
     .min(2)
     .max(200)
+    .optional()
     .describe('Nombre comercial o razón social del negocio, tal como está registrado.'),
+  holder_name: z
+    .string()
+    .min(2)
+    .max(200)
+    .optional()
+    .describe(
+      'Nombre completo de la titular. Muchas emprendedoras están dadas de alta como persona física, así que el registro va a su nombre y no al del negocio. Si el nombre del negocio no aparece, se busca con este.',
+    ),
+
   state_code: z
     .number()
     .int()
@@ -43,7 +55,12 @@ const verifyBusinessShape = {
     .max(32)
     .optional()
     .describe('Código INEGI de la entidad federativa. Acota una búsqueda que suele traer miles de resultados.'),
-  rfc: z.string().optional().describe('RFC del negocio. Si se envía, se usa para confirmar que el registro es el correcto.'),
+  rfc: z
+    .string()
+    .optional()
+    .describe(
+      'RFC del negocio o de la titular. Se compara en local contra el registro que devuelve el directorio para elegir cuál de varias coincidencias es la correcta. No comprueba que el RFC exista: eso requiere el SAT, que no está disponible.',
+    ),
 };
 
 const reportShape = {
@@ -53,6 +70,15 @@ const reportShape = {
     .max(200)
     .optional()
     .describe('Nombre del negocio. Si se omite, el reporte sale sin sello y lo dice.'),
+  holder_name: z
+    .string()
+    .min(2)
+    .max(200)
+    .optional()
+    .describe(
+      'Nombre completo de la titular. Muchas emprendedoras están dadas de alta como persona física, así que el registro va a su nombre y no al del negocio. Si el nombre del negocio no aparece, se busca con este.',
+    ),
+
   state_code: z
     .number()
     .int()
@@ -60,7 +86,10 @@ const reportShape = {
     .max(32)
     .optional()
     .describe('Código INEGI de la entidad federativa.'),
-  rfc: z.string().optional().describe('RFC del negocio. Se compara en local; nunca se envía al proveedor.'),
+  rfc: z
+    .string()
+    .optional()
+    .describe('RFC del negocio o de la titular. Se compara en local; nunca se envía al proveedor.'),
   document: z
     .boolean()
     .optional()
@@ -108,11 +137,25 @@ export function buildVerifyBusinessTool(
       inputSchema: verifyBusinessShape,
     },
     async handler(args) {
-      const result = await setup.service.verify({
+      const rfc = inspectRfc(args.rfc);
+      const subject = await verifySubject(setup.service, {
         businessName: args.business_name,
+        holderName: args.holder_name,
         stateCode: args.state_code,
-        rfc: args.rfc,
+        rfc: rfc.usable ? (rfc.normalized ?? undefined) : undefined,
       });
+
+      const result = subject.result;
+      if (result === null) {
+        return text(
+          JSON.stringify(
+            { status: 'sin_consulta', message: 'Hace falta el nombre del negocio o el de la titular.' },
+            null,
+            2,
+          ),
+          true,
+        );
+      }
 
       const status = getVerificationStatus(result);
       if (status === 'unavailable') {
@@ -135,6 +178,9 @@ export function buildVerifyBusinessTool(
           {
             status,
             badge: buildVerificationBadge(result),
+            matched_by: subject.matched_by,
+            names_tried: subject.tried,
+            rfc_check: args.rfc === undefined ? null : { kind: rfc.kind, usable: rfc.usable, note: rfc.note },
             candidates_found: result.data?.candidates_found ?? 0,
             checked_at: result.checked_at,
             source: result.source,
@@ -231,20 +277,18 @@ export function buildReportTool(
       inputSchema: reportShape,
     },
     async handler(args) {
-      const verification =
-        args.business_name === undefined
-          ? null
-          : await setup.service.verify({
-              businessName: args.business_name,
-              stateCode: args.state_code,
-              rfc: args.rfc,
-            });
+      const reportRfc = inspectRfc(args.rfc);
+      const reportSubject = await verifySubject(setup.service, {
+        businessName: args.business_name,
+        holderName: args.holder_name,
+        stateCode: args.state_code,
+        rfc: reportRfc.usable ? (reportRfc.normalized ?? undefined) : undefined,
+      });
+      const verification = reportSubject.result;
 
+      const asked = args.business_name ?? args.holder_name;
       const report = buildReport({
-        subject:
-          args.business_name === undefined
-            ? null
-            : { business_name: args.business_name, state_code: args.state_code ?? null },
+        subject: asked === undefined ? null : { business_name: asked, state_code: args.state_code ?? null },
         verification,
         radar: await setup.radar.scan(),
         rates: await setup.rates.getRates(),

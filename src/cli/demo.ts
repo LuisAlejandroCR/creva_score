@@ -18,10 +18,13 @@ import { SourceResult } from '../common/types/source-result.types';
 import { CountingCacheStore } from './counting-cache';
 import { readEnvFile } from './env-file';
 import { buildReport } from '../modules/creva-score/creva-report.builder';
+import { MatchedBy, verifySubject } from '../modules/business-verification/verify-subject';
+import { inspectRfc } from '../modules/business-verification/rfc';
 import { renderReportHtml } from './report';
 
 export interface DemoArgs {
   businessName?: string;
+  holderName?: string;
   stateCode?: number;
   rfc?: string;
   report?: boolean;
@@ -48,6 +51,7 @@ export function parseArgs(argv: string[]): DemoArgs {
     if (value === undefined || value.startsWith('--')) continue;
 
     if (flag === '--negocio') args.businessName = value;
+    if (flag === '--titular') args.holderName = value;
     if (flag === '--rfc') args.rfc = value;
     if (flag === '--estado') {
       const parsed = Number(value);
@@ -98,16 +102,19 @@ function heading(text: string): string {
 export function renderVerification(
   args: DemoArgs,
   result: SourceResult<BusinessVerification> | null,
+  matchedBy: MatchedBy = null,
 ): string[] {
   const lines = [heading('Sello de tu negocio')];
+  const asked = args.businessName ?? args.holderName;
 
-  if (result === null || args.businessName === undefined) {
+  if (result === null || asked === undefined) {
     lines.push('  No consultamos ningún negocio en esta corrida.');
     lines.push('  Para verificar el tuyo:');
     lines.push('    npm run build');
     lines.push('    node dist/cli/demo.js --negocio "NOMBRE DE TU NEGOCIO" --estado 29');
     lines.push('  El estado es opcional, pero sin él la búsqueda por nombre rara vez acierta.');
     lines.push('  Usa el nombre completo tal como está registrado: una palabra suelta no identifica un negocio.');
+    lines.push('  Si estás dada de alta como persona física, agrega --titular "TU NOMBRE COMPLETO".');
     return lines;
   }
 
@@ -115,10 +122,17 @@ export function renderVerification(
   const badge = buildVerificationBadge(result);
 
   if (status === 'verified' && badge !== null) {
-    lines.push(`  ✔ Encontramos "${badge.commercial_name ?? args.businessName}" en el directorio oficial.`);
+    lines.push(`  ✔ Encontramos "${badge.commercial_name ?? asked}" en el directorio oficial.`);
     if (badge.state !== null) lines.push(`  Estado: ${badge.state}`);
+    if (matchedBy === 'holder') {
+      lines.push('  Coincidió por el nombre de la titular, no por el del negocio: así se registran las personas físicas.');
+    }
     lines.push(
-      `  ${badge.confirmed_by_rfc ? 'Confirmado con tu RFC.' : 'Coincidencia por nombre, sin confirmar con RFC.'}`,
+      `  ${
+        badge.confirmed_by_rfc
+          ? 'Coincidencia por nombre, confirmada con tu RFC contra el registro del directorio.'
+          : 'Coincidencia por nombre. No se confirmó con RFC.'
+      }`,
     );
     lines.push(`  Fuente: ${describeSource(badge.source)} · consultado el ${formatDate(badge.checked_at)}`);
     return lines;
@@ -126,15 +140,16 @@ export function renderVerification(
 
   if (status === 'ambiguous') {
     const found = new Intl.NumberFormat('es-MX').format(result.data?.candidates_found ?? 0);
-    lines.push(`  Encontramos ${found} negocios con un nombre parecido a "${args.businessName}",`);
+    lines.push(`  Encontramos ${found} negocios con un nombre parecido a "${asked}",`);
     lines.push('  pero ninguno se puede identificar como el tuyo.');
     lines.push('  No emitimos un sello que no podamos comprobar.');
     lines.push('  Prueba con el nombre completo tal como está registrado, o agrega tu RFC con --rfc.');
+    lines.push('  Si estás dada de alta como persona física, tu registro suele ir a tu nombre, no al del negocio.');
     return lines;
   }
 
   if (status === 'not_listed') {
-    lines.push(`  No encontramos "${args.businessName}" en el directorio oficial.`);
+    lines.push(`  No encontramos "${asked}" en el directorio oficial.`);
     lines.push('  Eso no dice nada malo de tu negocio: el registro es voluntario.');
     lines.push('  Tu puntaje es exactamente el mismo, con sello o sin él.');
     return lines;
@@ -236,30 +251,35 @@ async function main(): Promise<void> {
   const cache = new CountingCacheStore(createCacheStore(env));
   const { service, radar, rates, disclosure } = createCrevaScore(env, undefined, cache);
 
-  const verification =
-    args.businessName === undefined
-      ? null
-      : await service.verify({
-          businessName: args.businessName,
-          stateCode: args.stateCode,
-          rfc: args.rfc,
-        });
+  const rfc = inspectRfc(args.rfc);
+  if (args.rfc !== undefined && !rfc.usable) {
+    process.stdout.write(`Aviso sobre el RFC: ${rfc.note}
+`);
+  }
+
+  const subject = await verifySubject(service, {
+    businessName: args.businessName,
+    holderName: args.holderName,
+    stateCode: args.stateCode,
+    // A malformed RFC would only make the confirmation fail; the search by name still runs.
+    rfc: rfc.usable ? (rfc.normalized ?? undefined) : undefined,
+  });
+  const verification = subject.result;
 
   const scan = await radar.scan();
 
+  const asked = args.businessName ?? args.holderName;
+
   if (args.report === true) {
     const report = buildReport({
-      subject:
-        args.businessName === undefined
-          ? null
-          : { business_name: args.businessName, state_code: args.stateCode ?? null },
+      subject: asked === undefined ? null : { business_name: asked, state_code: args.stateCode ?? null },
       verification,
       radar: scan,
       rates: await rates.getRates(),
       disclosure,
     });
 
-    const folder = resolveReportFolder(args.businessName ?? 'revision-general', report.generated_at);
+    const folder = resolveReportFolder(asked ?? 'revision-general', report.generated_at);
     const htmlPath = join(folder, 'creva-reporte.html');
     const jsonPath = join(folder, 'creva-reporte.json');
 
@@ -279,7 +299,7 @@ async function main(): Promise<void> {
     return;
   }
 
-  const body = [...renderVerification(args, verification), ...renderRadar(scan)];
+  const body = [...renderVerification(args, verification, subject.matched_by), ...renderRadar(scan)];
 
   const lines = [
     'Creva Score — demostración',

@@ -100,6 +100,16 @@ node dist/cli/demo.js --negocio "ABARROTES ERENDIRA" --estado 8
 
 El estado es opcional pero casi siempre necesario: buscar por nombre sin acotar suele devolver miles de coincidencias, y entonces no se emite sello. En `cmd.exe`, `npm run demo -- --negocio "…"` rompe las comillas.
 
+**Si estás dada de alta como persona física**, tu registro suele ir a tu nombre y no al del negocio. Para eso está `--titular`:
+
+```bash
+node dist/cli/demo.js --negocio "MAGNIFIQUE STUDIO" --titular "TU NOMBRE COMPLETO" --estado 21
+```
+
+Busca primero por el nombre del negocio y, si no aparece, por el tuyo — y te dice cuál de los dos coincidió. Si das el nombre del negocio y ese basta, no gasta la segunda consulta.
+
+El `--rfc` se revisa antes de salir a la red: si el último carácter no corresponde al resto, te avisa de la posible errata **y busca por nombre de todos modos**. Un RFC bien formado no es un RFC verificado — comprobar que existe requiere el SAT, que no está disponible.
+
 ### Reporte
 
 ```bash

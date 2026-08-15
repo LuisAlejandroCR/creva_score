@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto';
 import { CacheStore } from '../../common/cache/memory-cache';
 import { SourceResult, sourceOk } from '../../common/types/source-result.types';
 import { SiemClient } from './providers/siem.provider';
+import { normalizeRfc } from './rfc';
 import { EstablishmentSummary, SIEM_SOURCE } from './providers/siem.types';
 
 export interface BusinessVerificationInput {
@@ -161,12 +162,6 @@ function rank(candidate: EstablishmentSummary, target: string): number {
   if (name.startsWith(target)) return 1;
   if (name.includes(target)) return 2;
   return 3;
-}
-
-function normalizeRfc(rfc: string | undefined): string | undefined {
-  if (typeof rfc !== 'string') return undefined;
-  const normalized = rfc.replace(/[\s-]/g, '').toUpperCase();
-  return normalized.length > 0 ? normalized : undefined;
 }
 
 function normalizeName(name: string): string {
