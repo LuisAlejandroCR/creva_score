@@ -18,6 +18,10 @@ coverage/
 creva-report.html
 creva-report.json
 
+# Máster de la grabación de pantalla: 96,9 MB. GitHub avisa arriba de 50 MB y
+# rechaza arriba de 100. Lo que se publica son los recortes de `media/`, 605 KB.
+creva-score.mp4
+
 # Skills vendored by `npx skills add`; skills-lock.json is what pins them.
 .agents/
 .claude/

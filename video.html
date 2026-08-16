@@ -36,7 +36,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;z-index:0;opacity:.5;displa
     radial-gradient(62% 56% at 6% 94%,rgba(196,30,58,.10),transparent 60%)}
 
 .slide{position:fixed;inset:0;z-index:3;display:flex;flex-direction:column;
-  justify-content:center;padding:clamp(3rem,8vh,5rem) var(--pad);
+  justify-content:center;padding:clamp(2rem,6vh,4rem) var(--pad);
   opacity:0;visibility:hidden;
   transition:opacity var(--cr-dur-slow) var(--cr-ease),visibility var(--cr-dur-slow)}
 .slide.on{opacity:1;visibility:visible}
@@ -50,20 +50,20 @@ html:not(.ready) #s0{opacity:1;visibility:visible}
 .slide.on .in>*:nth-child(3){animation-delay:.26s}
 .slide.on .in>*:nth-child(4){animation-delay:.39s}
 
-h1{font-size:clamp(2.4rem,7vw,5.4rem);line-height:1.02;letter-spacing:-.045em;
+h1{font-size:clamp(2.2rem,6.4vw,5rem);line-height:1.03;letter-spacing:-.045em;
   font-weight:700;max-width:17ch;color:var(--cr-text)}
 h1 em{font-style:normal;display:block;
   background:var(--cr-gradient);-webkit-background-clip:text;background-clip:text;color:transparent}
 .kicker{font-size:.68rem;letter-spacing:.28em;text-transform:uppercase;
-  color:var(--cr-crimson);font-weight:700;margin-bottom:1.4rem}
-.one{font-size:clamp(1.05rem,2vw,1.5rem);color:var(--cr-text-muted);max-width:44ch;margin-top:1.5rem}
+  color:var(--cr-crimson);font-weight:700;margin-bottom:1.2rem}
+.one{font-size:clamp(1rem,1.9vw,1.42rem);color:var(--cr-text-muted);max-width:46ch;margin-top:1.3rem}
 .one b{color:var(--cr-text);font-weight:650}
 
-.brand{display:flex;align-items:center;gap:.75rem;margin-bottom:1.6rem}
+.brand{display:flex;align-items:center;gap:.75rem;margin-bottom:1.4rem}
 .mark{width:34px;height:34px;border-radius:10px;background:var(--cr-gradient);
   box-shadow:var(--cr-card-shadow)}
 .brand b{font-size:.98rem}
-.chips{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:2rem}
+.chips{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1.8rem}
 .chip{border:1px solid var(--cr-border);border-radius:99px;padding:.44rem .95rem;
   font-size:.78rem;color:var(--cr-text-muted);background:var(--cr-surface-1)}
 .chip b{color:var(--cr-crimson);font-weight:700}
@@ -82,33 +82,67 @@ svg{display:block;width:100%;height:auto;overflow:visible}
 @keyframes pulse{0%,100%{opacity:.3;r:5}50%{opacity:1;r:8}}
 .slide.on .sweep{animation:orbit 3s linear .3s infinite}
 
-.nums{display:grid;gap:clamp(1rem,3vw,2.5rem);grid-template-columns:repeat(3,1fr);margin-top:2.2rem}
-@media (max-width:700px){.nums{grid-template-columns:1fr;gap:1.1rem}}
-.num .v{font-size:clamp(2.4rem,6vw,4.4rem);font-weight:700;letter-spacing:-.05em;line-height:1;
-  background:var(--cr-gradient);-webkit-background-clip:text;background-clip:text;color:transparent}
-.num .c{margin-top:.5rem;font-size:.9rem;color:var(--cr-text-muted);max-width:22ch}
+/* ── scene 2: the four registries wiring up ─────────────────────────────── */
+.wire{stroke:var(--cr-crimson);stroke-width:2;fill:none;stroke-linecap:round}
+.node{fill:var(--cr-surface-1);stroke:var(--cr-crimson);stroke-width:2}
+.node-l{font-size:12.5px;font-weight:700;fill:var(--cr-text);text-anchor:middle}
+.node-s{font-size:10px;fill:var(--cr-text-subtle);text-anchor:middle}
 
-.trio{display:grid;gap:1.3rem;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));margin-top:2rem}
-.p{border:1px solid var(--cr-border);border-radius:18px;padding:1.5rem 1.3rem;
-  background:var(--cr-surface-1);box-shadow:0 12px 32px rgba(26,22,19,.06)}
-.p svg{width:44px;height:44px;margin-bottom:.9rem}
-.p b{display:block;font-size:1.05rem;margin-bottom:.35rem;letter-spacing:-.02em}
-.p span{font-size:.88rem;color:var(--cr-text-muted)}
+/* ── scene 3: the number lands ──────────────────────────────────────────── */
+.big{display:grid;grid-template-columns:auto 1fr;gap:clamp(1.6rem,5vw,4rem);
+  align-items:center;margin-top:1.4rem}
+@media (max-width:860px){.big{grid-template-columns:1fr}}
+.ring{position:relative;width:clamp(190px,26vw,290px);aspect-ratio:1}
+.ring .n{position:absolute;inset:0;display:grid;place-content:center;text-align:center}
+.ring .n b{display:block;font-size:clamp(3.4rem,8vw,5.6rem);line-height:1;font-weight:700;
+  letter-spacing:-.06em;background:var(--cr-gradient);
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.ring .n span{font-size:.66rem;letter-spacing:.26em;text-transform:uppercase;
+  color:var(--cr-text-subtle);font-weight:700}
+.srcs{display:grid;gap:.7rem}
+.src{display:grid;grid-template-columns:5.5rem 1fr auto;gap:.9rem;align-items:center;
+  font-size:.92rem}
+.src b{font-weight:700;letter-spacing:.02em}
+.bar{height:9px;border-radius:99px;background:rgba(26,22,19,.08);overflow:hidden}
+.bar i{display:block;height:100%;border-radius:99px;background:var(--cr-gradient);width:var(--w)}
+.src u{text-decoration:none;color:var(--cr-text-subtle);font-variant-numeric:tabular-nums}
 
-.slots{display:grid;gap:1.3rem;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));margin-top:1.8rem}
-.slot{border-radius:16px;overflow:hidden;background:var(--cr-ink);
-  box-shadow:0 18px 44px rgba(26,22,19,.18)}
-.slot .hd{padding:.75rem 1.05rem;border-bottom:1px solid rgba(246,241,231,.09);
-  display:flex;align-items:center;gap:.55rem;font-size:.84rem;color:#F6F1E7}
-.dot{width:8px;height:8px;border-radius:99px;background:var(--cr-rosa)}
-.scr{aspect-ratio:16/10;background:var(--cr-ink-2);position:relative}
-.scr video{width:100%;height:100%;object-fit:cover}
-.ph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
-  justify-content:center;gap:.55rem;text-align:center;padding:1rem}
-.ph code{font-size:.76rem;color:var(--cr-rosa);font-family:ui-monospace,Menlo,monospace}
-.ph p{font-size:.74rem;color:rgba(246,241,231,.58)}
-.rec{width:28px;height:28px;border-radius:99px;border:2px solid var(--cr-crimson);display:grid;place-items:center}
-.rec::after{content:'';width:10px;height:10px;border-radius:99px;background:var(--cr-crimson)}
+/* ── scenes 4–6: one frame, the camera moves inside it ──────────────────── */
+.stage{position:relative;margin-top:1.1rem;border-radius:18px;overflow:hidden;
+  background:var(--cr-ink);aspect-ratio:16/9;max-height:62vh;
+  box-shadow:0 26px 70px rgba(26,22,19,.22);border:1px solid var(--cr-border)}
+/* Only the layers fill the frame. The caption pill must NOT — `.stage>*` used to
+   catch it too and inflated it to the whole stage. */
+.stage>video,.stage>iframe,.stage>.fallback{position:absolute;inset:0;width:100%;height:100%}
+.stage video{object-fit:cover;object-position:center top;
+  transition:transform 900ms var(--cr-ease),opacity 320ms linear;opacity:0}
+.stage video.live{opacity:1}
+/* Each clip carries its own framing so the eye lands on the line that matters. */
+.stage video.z-doc{transform:scale(1.55) translate(6%,14%)}
+.stage video.z-term{transform:scale(1.5) translate(2%,-2%)}
+.stage video.z-files{transform:scale(1.45) translate(9%,20%)}
+.stage video.z-cover{transform:scale(1.3) translate(0,6%)}
+
+.doc{border:0;background:var(--cr-surface-1);width:1440px;height:1900px;
+  transform-origin:0 0;transition:transform 1200ms var(--cr-ease)}
+.fallback{display:grid;place-content:center;gap:.6rem;text-align:center;padding:2rem;
+  background:var(--cr-surface-1)}
+.fallback b{font-size:clamp(1.2rem,2.4vw,1.9rem);letter-spacing:-.03em}
+.fallback span{font-size:.85rem;color:var(--cr-text-subtle)}
+.fallback .row{display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap;margin-top:.5rem}
+.fallback .row i{font-style:normal;border:1px solid var(--cr-border);border-radius:99px;
+  padding:.3rem .8rem;font-size:.75rem;color:var(--cr-text-muted)}
+
+.tag{position:absolute;left:1rem;bottom:1rem;z-index:4;display:flex;align-items:center;
+  gap:.5rem;background:rgba(23,19,15,.82);color:#F6F1E7;border-radius:99px;
+  padding:.42rem .95rem;font-size:.78rem;backdrop-filter:blur(6px)}
+.tag i{width:7px;height:7px;border-radius:99px;background:var(--cr-rosa);font-style:normal}
+
+.seal{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:1.1rem}
+.seal span{border:1px solid var(--cr-border);background:var(--cr-surface-1);border-radius:10px;
+  padding:.5rem .9rem;font-size:.8rem;color:var(--cr-text-muted);
+  font-family:ui-monospace,Menlo,Consolas,monospace}
+.seal span b{color:var(--cr-crimson);font-weight:700}
 
 /* ── chrome: a thin progress line stays, everything else leaves the frame ──
    This deck exists to be screen-recorded, so a visible clock and key hints would be
@@ -127,8 +161,20 @@ svg{display:block;width:100%;height:auto;overflow:visible}
   letter-spacing:.2em;text-transform:uppercase;color:var(--cr-crimson);opacity:0;
   transition:opacity var(--cr-dur)}
 .pz.on{opacity:1}
+
+/* The recording starts from here: one click arms the audio, which owns the clock. */
+.gate{position:fixed;inset:0;z-index:30;display:grid;place-content:center;gap:1.1rem;
+  background:var(--cr-bg);text-align:center;padding:2rem}
+.gate b{font-size:clamp(1.3rem,3vw,2.2rem);letter-spacing:-.03em}
+.gate p{font-size:.9rem;color:var(--cr-text-muted);max-width:34ch;margin:0 auto}
+.play{margin:0 auto;width:78px;height:78px;border-radius:99px;border:0;cursor:pointer;
+  background:var(--cr-gradient);box-shadow:var(--cr-card-shadow);display:grid;place-content:center}
+.play::after{content:'';margin-left:6px;border-left:22px solid #fff;
+  border-top:14px solid transparent;border-bottom:14px solid transparent}
+.gate small{font-size:.72rem;color:var(--cr-text-subtle)}
+
 @media (prefers-reduced-motion:reduce){
-  .slide,.slide.on .in>*{transition:none;animation:none}
+  .slide,.slide.on .in>*,.stage video,.doc{transition:none;animation:none}
   canvas{display:none}.dash{stroke-dashoffset:0}
 }
 </style>
@@ -139,13 +185,15 @@ svg{display:block;width:100%;height:auto;overflow:visible}
 <div class="veil"></div>
 <div class="pz" id="pz">Pausa</div>
 
-<!-- 0 · EL PROBLEMA · 0–11 s -->
+<audio id="vo" src="creva-audio.mp3" preload="auto"></audio>
+
+<!-- 0 · EL PROBLEMA · 0.00 s -->
 <section class="slide on" id="s0"><div class="in">
   <div class="brand"><div class="mark"></div><div><b>Creva Score</b></div></div>
   <div class="split">
     <div>
       <h1>Sin historial<em>no hay crédito.</em></h1>
-      <p class="one">Y sin crédito nunca lo construye. El círculo se cierra sobre sí mismo.</p>
+      <p class="one">El problema no es existir. Es poder demostrarlo.</p>
     </div>
     <figure class="fig-hide" aria-label="Círculo vicioso del crédito">
       <svg viewBox="0 0 260 260" role="img">
@@ -166,83 +214,108 @@ svg{display:block;width:100%;height:auto;overflow:visible}
   </div>
 </div></section>
 
-<!-- 1 · LA EVIDENCIA · 11–25 s -->
+<!-- 1 · LA INVESTIGACIÓN · 6.84 s -->
 <section class="slide" id="s1"><div class="in">
-  <p class="kicker">Lo medimos antes de decidir</p>
-  <h1>Un dato de gobierno<em>también excluye.</em></h1>
-  <div class="nums">
-    <div class="num"><div class="v" data-count="30" data-suffix="×">30×</div>
-      <p class="c">más registros por habitante en el norte que en el centro</p></div>
-    <div class="num"><div class="v" data-count="3" data-suffix=" de 3">3 de 3</div>
-      <p class="c">negocios reales y formales, ausentes del directorio</p></div>
-    <div class="num"><div class="v" data-count="0" data-suffix="">0</div>
-      <p class="c">puntos que ese registro aporta al puntaje</p></div>
-  </div>
+  <p class="kicker">Lo que hace Creva</p>
+  <h1>Evidencia dispersa,<em>señales verificables.</em></h1>
+  <figure aria-label="Cuatro registros públicos conectados a Creva">
+    <svg viewBox="0 0 900 210" role="img">
+      <path class="wire dash" style="--L:300" d="M150 52 C 300 52, 330 105, 450 105"/>
+      <path class="wire dash" style="--L:300" d="M150 158 C 300 158, 330 105, 450 105"/>
+      <path class="wire dash" style="--L:300" d="M750 52 C 600 52, 570 105, 450 105"/>
+      <path class="wire dash" style="--L:300" d="M750 158 C 600 158, 570 105, 450 105"/>
+      <g class="node-g">
+        <rect class="node" x="40" y="30" width="118" height="44" rx="12"/>
+        <text class="node-l" x="99" y="50">SIEM</text><text class="node-s" x="99" y="65">directorio</text>
+        <rect class="node" x="40" y="136" width="118" height="44" rx="12"/>
+        <text class="node-l" x="99" y="156">DOF</text><text class="node-s" x="99" y="171">gaceta</text>
+        <rect class="node" x="742" y="30" width="118" height="44" rx="12"/>
+        <text class="node-l" x="801" y="50">CNBV</text><text class="node-s" x="801" y="65">normas</text>
+        <rect class="node" x="742" y="136" width="118" height="44" rx="12"/>
+        <text class="node-l" x="801" y="156">BANXICO</text><text class="node-s" x="801" y="171">tasas</text>
+      </g>
+      <circle cx="450" cy="105" r="34" fill="var(--cr-crimson)"/>
+      <circle class="pulse" cx="450" cy="105" r="44" fill="none"
+              stroke="var(--cr-rosa)" stroke-width="2"/>
+      <text x="450" y="110" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">CREVA</text>
+    </svg>
+  </figure>
+  <p class="one">Cada señal viaja con <b>su fuente y su fecha</b>. Sin eso, no entra.</p>
 </div></section>
 
-<!-- 2 · LA SOLUCIÓN · 25–39 s -->
+<!-- 2 · EL NÚMERO · 16.25 s -->
 <section class="slide" id="s2"><div class="in">
-  <p class="kicker">Lo que construimos</p>
-  <h1>Un expediente que<em>sí puede enseñar.</em></h1>
-  <div class="trio">
-    <div class="p">
-      <svg viewBox="0 0 48 48" fill="none" aria-hidden="true">
-        <circle cx="24" cy="24" r="17" stroke="var(--cr-rosa)" stroke-width="2"/>
-        <path class="dash" style="--L:26" d="M16 24.5l5.5 5.5L33 19" stroke="var(--cr-crimson)"
-              stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <p class="kicker">Este caso, 16 de agosto de 2026</p>
+  <h1>25 señales,<em>4 registros.</em></h1>
+  <div class="big">
+    <div class="ring">
+      <svg viewBox="0 0 200 200" aria-hidden="true">
+        <circle cx="100" cy="100" r="82" fill="none" stroke="rgba(26,22,19,.08)" stroke-width="14"/>
+        <circle class="dash" style="--L:515" cx="100" cy="100" r="82" fill="none"
+                stroke="var(--cr-crimson)" stroke-width="14" stroke-linecap="round"
+                transform="rotate(-90 100 100)"/>
       </svg>
-      <b>El sello</b><span>Su negocio en el directorio oficial, con fuente y fecha.</span>
+      <div class="n"><b data-count="25">25</b><span>señales</span></div>
     </div>
-    <div class="p">
-      <svg viewBox="0 0 48 48" fill="none" aria-hidden="true">
-        <circle cx="24" cy="24" r="17" stroke="rgba(26,22,19,.14)" stroke-width="1.5"/>
-        <circle cx="24" cy="24" r="9" stroke="rgba(26,22,19,.14)" stroke-width="1.5"/>
-        <g class="sweep" style="transform-origin:24px 24px">
-          <path d="M24 24V7" stroke="var(--cr-crimson)" stroke-width="2.5" stroke-linecap="round"/>
-        </g>
-        <circle class="pulse" cx="33" cy="17" r="5" fill="var(--cr-rosa)"/>
-      </svg>
-      <b>El radar</b><span>Las reglas nuevas que sí le tocan, sin consultar datos suyos.</span>
-    </div>
-    <div class="p">
-      <svg viewBox="0 0 48 48" fill="none" aria-hidden="true">
-        <rect x="11" y="7" width="26" height="34" rx="3" stroke="var(--cr-rosa)" stroke-width="2"/>
-        <path d="M17 17h14M17 24h14M17 31h8" stroke="rgba(26,22,19,.20)" stroke-width="2" stroke-linecap="round"/>
-        <circle cx="34" cy="34" r="8" fill="var(--cr-crimson)"/>
-        <path class="dash" style="--L:14" d="M30.5 34l2.5 2.5 4.5-5" stroke="#fff"
-              stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-      <b>El reporte</b><span>Sellado y firmado: un byte alterado y deja de coincidir.</span>
+    <div class="srcs">
+      <div class="src"><b>SIEM</b><div class="bar"><i style="--w:4%"></i></div><u>1</u></div>
+      <div class="src"><b>DOF</b><div class="bar"><i style="--w:2%"></i></div><u>0</u></div>
+      <div class="src"><b>CNBV</b><div class="bar"><i style="--w:80%"></i></div><u>20</u></div>
+      <div class="src"><b>BANXICO</b><div class="bar"><i style="--w:16%"></i></div><u>4</u></div>
     </div>
   </div>
+  <p class="one"><b>Una</b> es sobre este negocio. Las otras 24 son el marco que lo rodea —
+    y el reporte lo dice con esas palabras.</p>
 </div></section>
 
-<!-- 3 · DEMO · 39–53 s -->
+<!-- 3 · EL EXPEDIENTE · 25.18 s -->
 <section class="slide" id="s3"><div class="in">
-  <p class="kicker">Corriendo, no en diapositiva</p>
-  <h1>Dos superficies,<em>los mismos datos.</em></h1>
-  <div class="slots">
-    <div class="slot">
-      <div class="hd"><span class="dot"></span><b>Claude Escritorio · MCP</b></div>
-      <div class="scr">
-        <video data-slot src="demo-claude-escritorio.mp4" muted loop playsinline preload="metadata"></video>
-        <div class="ph" data-ph><div class="rec"></div><p>Coloca tu grabación:</p><code>demo-claude-escritorio.mp4</code></div>
-      </div>
+  <p class="kicker">El expediente que sí puede enseñar</p>
+  <div class="stage" id="stage-doc">
+    <div class="fallback">
+      <b>Reporte de verificación pública</b>
+      <span>ABARROTES ERENDIRA · 25 señales · 4 fuentes · 16 de agosto de 2026</span>
+      <div class="row"><i>SIEM 1</i><i>DOF 0</i><i>CNBV 20</i><i>BANXICO 4</i></div>
     </div>
-    <div class="slot">
-      <div class="hd"><span class="dot"></span><b>Terminal · CLI</b></div>
-      <div class="scr">
-        <video data-slot src="demo-terminal.mp4" muted loop playsinline preload="metadata"></video>
-        <div class="ph" data-ph><div class="rec"></div><p>Coloca tu grabación:</p><code>demo-terminal.mp4</code></div>
-      </div>
-    </div>
+    <iframe class="doc" id="doc" src="creva-report.html" title="Reporte de verificación pública"
+            scrolling="no" tabindex="-1" aria-hidden="true" loading="eager"></iframe>
+    <div class="tag"><i></i>Qué se consultó, cuándo, y de qué registro salió</div>
   </div>
 </div></section>
 
-<!-- 4 · CIERRE · 53–60 s -->
-<section class="slide" id="s4"><div class="in" style="text-align:center">
-  <h1 style="margin-inline:auto">Los datos ya prueban<em>que el negocio existe.</em></h1>
-  <p class="one" style="margin-inline:auto">Solo que ningún banco los mira. Todavía.</p>
+<!-- 4 · DOS SUPERFICIES · 33.79 s -->
+<section class="slide" id="s4"><div class="in">
+  <p class="kicker">Corriendo, no en diapositiva</p>
+  <div class="stage">
+    <video data-at="33.79" class="z-doc live" src="media/mcp-permiso.mp4" muted loop playsinline preload="auto"></video>
+    <video data-at="34.79" class="z-doc" src="media/mcp-veredicto.mp4" muted loop playsinline preload="auto"></video>
+    <video data-at="37.99" class="z-doc" src="media/mcp-reporte.mp4" muted loop playsinline preload="auto"></video>
+    <video data-at="39.29" class="z-term" src="media/cli-sonda.mp4" muted loop playsinline preload="auto"></video>
+    <div class="tag"><i></i><span id="tag4">Claude Escritorio · MCP</span></div>
+  </div>
+</div></section>
+
+<!-- 5 · LA ENTREGA · 41.27 s -->
+<section class="slide" id="s5"><div class="in">
+  <p class="kicker">Lo que se lleva</p>
+  <div class="stage">
+    <video data-at="41.27" class="z-files live" src="media/dl-archivos.mp4" muted loop playsinline preload="auto"></video>
+    <video data-at="44.27" class="z-files" src="media/dl-carpeta.mp4" muted loop playsinline preload="auto"></video>
+    <video data-at="46.77" class="z-cover" src="media/dl-pdf.mp4" muted loop playsinline preload="auto"></video>
+    <div class="tag"><i></i><span id="tag5">HTML · PDF · JSON</span></div>
+  </div>
+  <div class="seal">
+    <span>Huella <b>SHA-256</b></span>
+    <span>Firma <b>Ed25519</b></span>
+    <span>Un byte cambiado <b>deja de coincidir</b></span>
+  </div>
+</div></section>
+
+<!-- 6 · CIERRE · 51.26 s -->
+<section class="slide" id="s6"><div class="in" style="text-align:center">
+  <h1 style="margin-inline:auto">No es una promesa de crédito.<em>Es evidencia verificable.</em></h1>
+  <p class="one" style="margin-inline:auto">Los datos ya prueban que el negocio opera.
+    Solo que ningún banco los mira. Todavía.</p>
   <div class="chips" style="justify-content:center">
     <span class="chip">🇲🇽 <b>México</b></span><span class="chip">🇨🇴 Colombia</span>
     <span class="chip">🇵🇪 Perú</span><span class="chip">La misma API</span>
@@ -251,24 +324,37 @@ svg{display:block;width:100%;height:auto;overflow:visible}
 
 <div class="pbar"><div class="pfil" id="pf"></div></div>
 <div class="chrome" id="chrome">
-  <span id="clock">0:00 / 1:00</span>
+  <span id="clock">0:00 / 0:59</span>
   <span>espacio pausa · ← → escena · R reinicia · F pantalla completa</span>
   <div class="dots" id="dots"></div>
+</div>
+
+<div class="gate" id="gate">
+  <b>Creva Score · un minuto</b>
+  <button class="play" id="go" type="button" aria-label="Reproducir con la narración"></button>
+  <p>Un clic arranca la narración, y la narración manda el reloj.</p>
+  <small>Pantalla completa con <b>F</b> antes de grabar.</small>
 </div>
 
 <script>
 (function(){
   document.documentElement.classList.add('ready');
 
-  var TOTAL = 60000;
-  // Five beats in a minute: problem, evidence, solution, demo, close.
-  var MARKS = [0, 11000, 25000, 39000, 53000];
+  // Scene marks measured on creva-audio.mp3 with ffmpeg silencedetect, not estimated.
+  // Re-measure and paste here if the take is replaced.
+  var TOTAL = 59298;
+  var MARKS = [0, 6840, 16250, 25180, 33790, 41270, 51260];
+  var LEAD = 0;
+
   var slides = [].slice.call(document.querySelectorAll('.slide'));
+  var clips  = [].slice.call(document.querySelectorAll('[data-at]'));
   var pf = document.getElementById('pf'), clock = document.getElementById('clock');
   var pz = document.getElementById('pz'), dotsBox = document.getElementById('dots');
-  var chrome = document.getElementById('chrome');
+  var chrome = document.getElementById('chrome'), gate = document.getElementById('gate');
+  var vo = document.getElementById('vo'), go = document.getElementById('go');
+  var doc = document.getElementById('doc'), tag4 = document.getElementById('tag4');
   var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var t0 = performance.now(), paused = false, pauseAt = 0, cur = -1, hideTimer;
+  var t0 = performance.now(), paused = false, pauseAt = 0, cur = -1, live = null, hideTimer;
 
   var dots = MARKS.map(function(_, i){
     var b = document.createElement('button');
@@ -294,7 +380,7 @@ svg{display:block;width:100%;height:auto;overflow:visible}
       var suffix = el.getAttribute('data-suffix') || '';
       // Never zero it synchronously: the markup already carries the true figure, and a
       // stalled rAF would otherwise leave the slide claiming the opposite of the evidence.
-      var start = null, dur = 1000;
+      var start = null, dur = 900;
       requestAnimationFrame(function tick(now){
         if (start === null) start = now;
         var p = Math.min(1, (now - start) / dur);
@@ -302,6 +388,37 @@ svg{display:block;width:100%;height:auto;overflow:visible}
         if (p < 1) requestAnimationFrame(tick);
       });
     });
+  }
+
+  // Three camera positions over the report, driven by the same clock as everything else.
+  var CAM = [
+    { at: 25180, s: 0.62, x: 0,    y: 0    },
+    { at: 28600, s: 1.00, x: -140, y: -240 },
+    { at: 31600, s: 1.30, x: -300, y: -900 }
+  ];
+  function camera(ms){
+    if (!doc) return;
+    var c = CAM[0];
+    for (var i = 0; i < CAM.length; i++) if (ms >= CAM[i].at) c = CAM[i];
+    doc.style.transform = 'translate(' + c.x + 'px,' + c.y + 'px) scale(' + c.s + ')';
+  }
+  if (doc) doc.addEventListener('error', function(){ doc.hidden = true; });
+
+  function reel(ms){
+    var pick = null;
+    for (var i = 0; i < clips.length; i++){
+      var at = parseFloat(clips[i].getAttribute('data-at')) * 1000;
+      if (ms >= at && (!pick || at >= parseFloat(pick.getAttribute('data-at')) * 1000)) pick = clips[i];
+    }
+    if (pick === live) return;
+    if (live) live.classList.remove('live');
+    live = pick;
+    if (!live) return;
+    live.classList.add('live');
+    try { live.currentTime = 0; } catch (e) {}
+    var p = live.play(); if (p && p.catch) p.catch(function(){});
+    if (tag4) tag4.textContent = live.src.indexOf('cli-') > -1
+      ? 'Terminal · sonda MCP' : 'Claude Escritorio · MCP';
   }
 
   function show(i){
@@ -316,6 +433,7 @@ svg{display:block;width:100%;height:auto;overflow:visible}
     i = Math.max(0, Math.min(MARKS.length - 1, i));
     t0 = performance.now() - MARKS[i];
     if (paused) pauseAt = MARKS[i];
+    if (!vo.paused) { try { vo.currentTime = MARKS[i] / 1000 + LEAD; } catch (e) {} }
     // Paint straight away, never only from the loop: a stalled clock must still leave
     // the deck drivable by hand instead of freezing on one scene.
     render(MARKS[i]);
@@ -330,8 +448,10 @@ svg{display:block;width:100%;height:auto;overflow:visible}
     var i = 0;
     for (var k = 0; k < MARKS.length; k++) if (ms >= MARKS[k]) i = k;
     show(i);
+    reel(ms);
+    camera(ms);
     pf.style.width = Math.min(100, (ms / TOTAL) * 100) + '%';
-    clock.textContent = mmss(ms) + ' / 1:00';
+    clock.textContent = mmss(ms) + ' / 0:59';
   }
 
   function frame(now){
@@ -345,30 +465,45 @@ svg{display:block;width:100%;height:auto;overflow:visible}
   render(0);
   requestAnimationFrame(frame);
 
+  // The narration owns the clock: every narrated second is 1000 ms of the deck, so
+  // pausing and resuming can never drift. Without audio the 59 s timer still runs.
+  vo.addEventListener('timeupdate', function(){
+    if (vo.paused) return;
+    t0 = performance.now() - Math.max(0, vo.currentTime - LEAD) * 1000;
+  });
+  vo.addEventListener('ended', function(){ paused = true; pauseAt = TOTAL; });
+  vo.addEventListener('error', function(){ gate.hidden = true; });
+
+  function start(){
+    gate.hidden = true;
+    t0 = performance.now();
+    paused = false; pauseAt = 0; pz.classList.remove('on');
+    render(0);
+    try {
+      vo.currentTime = 0;
+      var p = vo.play();
+      if (p && p.catch) p.catch(function(){});
+    } catch (e) {}
+  }
+  go.addEventListener('click', start);
+
   addEventListener('keydown', function(e){
     if (e.code === 'Space'){
       e.preventDefault();
-      if (paused){ t0 = performance.now() - pauseAt; paused = false; pz.classList.remove('on'); }
-      else { pauseAt = performance.now() - t0; paused = true; pz.textContent = 'Pausa'; pz.classList.add('on'); }
+      if (!gate.hidden) { start(); return; }
+      if (paused){ t0 = performance.now() - pauseAt; paused = false; pz.classList.remove('on');
+                   var r = vo.play(); if (r && r.catch) r.catch(function(){}); }
+      else { pauseAt = performance.now() - t0; paused = true; vo.pause();
+             pz.textContent = 'Pausa'; pz.classList.add('on'); }
     }
     if (e.key === 'ArrowRight') jump(cur + 1);
     if (e.key === 'ArrowLeft')  jump(cur - 1);
-    if (e.key === 'r' || e.key === 'R'){ t0 = performance.now(); paused = false; pauseAt = 0; pz.classList.remove('on'); }
+    if (e.key === 'r' || e.key === 'R'){ vo.pause(); gate.hidden = false; t0 = performance.now();
+      paused = false; pauseAt = 0; pz.classList.remove('on'); render(0); }
     if (e.key === 'f' || e.key === 'F'){
       if (document.fullscreenElement) document.exitFullscreen();
       else document.documentElement.requestFullscreen();
     }
-  });
-
-  [].forEach.call(document.querySelectorAll('[data-slot]'), function(v){
-    var ph = v.parentNode.querySelector('[data-ph]');
-    v.hidden = true;
-    v.addEventListener('loadeddata', function(){
-      v.hidden = false; if (ph) ph.hidden = true;
-      var p = v.play(); if (p && p.catch) p.catch(function(){});
-    });
-    v.addEventListener('error', function(){ v.hidden = true; });
-    v.load();
   });
 
   // ── background: an original constellation, drawn here, nothing borrowed ──
