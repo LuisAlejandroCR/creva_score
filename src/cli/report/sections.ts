@@ -118,7 +118,11 @@ export function investigation(report: CrevaReport, lanes: SourceLane[], name: st
 
     <ul class="ticks" aria-hidden="true">${ticks}</ul>
     <p class="progress" aria-hidden="true"><span class="progress-n" id="progress-n">0</span> <span id="progress-w">fuentes conectadas</span></p>
-    <p class="flash" id="flash" aria-hidden="true"><strong>${report.signals.length}</strong> señales encontradas</p>
+    <p class="flash" id="flash" aria-hidden="true">${
+      reportShape(report) === 'sin-registro'
+        ? 'Nada público <strong>todavía</strong>'
+        : `<strong>${report.signals.length}</strong> señales encontradas`
+    }</p>
   </section>`;
 }
 
@@ -174,13 +178,13 @@ function emptyLanding(report: CrevaReport): string {
     <div class="landing-side">
       <p class="empty-title">Todavía no hay nada público sobre tu negocio.</p>
       <p class="lead">Buscamos en el directorio oficial de establecimientos y no encontramos un registro a este nombre.</p>
+      <p class="lead lead-strong">Por eso este reporte es corto: no lo vamos a llenar con ${split.context} referencias que no son tuyas.</p>
       <ul class="empty-points">
         <li><b>Eso no te resta.</b> Ese directorio es <b>voluntario</b>: muchos negocios formales, que facturan y pagan impuestos, simplemente no están inscritos.</li>
         <li><b>Tu puntaje no depende de esto.</b> Sale de cómo opera tu negocio, no de aparecer en un padrón.</li>
         <li><b>Si algún día te inscribes</b>, aquí aparecería el sello con su fuente y su fecha, sin que tengas que pedirlo.</li>
       </ul>
-      <p class="lead">Lo que sigue no es sobre ti: son las ${split.context} referencias de marco regulatorio y de mercado, las mismas para cualquiera, cada una con su fuente y su fecha.</p>
-      <button class="lead-go" type="button" data-step="signals">Ver ese contexto <span class="jump-go" aria-hidden="true">→</span></button>
+      <button class="lead-go" type="button" data-step="audit">Ver qué consultamos y qué no <span class="jump-go" aria-hidden="true">→</span></button>
     </div>
   </div>`;
 }
@@ -214,8 +218,11 @@ export function summaryKpis(report: CrevaReport, lanes: SourceLane[]): Kpi[] {
 // The summary is where the investigation lands: the total the intro announced arrives in
 // the centre of the ring, and everything else is a door. Each figure is stated once.
 export function hero(report: CrevaReport, lanes: SourceLane[]): string {
+  const empty = reportShape(report) === 'sin-registro';
   const split = signalSplit(report);
+  // The rate tile is a door into the market stage, which no longer exists when nothing was found.
   const kpis = summaryKpis(report, lanes)
+    .filter((kpi) => !empty || kpi.label === 'Fuentes' || kpi.label === 'Directorio')
     .map(
       (kpi, index) => `<div class="kpi" style="--i:${index}">
     <p class="kpi-label">${escapeHtml(kpi.label)}</p>
@@ -228,7 +235,7 @@ export function hero(report: CrevaReport, lanes: SourceLane[]): string {
     .join('');
 
   const landing =
-    reportShape(report) === 'sin-registro'
+    empty
       ? emptyLanding(report)
       : `<div class="landing">
     <div class="landing-ring">${ring(lanes, report.signals.length, 'kpi-count')}</div>
@@ -242,7 +249,7 @@ export function hero(report: CrevaReport, lanes: SourceLane[]): string {
   ${landing}
 
   <div class="kpis" id="kpis">${kpis}</div>
-  <div class="jumps" id="jumps">${jumpCards(report)}</div>
+  ${empty ? '' : `<div class="jumps" id="jumps">${jumpCards(report)}</div>`}
 </section>`;
 }
 

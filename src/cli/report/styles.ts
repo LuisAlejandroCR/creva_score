@@ -145,6 +145,7 @@ margin:0 0 2rem}
 .empty-core{fill:var(--s2)}
 .empty-title{font-size:clamp(1.15rem,2.6vw,1.6rem);font-weight:650;letter-spacing:-.02em;
   line-height:1.2;margin-bottom:.7rem}
+.lead-strong{color:var(--tx);font-weight:600}
 .empty-points{list-style:none;margin:1.1rem 0;padding:0;display:grid;gap:.65rem}
 .empty-points li{position:relative;padding-left:1.1rem;font-size:.94rem;color:var(--muted);line-height:1.55}
 .empty-points li::before{content:'';position:absolute;left:0;top:.55em;width:5px;height:5px;

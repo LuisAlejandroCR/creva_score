@@ -3,28 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Creva Score — Presentación 2 min</title>
+<title>Creva Score — Video de 1 minuto</title>
 <style>
 /* ── Brand tokens, copied from creva_finance/frontend/app/globals.css ────── */
 :root{
   --cr-crimson:#C41E3A; --cr-crimson-dark:#9E1329;
   --cr-rosa:#FF8FAE; --cr-inactive:#DED7C8;
   --cr-gradient:linear-gradient(135deg,#D62E52 0%,#9E1329 100%);
-  --cr-gradient-soft:linear-gradient(135deg,#FF8FAE 0%,#C41E3A 100%);
-  --cr-blush-gradient:linear-gradient(135deg,#FFE8EE 0%,#FF8FAE 100%);
-  --cr-card-gradient:linear-gradient(135deg,#F57E8F 0%,#C41E3A 100%);
   --cr-card-shadow:0 20px 60px rgba(196,30,58,.35);
   --cr-ease:cubic-bezier(0.22,0.61,0.36,1);
   --cr-dur-fast:140ms; --cr-dur:240ms; --cr-dur-slow:420ms;
   --cr-success:#2E6A48;
-
-  /* Default: Light / Cream palette */
   --cr-bg:#F6F1E7; --cr-surface-1:#FFFFFF; --cr-surface-2:#FFE8EE;
   --cr-text:#1A1613; --cr-text-secondary:#6F675C;
   --cr-text-muted:rgba(26,22,19,.72); --cr-text-subtle:rgba(26,22,19,.60);
   --cr-border:rgba(26,22,19,.10);
-
-  /* Ink palette, used only where a screen must read as a screen */
   --cr-ink:#17130F; --cr-ink-2:#211B16;
   --pad:clamp(1.5rem,5vw,5.5rem);
 }
@@ -42,7 +35,6 @@ canvas{position:fixed;inset:0;width:100%;height:100%;z-index:0;opacity:.5;displa
     radial-gradient(58% 52% at 84% 8%,rgba(255,143,174,.30),transparent 62%),
     radial-gradient(62% 56% at 6% 94%,rgba(196,30,58,.10),transparent 60%)}
 
-/* ── slides ── */
 .slide{position:fixed;inset:0;z-index:3;display:flex;flex-direction:column;
   justify-content:center;padding:clamp(3rem,8vh,5rem) var(--pad);
   opacity:0;visibility:hidden;
@@ -51,7 +43,6 @@ canvas{position:fixed;inset:0;width:100%;height:100%;z-index:0;opacity:.5;displa
 html:not(.ready) #s0{opacity:1;visibility:visible}
 .in{width:100%;max-width:1160px;margin:0 auto}
 
-/* kinetic cascade: every direct child animates in, nothing hand-marked */
 @keyframes kin{from{opacity:0;transform:translateY(11px) scale(.985)}to{opacity:1;transform:none}}
 .slide.on .in>*{animation:kin var(--cr-dur-slow) var(--cr-ease) both}
 .slide.on .in>*:nth-child(1){animation-delay:.02s}
@@ -68,20 +59,17 @@ h1 em{font-style:normal;display:block;
 .one{font-size:clamp(1.05rem,2vw,1.5rem);color:var(--cr-text-muted);max-width:44ch;margin-top:1.5rem}
 .one b{color:var(--cr-text);font-weight:650}
 
-/* ── cover ── */
-.brand{display:flex;align-items:center;gap:.75rem;margin-bottom:clamp(1.8rem,6vh,3.2rem)}
-.mark{width:40px;height:40px;border-radius:12px;background:var(--cr-gradient);
+.brand{display:flex;align-items:center;gap:.75rem;margin-bottom:1.6rem}
+.mark{width:34px;height:34px;border-radius:10px;background:var(--cr-gradient);
   box-shadow:var(--cr-card-shadow)}
-.brand b{font-size:1.05rem}
-.brand span{color:var(--cr-text-secondary);font-size:.82rem}
-.chips{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:2.2rem}
+.brand b{font-size:.98rem}
+.chips{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:2rem}
 .chip{border:1px solid var(--cr-border);border-radius:99px;padding:.44rem .95rem;
   font-size:.78rem;color:var(--cr-text-muted);background:var(--cr-surface-1)}
 .chip b{color:var(--cr-crimson);font-weight:700}
 
-/* ── figure layout ── */
 .split{display:grid;gap:clamp(1.5rem,4vw,3.5rem);align-items:center;
-  grid-template-columns:1fr minmax(280px,44%);margin-top:1.2rem}
+  grid-template-columns:1fr minmax(280px,42%);margin-top:1rem}
 @media (max-width:860px){.split{grid-template-columns:1fr}.fig-hide{display:none}}
 svg{display:block;width:100%;height:auto;overflow:visible}
 
@@ -93,30 +81,24 @@ svg{display:block;width:100%;height:auto;overflow:visible}
 .slide.on .pulse{animation:pulse 2.6s ease-in-out .4s infinite}
 @keyframes pulse{0%,100%{opacity:.3;r:5}50%{opacity:1;r:8}}
 .slide.on .sweep{animation:orbit 3s linear .3s infinite}
-.slide.on .scan{animation:scan 2.8s var(--cr-ease) .4s infinite}
-@keyframes scan{0%{transform:translateY(0);opacity:0}12%{opacity:1}
-  88%{opacity:1}100%{transform:translateY(118px);opacity:0}}
 
-/* ── big numbers ── */
-.nums{display:grid;gap:clamp(1rem,3vw,2.5rem);grid-template-columns:repeat(3,1fr);margin-top:2.4rem}
+.nums{display:grid;gap:clamp(1rem,3vw,2.5rem);grid-template-columns:repeat(3,1fr);margin-top:2.2rem}
 @media (max-width:700px){.nums{grid-template-columns:1fr;gap:1.1rem}}
 .num .v{font-size:clamp(2.4rem,6vw,4.4rem);font-weight:700;letter-spacing:-.05em;line-height:1;
   background:var(--cr-gradient);-webkit-background-clip:text;background-clip:text;color:transparent}
 .num .c{margin-top:.5rem;font-size:.9rem;color:var(--cr-text-muted);max-width:22ch}
 
-/* ── three pieces ── */
-.trio{display:grid;gap:1.3rem;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));margin-top:2.2rem}
-.p{border:1px solid var(--cr-border);border-radius:18px;padding:1.6rem 1.4rem;
+.trio{display:grid;gap:1.3rem;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));margin-top:2rem}
+.p{border:1px solid var(--cr-border);border-radius:18px;padding:1.5rem 1.3rem;
   background:var(--cr-surface-1);box-shadow:0 12px 32px rgba(26,22,19,.06)}
-.p svg{width:46px;height:46px;margin-bottom:1rem}
-.p b{display:block;font-size:1.08rem;margin-bottom:.4rem;letter-spacing:-.02em}
+.p svg{width:44px;height:44px;margin-bottom:.9rem}
+.p b{display:block;font-size:1.05rem;margin-bottom:.35rem;letter-spacing:-.02em}
 .p span{font-size:.88rem;color:var(--cr-text-muted)}
 
-/* ── demo: screens use the ink palette so they read as screens ── */
-.slots{display:grid;gap:1.3rem;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));margin-top:2rem}
+.slots{display:grid;gap:1.3rem;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));margin-top:1.8rem}
 .slot{border-radius:16px;overflow:hidden;background:var(--cr-ink);
   box-shadow:0 18px 44px rgba(26,22,19,.18)}
-.slot .hd{padding:.8rem 1.05rem;border-bottom:1px solid rgba(246,241,231,.09);
+.slot .hd{padding:.75rem 1.05rem;border-bottom:1px solid rgba(246,241,231,.09);
   display:flex;align-items:center;gap:.55rem;font-size:.84rem;color:#F6F1E7}
 .dot{width:8px;height:8px;border-radius:99px;background:var(--cr-rosa)}
 .scr{aspect-ratio:16/10;background:var(--cr-ink-2);position:relative}
@@ -128,34 +110,20 @@ svg{display:block;width:100%;height:auto;overflow:visible}
 .rec{width:28px;height:28px;border-radius:99px;border:2px solid var(--cr-crimson);display:grid;place-items:center}
 .rec::after{content:'';width:10px;height:10px;border-radius:99px;background:var(--cr-crimson)}
 
-/* ── seal ── */
-.folio{font-family:ui-monospace,Menlo,monospace;font-weight:700;color:var(--cr-crimson);
-  font-size:clamp(1rem,2.8vw,1.85rem);margin-top:.8rem;line-height:1.35}
-.verd{display:grid;gap:.55rem;margin-top:1.5rem}
-.verd p{font-size:.95rem;display:flex;gap:.7rem;align-items:baseline;color:var(--cr-text-muted)}
-.verd i{font-style:normal;font-weight:700;flex:0 0 1.1em}
-.verd b{color:var(--cr-text);font-weight:650}
-.ok{color:var(--cr-success)}.no{color:var(--cr-crimson)}
-
-/* ── nos ── */
-.nos{display:grid;gap:.9rem;margin-top:2rem}
-.no-row{display:flex;gap:1rem;align-items:baseline;
-  font-size:clamp(1.05rem,2.4vw,1.7rem);letter-spacing:-.02em}
-.no-row s{text-decoration:none;color:var(--cr-crimson);font-weight:700}
-.no-row span{color:var(--cr-text-muted)}
-.no-row span b{color:var(--cr-text);font-weight:650}
-
-/* ── hud ── */
-.hud{position:fixed;left:0;right:0;bottom:0;z-index:20}
-.pbar{height:3px;background:rgba(26,22,19,.08)}
+/* ── chrome: a thin progress line stays, everything else leaves the frame ──
+   This deck exists to be screen-recorded, so a visible clock and key hints would be
+   baked into the delivered video. */
+.pbar{position:fixed;left:0;right:0;bottom:0;height:3px;z-index:20;background:rgba(26,22,19,.07)}
 .pfil{height:100%;width:0;background:var(--cr-gradient)}
-.hrow{display:flex;align-items:center;gap:1rem;padding:.65rem var(--pad);
-  font-size:.7rem;color:var(--cr-text-subtle)}
+.chrome{position:fixed;left:0;right:0;bottom:.5rem;z-index:21;display:flex;gap:1rem;
+  align-items:center;padding:0 var(--pad);font-size:.7rem;color:var(--cr-text-subtle);
+  opacity:1;transition:opacity 700ms var(--cr-ease)}
+.chrome.gone{opacity:0}
 .dots{display:flex;gap:.4rem;margin-left:auto}
 .dt{width:7px;height:7px;border-radius:99px;background:var(--cr-inactive);
   border:0;padding:0;cursor:pointer;transition:background var(--cr-dur),transform var(--cr-dur)}
 .dt.act{background:var(--cr-crimson);transform:scale(1.5)}
-.pz{position:fixed;top:1.1rem;right:var(--pad);z-index:21;font-size:.7rem;
+.pz{position:fixed;top:1.1rem;right:var(--pad);z-index:22;font-size:.7rem;
   letter-spacing:.2em;text-transform:uppercase;color:var(--cr-crimson);opacity:0;
   transition:opacity var(--cr-dur)}
 .pz.on{opacity:1}
@@ -163,7 +131,6 @@ svg{display:block;width:100%;height:auto;overflow:visible}
   .slide,.slide.on .in>*{transition:none;animation:none}
   canvas{display:none}.dash{stroke-dashoffset:0}
 }
-@media (max-width:700px){.keys{display:none}}
 </style>
 </head>
 <body>
@@ -172,21 +139,9 @@ svg{display:block;width:100%;height:auto;overflow:visible}
 <div class="veil"></div>
 <div class="pz" id="pz">Pausa</div>
 
-<!-- 0 · PORTADA -->
+<!-- 0 · EL PROBLEMA · 0–11 s -->
 <section class="slide on" id="s0"><div class="in">
-  <div class="brand"><div class="mark"></div>
-    <div><b>Creva Score</b><br><span>IA Hackathon GovTech · Croma</span></div></div>
-  <h1>La falta de historial<em>no es falta de negocio.</em></h1>
-  <div class="chips">
-    <span class="chip"><b>4</b> registros de gobierno</span>
-    <span class="chip"><b>25</b> señales</span>
-    <span class="chip"><b>358</b> pruebas</span>
-  </div>
-</div></section>
-
-<!-- 1 · EL CÍRCULO -->
-<section class="slide" id="s1"><div class="in">
-  <p class="kicker">El círculo</p>
+  <div class="brand"><div class="mark"></div><div><b>Creva Score</b></div></div>
   <div class="split">
     <div>
       <h1>Sin historial<em>no hay crédito.</em></h1>
@@ -202,10 +157,8 @@ svg{display:block;width:100%;height:auto;overflow:visible}
           <circle cx="130" cy="38" r="7" fill="var(--cr-rosa)"/>
         </g>
         <g fill="var(--cr-text-secondary)" font-size="11.5" text-anchor="middle" font-weight="600">
-          <text x="130" y="19">opera</text>
-          <text x="245" y="134">pide crédito</text>
-          <text x="130" y="252">sin historial</text>
-          <text x="15" y="134">se lo niegan</text>
+          <text x="130" y="19">opera</text><text x="245" y="134">pide crédito</text>
+          <text x="130" y="252">sin historial</text><text x="15" y="134">se lo niegan</text>
         </g>
         <circle cx="130" cy="130" r="4" fill="var(--cr-crimson)"/>
       </svg>
@@ -213,8 +166,8 @@ svg{display:block;width:100%;height:auto;overflow:visible}
   </div>
 </div></section>
 
-<!-- 2 · LA EVIDENCIA -->
-<section class="slide" id="s2"><div class="in">
+<!-- 1 · LA EVIDENCIA · 11–25 s -->
+<section class="slide" id="s1"><div class="in">
   <p class="kicker">Lo medimos antes de decidir</p>
   <h1>Un dato de gobierno<em>también excluye.</em></h1>
   <div class="nums">
@@ -227,9 +180,9 @@ svg{display:block;width:100%;height:auto;overflow:visible}
   </div>
 </div></section>
 
-<!-- 3 · LAS TRES PIEZAS -->
-<section class="slide" id="s3"><div class="in">
-  <p class="kicker">Funcionando de punta a punta</p>
+<!-- 2 · LA SOLUCIÓN · 25–39 s -->
+<section class="slide" id="s2"><div class="in">
+  <p class="kicker">Lo que construimos</p>
   <h1>Un expediente que<em>sí puede enseñar.</em></h1>
   <div class="trio">
     <div class="p">
@@ -249,7 +202,7 @@ svg{display:block;width:100%;height:auto;overflow:visible}
         </g>
         <circle class="pulse" cx="33" cy="17" r="5" fill="var(--cr-rosa)"/>
       </svg>
-      <b>El radar</b><span>Las reglas nuevas que sí le tocan. No consulta datos suyos.</span>
+      <b>El radar</b><span>Las reglas nuevas que sí le tocan, sin consultar datos suyos.</span>
     </div>
     <div class="p">
       <svg viewBox="0 0 48 48" fill="none" aria-hidden="true">
@@ -259,13 +212,13 @@ svg{display:block;width:100%;height:auto;overflow:visible}
         <path class="dash" style="--L:14" d="M30.5 34l2.5 2.5 4.5-5" stroke="#fff"
               stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <b>El reporte</b><span>Sellado y firmado. Un byte alterado y deja de coincidir.</span>
+      <b>El reporte</b><span>Sellado y firmado: un byte alterado y deja de coincidir.</span>
     </div>
   </div>
 </div></section>
 
-<!-- 4 · DEMO -->
-<section class="slide" id="s4"><div class="in">
+<!-- 3 · DEMO · 39–53 s -->
+<section class="slide" id="s3"><div class="in">
   <p class="kicker">Corriendo, no en diapositiva</p>
   <h1>Dos superficies,<em>los mismos datos.</em></h1>
   <div class="slots">
@@ -286,49 +239,8 @@ svg{display:block;width:100%;height:auto;overflow:visible}
   </div>
 </div></section>
 
-<!-- 5 · EL SELLO -->
-<section class="slide" id="s5"><div class="in">
-  <p class="kicker">Confianza bancaria</p>
-  <div class="split">
-    <div>
-      <h1>No se puede<em>falsificar.</em></h1>
-      <p class="folio">CB6EC68C‑A87E2BB9<br>E66AA971‑3CA82D0B</p>
-      <div class="verd">
-        <p><i class="ok">✔</i><span><b>Íntegro y firmado</b> por Creva</span></p>
-        <p><i class="no">✘</i><span><b>Alterado</b> — se nombra el archivo</span></p>
-        <p><i class="no">✘</i><span><b>Falta la firma</b> — se reporta como fallo</span></p>
-      </div>
-    </div>
-    <figure class="fig-hide" aria-label="Verificación del documento">
-      <svg viewBox="0 0 200 190" role="img">
-        <rect x="46" y="18" width="108" height="140" rx="7" fill="#FFFFFF"
-              stroke="rgba(26,22,19,.10)" stroke-width="1.5"/>
-        <path d="M64 46h72M64 62h72M64 78h50M64 94h72M64 110h40"
-              stroke="rgba(26,22,19,.16)" stroke-width="3" stroke-linecap="round"/>
-        <rect class="scan" x="46" y="18" width="108" height="3" fill="var(--cr-rosa)" opacity="0"/>
-        <circle cx="150" cy="140" r="26" fill="var(--cr-crimson)"/>
-        <path class="dash" style="--L:40" d="M139 140.5l7 7 15-16" stroke="#fff"
-              stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-      </svg>
-    </figure>
-  </div>
-</div></section>
-
-<!-- 6 · LO QUE NO HACE -->
-<section class="slide" id="s6"><div class="in">
-  <p class="kicker">Lo que este puntaje NO hace</p>
-  <h1>Decirlo<em>es el producto.</em></h1>
-  <div class="nos">
-    <p class="no-row"><s>NO</s><span>estima <b>probabilidad de impago</b></span></p>
-    <p class="no-row"><s>NO</s><span>usa <b>antecedentes penales</b></span></p>
-    <p class="no-row"><s>NO</s><span>castiga <b>la ausencia</b> en un registro voluntario</span></p>
-  </div>
-  <p class="one">El buró no te dice por qué. <b>Creva sí.</b></p>
-</div></section>
-
-<!-- 7 · CIERRE -->
-<section class="slide" id="s7"><div class="in" style="text-align:center">
-  <p class="kicker">México primero, y luego la región</p>
+<!-- 4 · CIERRE · 53–60 s -->
+<section class="slide" id="s4"><div class="in" style="text-align:center">
   <h1 style="margin-inline:auto">Los datos ya prueban<em>que el negocio existe.</em></h1>
   <p class="one" style="margin-inline:auto">Solo que ningún banco los mira. Todavía.</p>
   <div class="chips" style="justify-content:center">
@@ -337,34 +249,44 @@ svg{display:block;width:100%;height:auto;overflow:visible}
   </div>
 </div></section>
 
-<div class="hud">
-  <div class="pbar"><div class="pfil" id="pf"></div></div>
-  <div class="hrow">
-    <span id="clock">0:00 / 2:00</span>
-    <span class="keys">espacio pausa · ← → capítulo · R reinicia · F pantalla completa</span>
-    <div class="dots" id="dots"></div>
-  </div>
+<div class="pbar"><div class="pfil" id="pf"></div></div>
+<div class="chrome" id="chrome">
+  <span id="clock">0:00 / 1:00</span>
+  <span>espacio pausa · ← → escena · R reinicia · F pantalla completa</span>
+  <div class="dots" id="dots"></div>
 </div>
 
 <script>
 (function(){
   document.documentElement.classList.add('ready');
-  var TOTAL = 120000;
-  var MARKS = [0, 13000, 30000, 50000, 70000, 88000, 104000, 113000];
+
+  var TOTAL = 60000;
+  // Five beats in a minute: problem, evidence, solution, demo, close.
+  var MARKS = [0, 11000, 25000, 39000, 53000];
   var slides = [].slice.call(document.querySelectorAll('.slide'));
   var pf = document.getElementById('pf'), clock = document.getElementById('clock');
   var pz = document.getElementById('pz'), dotsBox = document.getElementById('dots');
+  var chrome = document.getElementById('chrome');
   var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var t0 = performance.now(), paused = false, pauseAt = 0, cur = -1;
+  var t0 = performance.now(), paused = false, pauseAt = 0, cur = -1, hideTimer;
 
   var dots = MARKS.map(function(_, i){
     var b = document.createElement('button');
     b.className = 'dt'; b.type = 'button';
-    b.setAttribute('aria-label', 'Capítulo ' + (i + 1));
+    b.setAttribute('aria-label', 'Escena ' + (i + 1));
     b.onclick = function(){ jump(i); };
     dotsBox.appendChild(b);
     return b;
   });
+
+  // The chrome is for the person driving, not for the recording.
+  function showChrome(){
+    chrome.classList.remove('gone');
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(function(){ chrome.classList.add('gone'); }, 2600);
+  }
+  showChrome();
+  addEventListener('mousemove', showChrome);
 
   function counters(scene){
     [].forEach.call(scene.querySelectorAll('[data-count]'), function(el){
@@ -372,7 +294,7 @@ svg{display:block;width:100%;height:auto;overflow:visible}
       var suffix = el.getAttribute('data-suffix') || '';
       // Never zero it synchronously: the markup already carries the true figure, and a
       // stalled rAF would otherwise leave the slide claiming the opposite of the evidence.
-      var start = null, dur = 1100;
+      var start = null, dur = 1000;
       requestAnimationFrame(function tick(now){
         if (start === null) start = now;
         var p = Math.min(1, (now - start) / dur);
@@ -394,8 +316,8 @@ svg{display:block;width:100%;height:auto;overflow:visible}
     i = Math.max(0, Math.min(MARKS.length - 1, i));
     t0 = performance.now() - MARKS[i];
     if (paused) pauseAt = MARKS[i];
-    // Paint straight away, never only from the loop: a stalled clock must still
-    // leave the deck drivable by hand instead of freezing on one slide.
+    // Paint straight away, never only from the loop: a stalled clock must still leave
+    // the deck drivable by hand instead of freezing on one scene.
     render(MARKS[i]);
   }
 
@@ -409,7 +331,7 @@ svg{display:block;width:100%;height:auto;overflow:visible}
     for (var k = 0; k < MARKS.length; k++) if (ms >= MARKS[k]) i = k;
     show(i);
     pf.style.width = Math.min(100, (ms / TOTAL) * 100) + '%';
-    clock.textContent = mmss(ms) + ' / 2:00';
+    clock.textContent = mmss(ms) + ' / 1:00';
   }
 
   function frame(now){

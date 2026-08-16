@@ -1250,11 +1250,42 @@ describe('the report takes a different shape when nothing public was found', () 
     expect(landing).not.toMatch(/\bsat\b/);
   });
 
-  it('still carries the context signals, labelled as context', () => {
-    const built = personaFisica();
-    const html = renderReportHtml(built);
+  it('drops the evidence and market stages, which held nothing about her', () => {
+    const html = renderReportHtml(personaFisica());
+    const tabs = [...html.matchAll(/data-step="([a-z]+)"[^>]*role="tab"/g)].map((m) => m[1]);
 
-    expect(signalSplit(built).context).toBeGreaterThan(0);
-    expect(html).toContain('las mismas para cualquiera');
+    expect(html).not.toContain('>Señales<');
+    expect(html).not.toContain('>Mercado<');
+    expect(tabs).not.toContain('signals');
+    expect(tabs).not.toContain('market');
+  });
+
+  it('keeps the summary and the audit, which are still about her report', () => {
+    const html = renderReportHtml(personaFisica());
+
+    expect(html).toContain('>Resumen<');
+    expect(html).toContain('>Auditoría<');
+  });
+
+  it('says why the report is short, before the three points rather than after', () => {
+    const html = renderReportHtml(personaFisica());
+    const why = html.indexOf('Por eso este reporte es corto');
+    const firstPoint = html.indexOf('Eso no te resta');
+
+    expect(why).toBeGreaterThan(-1);
+    expect(firstPoint).toBeGreaterThan(why);
+  });
+
+  it('does not flash a signal count the summary is about to disown', () => {
+    // The intro announced "25 señales encontradas" and the summary then said nothing was
+    // found. One of the two had to go, and it was not the truthful one.
+    const html = renderReportHtml(personaFisica());
+
+    expect(html).toContain('Nada público <strong>todavía</strong>');
+    expect(html).not.toMatch(/<strong>\d+<\/strong> señales encontradas/);
+  });
+
+  it('still flashes the count when there is a record to count', () => {
+    expect(renderReportHtml(report())).toMatch(/<strong>\d+<\/strong> señales encontradas/);
   });
 });

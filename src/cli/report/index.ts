@@ -2,7 +2,7 @@
 
 import { CrevaReport } from '../../common/types/creva-report.types';
 import { buildLanes, escapeHtml, formatDate, statusWord } from './lanes';
-import { audit, hero, investigation, market, signals } from './sections';
+import { audit, hero, investigation, market, reportShape, signals } from './sections';
 import { paper, paperTitle } from './paper';
 import { script } from './script';
 import { styles } from './styles';
@@ -19,11 +19,15 @@ export function renderReportHtml(report: CrevaReport): string {
   const data = JSON.stringify(report).replace(/</g, '\\u003c');
   const lanes = buildLanes(report);
   const name = report.subject?.business_name ?? 'Revisión general';
-  const marketBody = market(report);
+  // With nothing found about the subject, the evidence and market stages hold only material
+  // that is identical for every reader. Keeping them would pad the report with content the
+  // summary has just said is not hers.
+  const empty = reportShape(report) === 'sin-registro';
+  const marketBody = empty ? '' : market(report);
 
   const stages: Stage[] = [
     { id: 'summary', name: 'Resumen', body: hero(report, lanes) },
-    { id: 'signals', name: 'Señales', body: signals(report, lanes) },
+    ...(empty ? [] : [{ id: 'signals', name: 'Señales', body: signals(report, lanes) }]),
     ...(marketBody === '' ? [] : [{ id: 'market', name: 'Mercado', body: marketBody }]),
     { id: 'audit', name: 'Auditoría', body: audit(report) },
   ];
