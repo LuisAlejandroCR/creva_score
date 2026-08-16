@@ -82,11 +82,19 @@ svg{display:block;width:100%;height:auto;overflow:visible}
 @keyframes pulse{0%,100%{opacity:.3;r:5}50%{opacity:1;r:8}}
 .slide.on .sweep{animation:orbit 3s linear .3s infinite}
 
-/* ── scene 2: the four registries wiring up ─────────────────────────────── */
-.wire{stroke:var(--cr-crimson);stroke-width:2;fill:none;stroke-linecap:round}
-.node{fill:var(--cr-surface-1);stroke:var(--cr-crimson);stroke-width:2}
-.node-l{font-size:12.5px;font-weight:700;fill:var(--cr-text);text-anchor:middle}
-.node-s{font-size:10px;fill:var(--cr-text-subtle);text-anchor:middle}
+/* ── scene 2: the report's own landing, same geometry ───────────────────── */
+.net-fig{margin-top:.6rem}
+.net-fig svg{max-width:min(760px,86%);margin:0 auto}
+.net-root{font-size:15px;font-weight:700;letter-spacing:.22em;fill:var(--cr-text);text-anchor:middle}
+.link{fill:none;stroke:var(--cr-rosa);stroke-width:1.6}
+.net-node circle{fill:var(--cr-success)}
+.net-node text{font-size:12px;letter-spacing:.14em;fill:var(--cr-text-secondary);text-anchor:middle}
+.ticks{list-style:none;display:flex;gap:1.5rem;justify-content:center;flex-wrap:wrap;margin-top:.4rem}
+.ticks li{font-size:.8rem;letter-spacing:.14em;color:var(--cr-text-subtle)}
+.ticks span{color:var(--cr-success);margin-right:.4rem;font-weight:700}
+.conn{text-align:center;margin-top:.9rem;font-size:.86rem;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--cr-text-muted)}
+.conn b{color:var(--cr-crimson);font-size:1.15rem;font-weight:700}
 
 /* ── scene 3: the number lands ──────────────────────────────────────────── */
 .big{display:grid;grid-template-columns:auto 1fr;gap:clamp(1.6rem,5vw,4rem);
@@ -218,29 +226,27 @@ svg{display:block;width:100%;height:auto;overflow:visible}
 <section class="slide" id="s1"><div class="in">
   <p class="kicker">Lo que hace Creva</p>
   <h1>Evidencia dispersa,<em>señales verificables.</em></h1>
-  <figure aria-label="Cuatro registros públicos conectados a Creva">
-    <svg viewBox="0 0 900 210" role="img">
-      <path class="wire dash" style="--L:300" d="M150 52 C 300 52, 330 105, 450 105"/>
-      <path class="wire dash" style="--L:300" d="M150 158 C 300 158, 330 105, 450 105"/>
-      <path class="wire dash" style="--L:300" d="M750 52 C 600 52, 570 105, 450 105"/>
-      <path class="wire dash" style="--L:300" d="M750 158 C 600 158, 570 105, 450 105"/>
-      <g class="node-g">
-        <rect class="node" x="40" y="30" width="118" height="44" rx="12"/>
-        <text class="node-l" x="99" y="50">SIEM</text><text class="node-s" x="99" y="65">directorio</text>
-        <rect class="node" x="40" y="136" width="118" height="44" rx="12"/>
-        <text class="node-l" x="99" y="156">DOF</text><text class="node-s" x="99" y="171">gaceta</text>
-        <rect class="node" x="742" y="30" width="118" height="44" rx="12"/>
-        <text class="node-l" x="801" y="50">CNBV</text><text class="node-s" x="801" y="65">normas</text>
-        <rect class="node" x="742" y="136" width="118" height="44" rx="12"/>
-        <text class="node-l" x="801" y="156">BANXICO</text><text class="node-s" x="801" y="171">tasas</text>
-      </g>
-      <circle cx="450" cy="105" r="34" fill="var(--cr-crimson)"/>
-      <circle class="pulse" cx="450" cy="105" r="44" fill="none"
-              stroke="var(--cr-rosa)" stroke-width="2"/>
-      <text x="450" y="110" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">CREVA</text>
+  <figure class="net-fig" aria-label="Croma consultando cuatro fuentes de gobierno">
+    <!-- Same geometry as the landing of creva-report.html, so the deck and the
+         product show the identical picture. -->
+    <svg viewBox="0 0 600 210" role="img">
+      <text class="net-root" x="300" y="40">CROMA</text>
+      <circle cx="300" cy="55" r="5" fill="var(--cr-crimson)"/>
+      <path class="link dash" style="--L:120" d="M300 62 C300 110 90 100 90 143"/>
+      <path class="link dash" style="--L:120" d="M300 62 C300 110 230 100 230 143"/>
+      <path class="link dash" style="--L:120" d="M300 62 C300 110 370 100 370 143"/>
+      <path class="link dash" style="--L:120" d="M300 62 C300 110 510 100 510 143"/>
+      <g class="net-node"><circle cx="90"  cy="150" r="7"/><text x="90"  y="180">SIEM</text></g>
+      <g class="net-node"><circle cx="230" cy="150" r="7"/><text x="230" y="180">DOF</text></g>
+      <g class="net-node"><circle cx="370" cy="150" r="7"/><text x="370" y="180">CNBV</text></g>
+      <g class="net-node"><circle cx="510" cy="150" r="7"/><text x="510" y="180">BANXICO</text></g>
     </svg>
+    <ul class="ticks">
+      <li><span>✓</span>SIEM</li><li><span>✓</span>DOF</li>
+      <li><span>✓</span>CNBV</li><li><span>✓</span>BANXICO</li>
+    </ul>
+    <p class="conn"><b data-count="4">4</b> fuentes conectadas</p>
   </figure>
-  <p class="one">Cada señal viaja con <b>su fuente y su fecha</b>. Sin eso, no entra.</p>
 </div></section>
 
 <!-- 2 · EL NÚMERO · 16.25 s -->
@@ -390,18 +396,32 @@ svg{display:block;width:100%;height:auto;overflow:visible}
     });
   }
 
-  // Three camera positions over the report, driven by the same clock as everything else.
+  // Three camera positions over the report. `z` is a zoom on top of the scale that
+  // makes the document cover the frame, and the offsets are clamped, so no window
+  // size can ever open a white gap at an edge.
+  var DOC_W = 1440, DOC_H = 1900;
   var CAM = [
-    { at: 25180, s: 0.62, x: 0,    y: 0    },
-    { at: 28600, s: 1.00, x: -140, y: -240 },
-    { at: 31600, s: 1.30, x: -300, y: -900 }
+    { at: 25180, z: 1.00, x: 0,   y: 0   },
+    { at: 28600, z: 1.42, x: 40,  y: 150 },
+    { at: 31600, z: 1.78, x: 90,  y: 520 }
   ];
   function camera(ms){
-    if (!doc) return;
+    if (!doc || doc.hidden) return;
+    var box = doc.parentNode.getBoundingClientRect();
+    if (!box.width) return;
+    var cover = Math.max(box.width / DOC_W, box.height / DOC_H);
     var c = CAM[0];
     for (var i = 0; i < CAM.length; i++) if (ms >= CAM[i].at) c = CAM[i];
-    doc.style.transform = 'translate(' + c.x + 'px,' + c.y + 'px) scale(' + c.s + ')';
+    var s = cover * c.z;
+    // Keep the visible window inside the document on both axes.
+    var maxX = Math.max(0, DOC_W - box.width / s);
+    var maxY = Math.max(0, DOC_H - box.height / s);
+    var x = Math.min(c.x, maxX), y = Math.min(c.y, maxY);
+    doc.style.transform = 'scale(' + s + ') translate(' + (-x) + 'px,' + (-y) + 'px)';
   }
+  // The fallback stays behind the iframe rather than being hidden on `load`: a
+  // missing local file still fires `load` on the browser's own error page, so
+  // hiding it there would trade a readable panel for an error screen.
   if (doc) doc.addEventListener('error', function(){ doc.hidden = true; });
 
   function reel(ms){
